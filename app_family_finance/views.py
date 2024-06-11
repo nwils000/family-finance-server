@@ -12,8 +12,6 @@ def get_profile(request):
   profile = user.profile
   serializer = ProfileSerializer(profile, many=False)
   return Response(serializer.data)
-
-
         
 @api_view(['POST'])
 @permission_classes([])
@@ -48,3 +46,14 @@ def create_user(request):
 
   profile_serialized = ProfileSerializer(profile)
   return Response(profile_serialized.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_responsibility(request):
+  profile = request.user.profile
+  title = request.data.get('title')
+  date = request.data.get('date')
+  responsibility = Responsibility.objects.create(profile=profile, title=title, date=date)
+  responsibility.save()
+  responsibility_serialized = ResponsibilitySerializer(responsibility)
+  return Response(responsibility_serialized.data)

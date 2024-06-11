@@ -2,12 +2,33 @@ from rest_framework import serializers
 from .models import *
 
 class UserSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = User
-    fields = '__all__'
+    class Meta:
+        model = User
+        fields = ['username']
+
+class ResponsibilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Responsibility
+        fields = '__all__'
+
+class ProfileSimpleSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)  
+
+    class Meta:
+        model = Profile
+        fields = ['user', 'first_name', 'last_name', 'parent']  
+
+class FamilySerializer(serializers.ModelSerializer):
+    members = ProfileSimpleSerializer(many=True, read_only=True)  
+
+    class Meta:
+        model = Family
+        fields = '__all__'  
 
 class ProfileSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = Profile
-    fields = '__all__'
+    user = UserSerializer(read_only=True)
+    family = FamilySerializer()  
 
+    class Meta:
+        model = Profile
+        fields = '__all__'
