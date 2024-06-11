@@ -35,3 +35,6 @@ class Responsibility(models.Model):
   profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='responsibilities')
   title = models.CharField(max_length=50)
   date = models.DateField()
+
+  def __str__(self):
+     return f"{self.id} - {self.title}"

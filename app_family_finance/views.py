@@ -57,3 +57,22 @@ def create_responsibility(request):
   responsibility.save()
   responsibility_serialized = ResponsibilitySerializer(responsibility)
   return Response(responsibility_serialized.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_responsibilities(request):
+  profile = request.user.profile
+  responsibilities = profile.responsibilities.all()
+  serializer = ResponsibilitySerializer(responsibilities, many=True)
+  return Response(serializer.data)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_responsibility(request):
+  profile = request.user.profile
+  res_id = request.data.get('id')
+  responsibility = profile.responsibilities.get(id=res_id)
+  responsibility.delete()
+  responsibilities = profile.responsibilities.all()
+  serializer = ResponsibilitySerializer(responsibilities, many=True)
+  return Response(serializer.data)
