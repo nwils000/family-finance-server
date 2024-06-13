@@ -12,11 +12,12 @@ class ResponsibilitySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProfileSimpleSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)  
+    user = UserSerializer(read_only=True) 
+    responsibilities = ResponsibilitySerializer(many=True) 
 
     class Meta:
         model = Profile
-        fields = ['user', 'first_name', 'last_name', 'parent']  
+        fields = ['id', 'user', 'first_name', 'last_name', 'parent', 'responsibilities']  
 
 class FamilySerializer(serializers.ModelSerializer):
     members = ProfileSimpleSerializer(many=True, read_only=True)  
@@ -27,6 +28,7 @@ class FamilySerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    responsibilities = ResponsibilitySerializer(many=True) 
     family = FamilySerializer()  
 
     class Meta:

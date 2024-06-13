@@ -11,8 +11,12 @@ urlpatterns = [
     path('profile/', get_profile),
     path('create-user/', create_user),
     path('create-responsibility/', create_responsibility),
+    path('child-responsibilities/', get_child_responsibilities),
     path('responsibilities/', get_responsibilities),
     path('delete-responsibility/', delete_responsibility),
+    path('update-responsibility/', update_responsibility),
+    path('approve-responsibility/', approve_responsibility),
+    path('complete-responsibility/', complete_responsibility),
     path('refresh/', TokenRefreshView.as_view()),
     path('token/', TokenObtainPairView.as_view()),
 ]

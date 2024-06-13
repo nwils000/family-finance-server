@@ -32,9 +32,21 @@ class Profile(models.Model):
       return f"{self.first_name} {self.last_name} ({'Parent' if self.parent else 'Child'})"
  
 class Responsibility(models.Model):
+  class Difficulty(models.IntegerChoices):
+      AWAITING_VERIFICATION = 0
+      SUPER_EASY = 1
+      EASY = 2
+      MEDIUM = 3
+      HARD = 4
+      VERY_HARD = 5
+      EXTREME = 6       
   profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='responsibilities')
   title = models.CharField(max_length=50)
+  description = models.TextField()
   date = models.DateField()
+  completed = models.BooleanField(default=False)
+  verified = models.BooleanField(default=False)
+  difficulty = models.IntegerField(choices=Difficulty, default=0)
 
   def __str__(self):
      return f"{self.id} - {self.title}"

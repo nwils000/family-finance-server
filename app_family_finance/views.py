@@ -12,7 +12,7 @@ def get_profile(request):
   profile = user.profile
   serializer = ProfileSerializer(profile, many=False)
   return Response(serializer.data)
-        
+
 @api_view(['POST'])
 @permission_classes([])
 def create_user(request):
@@ -31,7 +31,6 @@ def create_user(request):
   else:
       return Response({'message': 'Either family hub name or invitation code is required'})
 
-
   user = User.objects.create(username=request.data.get('username'))
   user.set_password(request.data.get('password'))
   user.save()
@@ -41,7 +40,7 @@ def create_user(request):
       first_name=request.data.get('first_name'),
       last_name=request.data.get('last_name'),
       family=family,
-      parent=request.data.get('parent', False)  
+      parent=request.data.get('parent')  
   )
 
   profile_serialized = ProfileSerializer(profile)
@@ -50,13 +49,22 @@ def create_user(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_responsibility(request):
-  profile = request.user.profile
+  profile = Profile.objects.get(id=request.data['profile_id'])
   title = request.data.get('title')
   date = request.data.get('date')
-  responsibility = Responsibility.objects.create(profile=profile, title=title, date=date)
-  responsibility.save()
-  responsibility_serialized = ResponsibilitySerializer(responsibility)
-  return Response(responsibility_serialized.data)
+  description = request.data.get('description')
+  verified = request.data.get('verified')
+  print("*********************************************************", verified)
+  if profile.parent:
+    responsibility = Responsibility.objects.create(profile=profile, verified=verified, title=title, date=date, description=description)
+    responsibility.save()
+    responsibility_serialized = ResponsibilitySerializer(responsibility) 
+    return Response(responsibility_serialized.data)
+  else: 
+    responsibility = Responsibility.objects.create(profile=profile, verified=verified, title=title, date=date, description=description)  
+    responsibility.save()
+    responsibility_serialized = ResponsibilitySerializer(responsibility) 
+    return Response(responsibility_serialized.data)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -69,10 +77,56 @@ def get_responsibilities(request):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_responsibility(request):
-  profile = request.user.profile
+  profile = Profile.objects.get(id=request.data['profile_id'])
   res_id = request.data.get('id')
   responsibility = profile.responsibilities.get(id=res_id)
   responsibility.delete()
+  responsibilities = profile.responsibilities.all()
+  serializer = ResponsibilitySerializer(responsibilities, many=True)
+  return Response(serializer.data)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_responsibility(request):
+  profile = Profile.objects.get(id=request.data['profile_id'])
+  res_id = request.data.get('id')
+  responsibility = profile.responsibilities.get(id=res_id)
+  responsibility.title = request.data['title']
+  responsibility.description = request.data['description']
+  responsibility.difficulty = request.data['difficulty']
+  responsibility.completed = request.data['completed']
+  responsibility.save()
+  serializer = ResponsibilitySerializer(responsibility, many=False)
+  return Response(serializer.data)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def approve_responsibility(request):
+  res_id = request.data.get('id')
+  responsibility = Responsibility.objects.get(id=res_id)
+  responsibility.difficulty = request.data['difficulty']
+  responsibility.verified = request.data['verified']
+  responsibility.save()
+  serializer = ResponsibilitySerializer(responsibility, many=False)
+  return Response(serializer.data)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def complete_responsibility(request):
+  profile = request.user.profile
+  res_id = request.data.get('id')
+  responsibility = profile.responsibilities.get(id=res_id)
+  responsibility.completed = request.data['completed']
+  responsibility.save()
+  serializer = ResponsibilitySerializer(responsibility, many=False)
+  return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_child_responsibilities(request):
+  profile = Profile.objects.get(id=request.query_params['child_id'])
+  print("*************************************************************************************", profile)
   responsibilities = profile.responsibilities.all()
   serializer = ResponsibilitySerializer(responsibilities, many=True)
   return Response(serializer.data)
