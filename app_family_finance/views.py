@@ -11,26 +11,40 @@ def get_profile(request):
   user = request.user
   profile = user.profile
   today = timezone.localdate()
+  yesterday = today - timezone.timedelta(days=1)
 
   family = profile.family
   day_of_week = today.isoweekday()
   day_of_month = today.day
 
+  # Determine if today is the correct allowance day
   process_weekly = family.allowance_period_type == 'Weekly' and day_of_week == family.allowance_day
   process_monthly = family.allowance_period_type == 'Monthly' and day_of_month == family.allowance_day
 
   if (process_weekly or process_monthly) and (family.last_allowance_date != today):
     eligible_children = family.members.filter(parent=False)
-    for child in eligible_children:
-      total_difficulty_points = 0
-      responsibilities = child.responsibilities.filter(completed=True, verified=True)
-      for responsibility in responsibilities:
-        total_difficulty_points += responsibility.difficulty
+    for child in eligible_children:     
+      if family.last_allowance_date:
+        responsibilities = child.responsibilities.filter(
+          completed=True, 
+          verified=True,
+          date__gte=family.last_allowance_date, 
+          date__lt=today
+        )
+      else:
+        responsibilities = child.responsibilities.filter(
+          completed=True, 
+          verified=True,
+          date__lt=today
+        )
 
+      total_difficulty_points = sum(resp.difficulty for resp in responsibilities)
       allowance = total_difficulty_points * family.price_per_difficulty_point
       child.total_money += allowance
       child.save()
-    family.last_allowance_date = today  
+
+    # Update last allowance date to today
+    family.last_allowance_date = today
     family.save()
 
   serializer = ProfileSerializer(profile, many=False)
