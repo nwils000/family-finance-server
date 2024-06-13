@@ -13,16 +13,22 @@ def get_profile(request):
   today = timezone.localdate()
 
   family = profile.family
-  day_of_week = today.isoweekday() # 1 is Monday, 7 is Sunday
-  day_of_month = today.day  
-  
+  day_of_week = today.isoweekday()
+  day_of_month = today.day
+
   process_weekly = family.allowance_period_type == 'Weekly' and day_of_week == family.allowance_day
   process_monthly = family.allowance_period_type == 'Monthly' and day_of_month == family.allowance_day
 
   if (process_weekly or process_monthly) and (family.last_allowance_date != today):
     eligible_children = family.members.filter(parent=False)
     for child in eligible_children:
-      child.total_money += 100  
+      total_difficulty_points = 0
+      responsibilities = child.responsibilities.filter(completed=True, verified=True)
+      for responsibility in responsibilities:
+        total_difficulty_points += responsibility.difficulty
+
+      allowance = total_difficulty_points * family.price_per_difficulty_point
+      child.total_money += allowance
       child.save()
     family.last_allowance_date = today  
     family.save()

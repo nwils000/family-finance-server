@@ -9,6 +9,7 @@ class Family(models.Model):
   allowance_period_type = models.CharField(max_length=10, default='Daily', choices=(('Weekly', 'Weekly'), ('Monthly', 'Monthly')))
   allowance_day = models.IntegerField(default=1) 
   last_allowance_date = models.DateField(null=True, blank=True)
+  price_per_difficulty_point = models.DecimalField(max_digits=6, decimal_places=2, default=1.00) 
 
   def __str__(self):
       return self.name
