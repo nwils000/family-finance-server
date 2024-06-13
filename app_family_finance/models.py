@@ -6,6 +6,9 @@ class Family(models.Model):
   name = models.CharField(max_length=100, unique=True)
   description = models.TextField(blank=True, null=True)
   invitation_code = models.CharField(max_length=10, unique=True, blank=True)
+  allowance_period_type = models.CharField(max_length=10, default='Daily', choices=(('Weekly', 'Weekly'), ('Monthly', 'Monthly')))
+  allowance_day = models.IntegerField(default=1) 
+  last_allowance_date = models.DateField(null=True, blank=True)
 
   def __str__(self):
       return self.name
@@ -27,6 +30,8 @@ class Profile(models.Model):
   last_name = models.CharField(max_length=255)
   parent = models.BooleanField()
   family = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='members')
+  total_money = models.IntegerField(default=0)
+
 
   def __str__(self):
       return f"{self.first_name} {self.last_name} ({'Parent' if self.parent else 'Child'})"

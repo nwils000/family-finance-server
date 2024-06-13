@@ -17,6 +17,7 @@ urlpatterns = [
     path('update-responsibility/', update_responsibility),
     path('approve-responsibility/', approve_responsibility),
     path('complete-responsibility/', complete_responsibility),
+    path('set-allowance-period/', set_allowance_period),
     path('refresh/', TokenRefreshView.as_view()),
     path('token/', TokenObtainPairView.as_view()),
 ]
