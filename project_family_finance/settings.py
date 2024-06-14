@@ -12,6 +12,13 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import os
+
+APP_NAME = os.getenv("FLY_APP_NAME", None)
+
+DATABASE_PATH = os.getenv("DATABASE_PATH", None)
+
+CSRF_TRUSTED_ORIGINS = [f"https://{APP_NAME}.fly.dev"]
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,12 +29,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-$m+)dqiuiw)8q*ayy+a&^1ebi+veiu++(--x!t*^2s=r^n0f2+'
+SECRET_KEY = os.getenv('SECRET_KEY', 'a default-value for local dev')
+
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'local')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
+if ENVIRONMENT == 'local':
+  DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', f"{APP_NAME}.fly.dev"]
+
 
 
 # Application definition
@@ -48,6 +60,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -56,7 +69,27 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = ['http://localhost:8080']
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+if APP_NAME:
+  MEDIA_ROOT = '/mnt/volume_mount/media/'
+
+STORAGES = {
+    'default': {
+        'BACKEND': "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+
+CORS_ALLOWED_ORIGINS = [
+'http://localhost:8080',
+'https://family-finance-kappa.vercel.app/'
+]
 
 CORS_ALLOW_METHODS = [
     'GET',
@@ -70,8 +103,8 @@ CORS_ALLOW_METHODS = [
 CORS_ALLOW_HEADERS = [
     'Content-Type',
     'Authorization',
-    'authentication',
 ]
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -141,11 +174,12 @@ WSGI_APPLICATION = 'project_family_finance.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+	'default': {
+    		'ENGINE': 'django.db.backends.sqlite3',
+    		'NAME': DATABASE_PATH if APP_NAME else BASE_DIR / 'db.sqlite3',
+	}
 }
+
 
 
 # Password validation

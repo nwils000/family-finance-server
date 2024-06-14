@@ -172,6 +172,7 @@ def get_child_responsibilities(request):
 def set_allowance_period(request):
   profile = request.user.profile
   period_type = request.data.get('period_type')  # Weekly or Monthly
+  print("**********************************", period_type)
   allowance_day = int(request.data.get('allowance_day'))  # Day of the week 1-7 or day of the month 1-31
 
   family = profile.family

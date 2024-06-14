@@ -17,7 +17,7 @@ class ProfileSimpleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['id', 'user', 'first_name', 'last_name', 'parent', 'responsibilities']  
+        fields = ['id', 'user', 'first_name', 'last_name', 'parent', 'responsibilities', 'total_money']  
 
 class FamilySerializer(serializers.ModelSerializer):
     members = ProfileSimpleSerializer(many=True, read_only=True)  
