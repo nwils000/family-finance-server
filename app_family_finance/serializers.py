@@ -53,11 +53,11 @@ class PurchaseSerializer(serializers.ModelSerializer):
 class FinancialAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = FinancialAccount
-        fields = ['id', 'family', 'account_type', 'balance', 'interest_rate']
+        fields = '__all__'
         read_only_fields = ['family']
 
 class IndividualInvestmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = IndividualInvestment
-        fields = ['id', 'financial_account', 'child_profile', 'amount_invested', 'returns']
+        fields = '__all__'
         read_only_fields = ['child_profile']

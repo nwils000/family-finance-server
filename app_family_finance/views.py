@@ -294,80 +294,118 @@ def update_purchase_approval(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_account_types(request):
-    if not request.user.profile.is_parent:
-        return Response({"error": "Only parents can access this information."})
+  if not request.user.profile.parent:
+    return Response({"error": "Only parents can access this information."})
 
-    account_types = FinancialAccount.ACCOUNT_TYPE_CHOICES  # Assuming this is defined in your model
-    return Response({"account_types": account_types})
+  account_types = FinancialAccount.ACCOUNT_TYPE_CHOICES 
+  return Response({"account_types": account_types})
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
-def update_account(request, pk):
-    account = FinancialAccount.objects.get(pk=pk, family=request.user.profile.family)
-    
-    if not request.user.profile.is_parent:
-        return Response({"error": "Only parents can update accounts."})
-    
-    serializer = FinancialAccountSerializer(account, data=request.data)
-    return Response(serializer.data)
+def update_account(request):
+  account = FinancialAccount.objects.get(id=request.data.get('id'), family=request.user.profile.family)
+  
+  if not request.user.profile.parent:
+    return Response({"error": "Only parents can update accounts."})
+  
+  account.interest_period_type=request.data.get('interest_period_type')
+  account.interest_day=request.data.get('interest_day')
+  account.family=request.user.profile.family
+  account.account_type=request.data.get('account_type')
+  account.interest_rate=request.data.get('interest_rate')
+  
+  account.save()
+  serializer = FinancialAccountSerializer(account)
+  return Response(serializer.data)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_account(request):
-    if not request.user.profile.is_parent:
-        return Response({"error": "Only parents can create accounts."})
-    
-    serializer = FinancialAccountSerializer(data=request.data)
-    serializer.save(family=request.user.profile.family)
-    return Response(serializer.data)
+  if not request.user.profile.parent:
+    return Response({"error": "Only parents can create accounts."})
+  
+  interest_period_type=request.data.get('interest_period_type')
+  interest_day=request.data.get('interest_day')
+  family=request.user.profile.family
+  account_type=request.data.get('account_type')
+  interest_rate=request.data.get('interest_rate')
+  
+  account = FinancialAccount.objects.create(
+    family=family, account_type=account_type, 
+    interest_rate=interest_rate, 
+    interest_period_type=interest_period_type, 
+    interest_day=interest_day
+  )
+  account.save()
+  serializer = FinancialAccountSerializer(account)
+  return Response(serializer.data)
  
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def view_available_accounts(request):
-    if not request.user.profile.family:
-        return Response({"error": "User does not belong to any family."})
-    
-    accounts = FinancialAccount.objects.filter(family=request.user.profile.family)
-    serializer = FinancialAccountSerializer(accounts, many=True)
-    return Response(serializer.data)
-
+  if not request.user.profile.family:
+    return Response({"error": "User does not belong to any family."})
+  
+  accounts = FinancialAccount.objects.filter(family=request.user.profile.family)
+  serializer = FinancialAccountSerializer(accounts, many=True)
+  return Response(serializer.data)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
-def delete_account(request, pk):   
-    account = FinancialAccount.objects.get(pk=pk, family=request.user.profile.family)
-    
-    if not request.user.profile.is_parent:
-        return Response({"error": "Only parents can delete accounts."})
-    
-    account.delete()
-    return Response({"message": "Account deleted successfully."})
+def delete_responsibility(request):
+  profile = Profile.objects.get(id=request.data['profile_id'])
+  res_id = request.data.get('id')
+  responsibility = profile.responsibilities.get(id=res_id)
+  responsibility.delete()
+  responsibilities = profile.responsibilities.all()
+  serializer = ResponsibilitySerializer(responsibilities, many=True)
+  return Response(serializer.data)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_account(request):   
+  account = FinancialAccount.objects.get(id=request.data.get('id'), family=request.user.profile.family)
+
+  if not request.user.profile.parent:
+    return Response({"error": "Only parents can delete accounts."})
+  
+  account.delete()
+  return Response({"message": "Account deleted successfully."})
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def invest_money(request, account_id):
-    account = FinancialAccount.objects.get(id=account_id, family=request.user.profile.family)
+def invest_money(request):
+  account = FinancialAccount.objects.get(
+    id=request.data.get('account_id'), family=request.user.profile.family
+  )
+  amount = float(request.data.get('amount'))
+  total_money = float(request.user.profile.total_money)
 
-    amount = request.data.get('amount')  
+  if amount is None:
+    return Response({"error": "Amount is required."})
 
-    if amount is None:
-        return Response({"error": "Amount is required."})
-
-    if request.user.profile.total_money < amount:
-        return Response({"error": "Insufficient funds."})
-
-    request.user.profile.total_money -= amount
+  if total_money < amount:
+    return Response({"error": "Insufficient funds."})
+  
+  try:
+    investment = IndividualInvestment.objects.get(
+      financial_account=account, child_profile=request.user.profile
+    )
+    total_money -= amount
+    request.user.profile.total_money = total_money 
     request.user.profile.save()
+    investment.amount_invested += amount
+    investment.save()
+    return Response({"message": "Existing investment updated successfully."})
 
-    investment, created = IndividualInvestment.objects.get_or_create(
+  except IndividualInvestment.DoesNotExist:
+      investment = IndividualInvestment.objects.create(
         financial_account=account,
         child_profile=request.user.profile,
-        defaults={'amount_invested': amount, 'returns': 0.00}
-    )
-
-    if not created:
-        investment.amount_invested += amount
-        investment.save()
-
-    return Response({"message": "Investment successful."})
+        amount_invested=amount,
+      )
+      total_money -= amount
+      request.user.profile.total_money = total_money 
+      request.user.profile.save()
+      return Response({"message": "New investment created successfully."})

@@ -75,10 +75,17 @@ class Purchase(models.Model):
         return f"{self.profile.first_name} purchased {self.item.name} on {self.date}"
     
 class FinancialAccount(models.Model):
+    ACCOUNT_TYPE_CHOICES = (
+        ('savings', 'Savings'),
+        ('investment', 'Investment'),
+        ('loan', 'Loan')
+    )
     family = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='financial_accounts')
-    account_type = models.CharField(max_length=20, choices=(('savings', 'Savings'), ('investment', 'Investment'), ('loan', 'Loan')))
-    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    account_type = models.CharField(max_length=20, choices=ACCOUNT_TYPE_CHOICES)
     interest_rate = models.DecimalField(max_digits=4, decimal_places=2, default=0.00)
+    interest_period_type = models.CharField(max_length=10, default='Weekly', choices=(('Weekly', 'Weekly'), ('Monthly', 'Monthly'), ('Yearly', 'Yearly')))
+    interest_day = models.IntegerField(default=1)
+
 
     def __str__(self):
         return f"{self.account_type.title()} Account - {self.family.name}"
