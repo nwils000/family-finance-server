@@ -8,10 +8,12 @@ class ResponsibilityAdmin(admin.ModelAdmin):
   pass
 class FamilyAdmin(admin.ModelAdmin):
   pass
+class PurchaseAdmin(admin.ModelAdmin):
+  pass
 
 
 
-
+admin.site.register(Purchase, PurchaseAdmin)
 admin.site.register(Family, FamilyAdmin)
 admin.site.register(Profile, ProfileAdmin)
 admin.site.register(Responsibility, ResponsibilityAdmin)

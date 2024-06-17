@@ -57,16 +57,10 @@ def create_user(request):
   invitation_code = request.data.get('family_hub_invitation_code')
 
   if family_hub_name:
-      family, created = Family.objects.get_or_create(name=family_hub_name)
-      if not created:
-          return Response({'message': 'Family name already exists'})
+    family = Family.objects.get_or_create(name=family_hub_name)
   elif invitation_code:
-      try:
-          family = Family.objects.get(invitation_code=invitation_code)  
-      except Family.DoesNotExist:
-          return Response({'message': 'Invitation code does not exist'})
-  else:
-      return Response({'message': 'Either family hub name or invitation code is required'})
+    family = Family.objects.get(invitation_code=invitation_code)  
+
 
   user = User.objects.create(username=request.data.get('username'))
   user.set_password(request.data.get('password'))
@@ -90,15 +84,16 @@ def create_responsibility(request):
   title = request.data.get('title')
   date = request.data.get('date')
   description = request.data.get('description')
+  difficulty = request.data.get('difficulty')
   verified = request.data.get('verified')
   print("*********************************************************", verified)
   if profile.parent:
-    responsibility = Responsibility.objects.create(profile=profile, verified=verified, title=title, date=date, description=description)
+    responsibility = Responsibility.objects.create(profile=profile, verified=verified, title=title, date=date, difficulty=difficulty, description=description)
     responsibility.save()
     responsibility_serialized = ResponsibilitySerializer(responsibility) 
     return Response(responsibility_serialized.data)
   else: 
-    responsibility = Responsibility.objects.create(profile=profile, verified=verified, title=title, date=date, description=description)  
+    responsibility = Responsibility.objects.create(profile=profile, verified=verified, title=title, date=date, difficulty=difficulty, description=description)  
     responsibility.save()
     responsibility_serialized = ResponsibilitySerializer(responsibility) 
     return Response(responsibility_serialized.data)
@@ -181,3 +176,198 @@ def set_allowance_period(request):
   family.save()
 
   return Response({"message": "Allowance period set successfully"})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_store_item(request):
+  profile = request.user.profile
+  if profile.parent:
+    item = StoreItem.objects.create(
+      name=request.data.get('name'),
+      price=request.data.get('price'),
+      approved=True,
+      family=request.user.profile.family
+    )
+    store_items = profile.family.store_items.all()
+    serializer = StoreItemSerializer(store_items, many=True)
+    return Response(serializer.data)
+  else:
+    item = StoreItem.objects.create(
+      name=request.data.get('name'),
+      price=request.data.get('price'),
+      family=request.user.profile.family
+    )
+    store_items = profile.family.store_items.all()
+    serializer = StoreItemSerializer(store_items, many=True)
+    return Response(serializer.data)
+    
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_store_item(request):
+  item_id = request.data.get('id')  
+  profile = request.user.profile
+  
+  item = StoreItem.objects.get(id=item_id, family=request.user.profile.family)  
+  item.name = request.data.get('name')
+  item.price = request.data.get('price')
+  item.save()
+  store_items = profile.family.store_items.all()
+  serializer = StoreItemSerializer(store_items, many=True)
+  return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_store_items(request):
+  profile = request.user.profile
+
+  store_items = profile.family.store_items.all()
+  serializer = StoreItemSerializer(store_items, many=True)
+  return Response(serializer.data)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_store_items(request):
+  profile = request.user.profile
+
+  item_id = request.data.get('item_id')
+  item = StoreItem.objects.get(id=item_id)
+  item.delete()
+  store_items = profile.family.store_items.all()
+  serializer = StoreItemSerializer(store_items, many=True)
+  return Response(serializer.data)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def approve_store_item(request):
+  item_id = request.data.get('id')  
+  profile = request.user.profile
+  
+  item = StoreItem.objects.get(id=item_id, family=request.user.profile.family)  
+  item.approved = True
+  item.save()
+  store_items = profile.family.store_items.all()
+  serializer = StoreItemSerializer(store_items, many=True)
+  return Response(serializer.data)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def purchase_store_item(request):
+  item_id = request.data.get('id')  
+  profile = request.user.profile
+  
+  item = StoreItem.objects.get(id=item_id, family=profile.family)
+  if profile.total_money >= item.price: 
+    profile.total_money -= item.price
+    profile.save()
+
+    Purchase.objects.create(profile=profile, item=item)
+
+    serializer = ProfileSerializer(profile, many=False)
+    return Response(serializer.data)
+  else:
+    return Response({'message': 'Not enough funds'}, status=400)
+  
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_unapproved_purchases(request):
+    profile = request.user.profile
+
+    unapproved_purchases = Purchase.objects.filter(profile__family=profile.family, approved=False)
+    serializer = PurchaseSerializer(unapproved_purchases, many=True)
+    return Response(serializer.data)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_purchase_approval(request):
+  purchase_id = request.data.get('id')
+  print("****************************************", purchase_id)
+  approved = request.data.get('approved')
+  purchase = Purchase.objects.get(id=purchase_id)
+  purchase.approved = approved
+  purchase.save()
+  serializer = PurchaseSerializer(purchase)
+  return Response(serializer.data)
+
+
+# ALL INVESTMENT ACCOUNT LOGIC
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_account_types(request):
+    if not request.user.profile.is_parent:
+        return Response({"error": "Only parents can access this information."})
+
+    account_types = FinancialAccount.ACCOUNT_TYPE_CHOICES  # Assuming this is defined in your model
+    return Response({"account_types": account_types})
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_account(request, pk):
+    account = FinancialAccount.objects.get(pk=pk, family=request.user.profile.family)
+    
+    if not request.user.profile.is_parent:
+        return Response({"error": "Only parents can update accounts."})
+    
+    serializer = FinancialAccountSerializer(account, data=request.data)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_account(request):
+    if not request.user.profile.is_parent:
+        return Response({"error": "Only parents can create accounts."})
+    
+    serializer = FinancialAccountSerializer(data=request.data)
+    serializer.save(family=request.user.profile.family)
+    return Response(serializer.data)
+ 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def view_available_accounts(request):
+    if not request.user.profile.family:
+        return Response({"error": "User does not belong to any family."})
+    
+    accounts = FinancialAccount.objects.filter(family=request.user.profile.family)
+    serializer = FinancialAccountSerializer(accounts, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_account(request, pk):   
+    account = FinancialAccount.objects.get(pk=pk, family=request.user.profile.family)
+    
+    if not request.user.profile.is_parent:
+        return Response({"error": "Only parents can delete accounts."})
+    
+    account.delete()
+    return Response({"message": "Account deleted successfully."})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def invest_money(request, account_id):
+    account = FinancialAccount.objects.get(id=account_id, family=request.user.profile.family)
+
+    amount = request.data.get('amount')  
+
+    if amount is None:
+        return Response({"error": "Amount is required."})
+
+    if request.user.profile.total_money < amount:
+        return Response({"error": "Insufficient funds."})
+
+    request.user.profile.total_money -= amount
+    request.user.profile.save()
+
+    investment, created = IndividualInvestment.objects.get_or_create(
+        financial_account=account,
+        child_profile=request.user.profile,
+        defaults={'amount_invested': amount, 'returns': 0.00}
+    )
+
+    if not created:
+        investment.amount_invested += amount
+        investment.save()
+
+    return Response({"message": "Investment successful."})

@@ -87,8 +87,8 @@ STORAGES = {
 
 
 CORS_ALLOWED_ORIGINS = [
+'https://family-finance-kappa.vercel.app',
 'http://localhost:8080',
-'https://family-finance-kappa.vercel.app/'
 ]
 
 CORS_ALLOW_METHODS = [
