@@ -32,6 +32,8 @@ urlpatterns = [
     path('view-available-accounts/', view_available_accounts),
     path('delete-account/', delete_account),
     path('invest-money/', invest_money),
+    path('cash-out/', cash_out),
+     path('view-investments/', view_investments),
     path('refresh/', TokenRefreshView.as_view()),
     path('token/', TokenObtainPairView.as_view()),
 ]

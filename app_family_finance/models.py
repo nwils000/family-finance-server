@@ -85,6 +85,7 @@ class FinancialAccount(models.Model):
     interest_rate = models.DecimalField(max_digits=4, decimal_places=2, default=0.00)
     interest_period_type = models.CharField(max_length=10, default='Weekly', choices=(('Weekly', 'Weekly'), ('Monthly', 'Monthly'), ('Yearly', 'Yearly')))
     interest_day = models.IntegerField(default=1)
+    last_interest_paid_date = models.DateField(null=True, blank=True)
 
 
     def __str__(self):

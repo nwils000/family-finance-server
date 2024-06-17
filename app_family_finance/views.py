@@ -5,50 +5,121 @@ from rest_framework.decorators import api_view, permission_classes
 from .models import *
 from .serializers import *
 
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def get_profile(request):
+#   user = request.user
+#   profile = user.profile
+#   today = timezone.localdate()
+#   yesterday = today - timezone.timedelta(days=1)
+
+#   family = profile.family
+#   day_of_week = today.isoweekday()
+#   day_of_month = today.day
+
+#   # Determine if today is the correct allowance day
+#   process_weekly = family.allowance_period_type == 'Weekly' and day_of_week == family.allowance_day
+#   process_monthly = family.allowance_period_type == 'Monthly' and day_of_month == family.allowance_day
+
+#   if (process_weekly or process_monthly) and (family.last_allowance_date != today):
+#     eligible_children = family.members.filter(parent=False)
+#     for child in eligible_children:     
+#       if family.last_allowance_date:
+#         responsibilities = child.responsibilities.filter(
+#           completed=True, 
+#           verified=True,
+#           date__gte=family.last_allowance_date, 
+#           date__lt=today
+#         )
+#       else:
+#         responsibilities = child.responsibilities.filter(
+#           completed=True, 
+#           verified=True,
+#           date__lt=today
+#         )
+
+#       total_difficulty_points = sum(resp.difficulty for resp in responsibilities)
+#       allowance = total_difficulty_points * family.price_per_difficulty_point
+#       child.total_money += allowance
+#       child.save()
+
+#     # Update last allowance date to today
+#     family.last_allowance_date = today
+#     family.save()
+
+#   serializer = ProfileSerializer(profile, many=False)
+#   return Response(serializer.data)
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_profile(request):
-  user = request.user
-  profile = user.profile
-  today = timezone.localdate()
-  yesterday = today - timezone.timedelta(days=1)
+    user = request.user
+    profile = user.profile
+    today = timezone.localdate()
 
-  family = profile.family
-  day_of_week = today.isoweekday()
-  day_of_month = today.day
+    family = profile.family
+    day_of_week = today.isoweekday()
+    day_of_month = today.day
 
-  # Determine if today is the correct allowance day
-  process_weekly = family.allowance_period_type == 'Weekly' and day_of_week == family.allowance_day
-  process_monthly = family.allowance_period_type == 'Monthly' and day_of_month == family.allowance_day
+    process_weekly = family.allowance_period_type == 'Weekly' and day_of_week == family.allowance_day
+    process_monthly = family.allowance_period_type == 'Monthly' and day_of_month == family.allowance_day
 
-  if (process_weekly or process_monthly) and (family.last_allowance_date != today):
-    eligible_children = family.members.filter(parent=False)
-    for child in eligible_children:     
-      if family.last_allowance_date:
-        responsibilities = child.responsibilities.filter(
-          completed=True, 
-          verified=True,
-          date__gte=family.last_allowance_date, 
-          date__lt=today
-        )
-      else:
-        responsibilities = child.responsibilities.filter(
-          completed=True, 
-          verified=True,
-          date__lt=today
-        )
+    if (process_weekly or process_monthly) and (family.last_allowance_date != today):
+        eligible_children = family.members.filter(parent=False)
+        for child in eligible_children:     
+          if family.last_allowance_date:
+            responsibilities = child.responsibilities.filter(
+              completed=True, 
+              verified=True,
+              date__gte=family.last_allowance_date, 
+              date__lt=today
+            )
+          else:
+            responsibilities = child.responsibilities.filter(
+              completed=True, 
+              verified=True,
+              date__lt=today
+            )
 
-      total_difficulty_points = sum(resp.difficulty for resp in responsibilities)
-      allowance = total_difficulty_points * family.price_per_difficulty_point
-      child.total_money += allowance
-      child.save()
+          total_difficulty_points = sum(resp.difficulty for resp in responsibilities)
+          allowance = total_difficulty_points * family.price_per_difficulty_point
+          child.total_money += allowance
+          child.save()
 
-    # Update last allowance date to today
-    family.last_allowance_date = today
-    family.save()
+        # Update last allowance date to today
+        family.last_allowance_date = today
+        family.save()
 
-  serializer = ProfileSerializer(profile, many=False)
-  return Response(serializer.data)
+    # ********************************************************************
+    # Handling cash out for financial accounts!
+    # ********************************************************************
+
+    for account in family.financial_accounts.all():
+        process_interest = False
+
+        if account.interest_period_type == 'Weekly' and day_of_week == account.interest_day:
+            process_interest = True
+        elif account.interest_period_type == 'Monthly' and day_of_month == account.interest_day:
+            process_interest = True
+
+        # I need to figure out how to set it up for yearly payments.
+
+        # elif account.interest_period_type == 'Yearly'
+            # process_interest = True
+
+        if process_interest and account.last_interest_paid_date != today: 
+            for investment in account.investments.all():
+                interest_earned = investment.amount_invested * (account.interest_rate / 100)
+                investment.amount_invested += interest_earned
+                investment.save()
+                # investment.child_profile.total_money += interest_earned
+                # investment.child_profile.save()
+
+            account.last_interest_paid_date = today
+            account.save()
+            
+    serializer = ProfileSerializer(profile, many=False)
+    return Response(serializer.data)
 
 @api_view(['POST'])
 @permission_classes([])
@@ -409,3 +480,22 @@ def invest_money(request):
       request.user.profile.total_money = total_money 
       request.user.profile.save()
       return Response({"message": "New investment created successfully."})
+  
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def cash_out(request):
+  investment_id = request.data.get('id')
+
+  investment = IndividualInvestment.objects.get(id=investment_id)
+
+  investment.child_profile.total_money += investment.amount_invested
+  investment.child_profile.save()
+  investment.delete()
+  return Response({'message': 'Cash-out successful!'})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def view_investments(request): 
+  investments = IndividualInvestment.objects.filter(child_profile=request.user.profile)
+  serializer = IndividualInvestmentSerializer(investments, many=True)
+  return Response(serializer.data)
