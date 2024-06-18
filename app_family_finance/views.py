@@ -61,34 +61,35 @@ def get_profile(request):
     day_of_week = today.isoweekday()
     day_of_month = today.day
 
+    # Determine if today is the correct allowance day
     process_weekly = family.allowance_period_type == 'Weekly' and day_of_week == family.allowance_day
     process_monthly = family.allowance_period_type == 'Monthly' and day_of_month == family.allowance_day
 
     if (process_weekly or process_monthly) and (family.last_allowance_date != today):
-        eligible_children = family.members.filter(parent=False)
-        for child in eligible_children:     
-          if family.last_allowance_date:
-            responsibilities = child.responsibilities.filter(
-              completed=True, 
-              verified=True,
-              date__gte=family.last_allowance_date, 
-              date__lt=today
-            )
-          else:
-            responsibilities = child.responsibilities.filter(
-              completed=True, 
-              verified=True,
-              date__lt=today
-            )
+      eligible_children = family.members.filter(parent=False)
+      for child in eligible_children:     
+        if family.last_allowance_date:
+          responsibilities = child.responsibilities.filter(
+            completed=True, 
+            verified=True,
+            date__gte=family.last_allowance_date, 
+            date__lt=today
+          )
+        else:
+          responsibilities = child.responsibilities.filter(
+            completed=True, 
+            verified=True,
+            date__lt=today
+          )
 
-          total_difficulty_points = sum(resp.difficulty for resp in responsibilities)
-          allowance = total_difficulty_points * family.price_per_difficulty_point
-          child.total_money += allowance
-          child.save()
+        total_difficulty_points = sum(resp.difficulty for resp in responsibilities)
+        allowance = total_difficulty_points * family.price_per_difficulty_point
+        child.total_money += allowance
+        child.save()
 
-        # Update last allowance date to today
-        family.last_allowance_date = today
-        family.save()
+      # Update last allowance date to today
+      family.last_allowance_date = today
+      family.save()
 
     # ********************************************************************
     # Handling cash out for financial accounts!
@@ -128,9 +129,16 @@ def create_user(request):
   invitation_code = request.data.get('family_hub_invitation_code')
 
   if family_hub_name:
-    family = Family.objects.get_or_create(name=family_hub_name)
+      family, created = Family.objects.get_or_create(name=family_hub_name)
+      if not created:
+          return Response({'message': 'Family name already exists'})
   elif invitation_code:
-    family = Family.objects.get(invitation_code=invitation_code)  
+      try:
+          family = Family.objects.get(invitation_code=invitation_code)  
+      except Family.DoesNotExist:
+          return Response({'message': 'Invitation code does not exist'})
+  else:
+      return Response({'message': 'Either family hub name or invitation code is required'})
 
 
   user = User.objects.create(username=request.data.get('username'))
