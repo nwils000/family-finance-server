@@ -4,6 +4,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from .models import *
 from .serializers import *
+from datetime import timedelta, datetime
+import calendar
+
 
 # @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
@@ -159,23 +162,96 @@ def create_user(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_responsibility(request):
-  profile = Profile.objects.get(id=request.data['profile_id'])
+  profile = request.user.profile
   title = request.data.get('title')
-  date = request.data.get('date')
+  start_date_str = request.data.get('date')
+  start_date = timezone.datetime.strptime(start_date_str, '%Y-%m-%d').date()
   description = request.data.get('description')
   difficulty = request.data.get('difficulty')
   verified = request.data.get('verified')
-  print("*********************************************************", verified)
-  if profile.parent:
-    responsibility = Responsibility.objects.create(profile=profile, verified=verified, title=title, date=date, difficulty=difficulty, description=description)
-    responsibility.save()
-    responsibility_serialized = ResponsibilitySerializer(responsibility) 
-    return Response(responsibility_serialized.data)
-  else: 
-    responsibility = Responsibility.objects.create(profile=profile, verified=verified, title=title, date=date, difficulty=difficulty, description=description)  
-    responsibility.save()
-    responsibility_serialized = ResponsibilitySerializer(responsibility) 
-    return Response(responsibility_serialized.data)
+  repeat_info = request.data.get('repeat')
+
+  repeat_days = repeat_info.get('details', [])
+  type_of_repeat = repeat_info.get('type')
+
+  series = ResponsibilitySeries.objects.create(
+    title=title,
+    start_date=start_date,
+    repeat_type=type_of_repeat,
+    repeat_days=','.join(map(str, repeat_days))
+  )
+
+  responsibilities = []
+
+  end_date = start_date + timedelta(days=365) 
+
+  if type_of_repeat == 'weekly':
+    weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    repeat_days = [weekdays.index(day) for day in repeat_days]
+
+    dates_to_create = []
+    for day in repeat_days:
+      next_date = start_date
+      while next_date.weekday() != day:
+        next_date += timedelta(days=1)
+      while next_date <= end_date:
+        dates_to_create.append(next_date)
+        next_date += timedelta(days=7)
+
+  elif type_of_repeat == 'monthly':
+    repeat_days = [int(day) for day in repeat_days]
+
+    dates_to_create = []
+    for day in repeat_days:
+      month = start_date.month
+      year = start_date.year
+      if day > calendar.monthrange(year, month)[1]:
+        day = calendar.monthrange(year, month)[1] 
+      next_date = start_date.replace(day=day)
+      if day < start_date.day:
+        if month == 12:
+          month = 1
+          year += 1
+        else:
+          month += 1
+        if day > calendar.monthrange(year, month)[1]:
+          day = calendar.monthrange(year, month)[1]
+        next_date = datetime(year, month, day).date()
+      while next_date <= end_date:
+        last_day_of_month = calendar.monthrange(next_date.year, next_date.month)[1]
+        if day > last_day_of_month:
+          next_date = datetime(next_date.year, next_date.month, last_day_of_month).date()
+        else:
+          next_date = datetime(next_date.year, next_date.month, day).date()
+        dates_to_create.append(next_date)
+        if next_date.month == 12:
+          next_date = datetime(next_date.year + 1, 1, day).date()
+        else:
+          month = next_date.month + 1
+          year = next_date.year
+          last_day_of_month = calendar.monthrange(year, month)[1]
+          if day > last_day_of_month:
+            next_date = datetime(year, month, last_day_of_month).date()
+          else:
+            next_date = datetime(year, month, day).date()
+
+  dates_to_create = sorted(list(set(dates_to_create)))
+
+  for responsibility_date in dates_to_create:
+    if responsibility_date >= start_date:
+      responsibility = Responsibility.objects.create(
+        profile=profile,
+        title=title,
+        date=responsibility_date,
+        description=description,
+        difficulty=difficulty,
+        verified=verified,
+        series=series
+      )
+      responsibilities.append(responsibility)
+
+  serialized_responsibilities = ResponsibilitySerializer(responsibilities, many=True)
+  return Response(serialized_responsibilities.data)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

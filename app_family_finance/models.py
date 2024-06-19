@@ -35,7 +35,16 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({'Parent' if self.parent else 'Child'})"
+    
+class ResponsibilitySeries(models.Model):
+    title = models.CharField(max_length=255)
+    start_date = models.DateField()
+    repeat_type = models.CharField(max_length=10) 
+    repeat_days = models.CharField(max_length=255) 
 
+    def __str__(self):
+        return self.title
+    
 class Responsibility(models.Model):
     class Difficulty(models.IntegerChoices):
         TOO_EASY = 0
@@ -52,9 +61,11 @@ class Responsibility(models.Model):
     completed = models.BooleanField(default=False)
     verified = models.BooleanField(default=False)
     difficulty = models.IntegerField(choices=Difficulty.choices, default=Difficulty.TOO_EASY)
+    series = models.ForeignKey(ResponsibilitySeries, on_delete=models.CASCADE, related_name='responsibilities', null=True, blank=True)
 
     def __str__(self):
         return f"{self.id} - {self.title}"
+
 
 class StoreItem(models.Model):
     name = models.CharField(max_length=100)
@@ -64,7 +75,7 @@ class StoreItem(models.Model):
 
     def __str__(self):
         return f"{self.name} - ${self.price}"
-    
+
 class Purchase(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='purchases')
     item = models.ForeignKey(StoreItem, on_delete=models.CASCADE, related_name='purchases')

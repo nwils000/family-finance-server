@@ -11,6 +11,11 @@ class ResponsibilitySerializer(serializers.ModelSerializer):
         model = Responsibility
         fields = '__all__'
 
+class ResponsibilitySeriesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResponsibilitySeries
+        fields = '__all__'
+
 class ProfileSimpleSerializer(serializers.ModelSerializer):
     user = UserSerializer() 
     responsibilities = ResponsibilitySerializer(many=True) 
