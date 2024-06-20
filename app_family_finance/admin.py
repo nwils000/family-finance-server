@@ -14,9 +14,12 @@ class IndividualInvestmentAdmin(admin.ModelAdmin):
   pass
 class FinancialAccountAdmin(admin.ModelAdmin):
   pass
+class ResponsibilitySeriesAdmin(admin.ModelAdmin):
+  pass
 
 
 
+admin.site.register(ResponsibilitySeries, ResponsibilitySeriesAdmin)
 admin.site.register(FinancialAccount, FinancialAccountAdmin)
 admin.site.register(IndividualInvestment, IndividualInvestmentAdmin)
 admin.site.register(Purchase, PurchaseAdmin)

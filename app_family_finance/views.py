@@ -162,34 +162,110 @@ def create_user(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_responsibility(request):
-  profile = request.user.profile
-  title = request.data.get('title')
-  start_date_str = request.data.get('date')
-  start_date = timezone.datetime.strptime(start_date_str, '%Y-%m-%d').date()
-  description = request.data.get('description')
-  difficulty = request.data.get('difficulty')
-  verified = request.data.get('verified')
-  repeat_info = request.data.get('repeat')
+    profile = Profile.objects.get(id=request.data['profile_id'])
+    title = request.data.get('title')
+    start_date_str = request.data.get('date')
+    start_date = timezone.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+    description = request.data.get('description')
+    difficulty = request.data.get('difficulty')
+    verified = request.data.get('verified')
+    repeat_info = request.data.get('repeat')
 
-  repeat_days = repeat_info.get('details', [])
-  type_of_repeat = repeat_info.get('type')
+    repeat_days = repeat_info.get('details', [])
+    type_of_repeat = repeat_info.get('type')
 
-  series = ResponsibilitySeries.objects.create(
-    title=title,
-    start_date=start_date,
-    repeat_type=type_of_repeat,
-    repeat_days=','.join(map(str, repeat_days))
-  )
+    # Create a responsibility series for all events
+    series = ResponsibilitySeries.objects.create(
+        title=title,
+        start_date=start_date,
+        repeat_type=type_of_repeat,
+        repeat_days=','.join(map(str, repeat_days))
+    )
 
-  responsibilities = []
+    responsibilities = []
+    dates_to_create = []
 
-  end_date = start_date + timedelta(days=365) 
+    if type_of_repeat == 'none':
+        dates_to_create.append(start_date)
+    elif type_of_repeat == 'weekly':
+        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        repeat_days = [weekdays.index(day) for day in repeat_days]
+        for day in repeat_days:
+            next_date = start_date
+            while next_date.weekday() != day:
+                next_date += timedelta(days=1)
+            end_date = start_date + timedelta(days=365)
+            while next_date <= end_date:
+                dates_to_create.append(next_date)
+                next_date += timedelta(days=7)
+    elif type_of_repeat == 'monthly':
+        repeat_days = [int(day) for day in repeat_days]
+        for day in repeat_days:
+            month = start_date.month
+            year = start_date.year
+            if day > calendar.monthrange(year, month)[1]:
+                day = calendar.monthrange(year, month)[1] 
+            next_date = start_date.replace(day=day)
+            end_date = start_date + timedelta(days=365)
+            while next_date <= end_date:
+                last_day_of_month = calendar.monthrange(next_date.year, next_date.month)[1]
+                if day > last_day_of_month:
+                    next_date = datetime(next_date.year, next_date.month, last_day_of_month).date()
+                else:
+                    next_date = datetime(next_date.year, next_date.month, day).date()
+                dates_to_create.append(next_date)
+                if next_date.month == 12:
+                    next_date = datetime(next_date.year + 1, 1, day).date()
+                else:
+                    month = next_date.month + 1
+                    year = next_date.year
+                    last_day_of_month = calendar.monthrange(year, month)[1]
+                    if day > last_day_of_month:
+                        next_date = datetime(year, month, last_day_of_month).date()
+                    else:
+                        next_date = datetime(year, month, day).date()
+
+    dates_to_create = sorted(list(set(dates_to_create)))
+    is_single_instance = len(dates_to_create) == 1  # Determine if this is a single instance or not
+
+    for responsibility_date in dates_to_create:
+        responsibility = Responsibility.objects.create(
+            profile=profile,
+            title=title,
+            date=responsibility_date,
+            description=description,
+            difficulty=difficulty,
+            verified=verified,
+            series=series,
+            single=is_single_instance  # Set the single field based on the number of dates
+        )
+        responsibilities.append(responsibility)
+
+    serialized_responsibilities = ResponsibilitySerializer(responsibilities, many=True)
+    return Response(serialized_responsibilities.data)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def edit_responsibility_series(request):
+  profile = Profile.objects.get(id=request.data['profile_id'])
+  series_id = request.data.get('series_id')
+  series = ResponsibilitySeries.objects.get(id=series_id)
+  series.title = request.data.get('title', series.title)
+  series.start_date = timezone.datetime.strptime(request.data.get('start_date', series.start_date.strftime('%Y-%m-%d')), '%Y-%m-%d').date()
+  series.repeat_type = request.data.get('repeat', {}).get('type', series.repeat_type)
+  series.repeat_days = ','.join(map(str, request.data.get('repeat', {}).get('details', series.repeat_days.split(','))))
+  series.save()
+
+  series.responsibilities.all().delete()
+
+  start_date = series.start_date
+  end_date = start_date + timedelta(days=365)
+  type_of_repeat = series.repeat_type
+  dates_to_create = []
 
   if type_of_repeat == 'weekly':
     weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    repeat_days = [weekdays.index(day) for day in repeat_days]
-
-    dates_to_create = []
+    repeat_days = [weekdays.index(day.strip()) for day in series.repeat_days.split(',')]
     for day in repeat_days:
       next_date = start_date
       while next_date.weekday() != day:
@@ -197,61 +273,53 @@ def create_responsibility(request):
       while next_date <= end_date:
         dates_to_create.append(next_date)
         next_date += timedelta(days=7)
-
   elif type_of_repeat == 'monthly':
-    repeat_days = [int(day) for day in repeat_days]
-
-    dates_to_create = []
+    repeat_days = [int(day.strip()) for day in series.repeat_days.split(',')]
     for day in repeat_days:
-      month = start_date.month
       year = start_date.year
+      month = start_date.month
       if day > calendar.monthrange(year, month)[1]:
-        day = calendar.monthrange(year, month)[1] 
-      next_date = start_date.replace(day=day)
-      if day < start_date.day:
-        if month == 12:
-          month = 1
-          year += 1
-        else:
-          month += 1
-        if day > calendar.monthrange(year, month)[1]:
-          day = calendar.monthrange(year, month)[1]
-        next_date = datetime(year, month, day).date()
+        day = calendar.monthrange(year, month)[1]
+      next_date = datetime(year, month, day).date()
       while next_date <= end_date:
-        last_day_of_month = calendar.monthrange(next_date.year, next_date.month)[1]
-        if day > last_day_of_month:
-          next_date = datetime(next_date.year, next_date.month, last_day_of_month).date()
-        else:
-          next_date = datetime(next_date.year, next_date.month, day).date()
         dates_to_create.append(next_date)
         if next_date.month == 12:
           next_date = datetime(next_date.year + 1, 1, day).date()
         else:
           month = next_date.month + 1
           year = next_date.year
-          last_day_of_month = calendar.monthrange(year, month)[1]
-          if day > last_day_of_month:
-            next_date = datetime(year, month, last_day_of_month).date()
-          else:
-            next_date = datetime(year, month, day).date()
+          if day > calendar.monthrange(year, month)[1]:
+            day = calendar.monthrange(year, month)[1]
+          next_date = datetime(year, month, day).date()
 
   dates_to_create = sorted(list(set(dates_to_create)))
 
+  responsibilities = []
   for responsibility_date in dates_to_create:
     if responsibility_date >= start_date:
       responsibility = Responsibility.objects.create(
         profile=profile,
-        title=title,
+        title=series.title,
         date=responsibility_date,
-        description=description,
-        difficulty=difficulty,
-        verified=verified,
-        series=series
+        description=request.data.get('description'),
+        difficulty=request.data.get('difficulty'),
+        verified=request.data.get('verified'),
+        series=series,
+        single = False
       )
       responsibilities.append(responsibility)
 
   serialized_responsibilities = ResponsibilitySerializer(responsibilities, many=True)
   return Response(serialized_responsibilities.data)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_responsibility_series(request):
+  series_id = request.data.get('series_id')
+  print("*****************************************************", series_id)
+  series = ResponsibilitySeries.objects.get(id=series_id)
+  series.delete()
+  return Response({"message": "ResponsibilitySeries deleted successfully"})
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

@@ -62,6 +62,7 @@ class Responsibility(models.Model):
     verified = models.BooleanField(default=False)
     difficulty = models.IntegerField(choices=Difficulty.choices, default=Difficulty.TOO_EASY)
     series = models.ForeignKey(ResponsibilitySeries, on_delete=models.CASCADE, related_name='responsibilities', null=True, blank=True)
+    single = models.BooleanField()
 
     def __str__(self):
         return f"{self.id} - {self.title}"
