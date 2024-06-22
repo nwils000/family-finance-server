@@ -38,6 +38,7 @@ urlpatterns = [
     path('edit-responsibility-series/', edit_responsibility_series),
     path('approve-whole-series/', approve_whole_series),
     path('update-difficulty-point-value/', update_difficulty_point_value),
+    path('complete-responsibility-series/', complete_responsibility_series),
     path('refresh/', TokenRefreshView.as_view()),
     path('token/', TokenObtainPairView.as_view()),
 ]

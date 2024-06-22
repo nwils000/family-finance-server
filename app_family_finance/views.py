@@ -275,6 +275,22 @@ def edit_responsibility_series(request):
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
+def complete_responsibility_series(request):
+  profile = Profile.objects.get(id=request.data['profile_id'])
+  series = ResponsibilitySeries.objects.get(id=request.data['series_id'])
+  completed_status = True
+
+  responsibilities = series.responsibilities.all()
+  for responsibility in responsibilities:
+    responsibility.completed = completed_status
+    responsibility.completion_date = timezone.now() if completed_status else None
+    responsibility.save()
+
+  serializer = ResponsibilitySerializer(responsibilities, many=True)
+  return Response(serializer.data)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def approve_whole_series(request):
   series_id = request.data.get('series_id')
   series = ResponsibilitySeries.objects.get(id=series_id)
