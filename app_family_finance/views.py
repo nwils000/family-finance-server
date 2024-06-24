@@ -16,44 +16,47 @@ def get_profile(request):
   profile = user.profile
   today = timezone.localdate()
   family = profile.family
-  
+
   day_of_week = today.isoweekday()
   day_of_month = today.day
   day_of_year_today = today.timetuple().tm_yday
 
   process_weekly = family.allowance_period_type == 'Weekly' and day_of_week == family.allowance_day
   process_monthly = family.allowance_period_type == 'Monthly' and day_of_month == family.allowance_day
-  
+
+  responsibilities = [] 
+
   if (process_weekly or process_monthly) and (family.last_allowance_date != today):
-      
+
     eligible_children = family.members.filter(parent=False)
     for child in eligible_children:
       if family.last_allowance_date:
         responsibilities = child.responsibilities.filter(
-          completed=True, 
-          verified=True,
-          date__gte=family.last_allowance_date, 
-          date__lt=today
+            completed=True,
+            verified=True,
+            date__gte=family.last_allowance_date,
+            date__lt=today
         )
       else:
         responsibilities = child.responsibilities.filter(
-          completed=True, 
-          verified=True,
-          date__lt=today
+            completed=True,
+            verified=True,
+            date__lt=today
         )
-
-    total_difficulty_points = sum(resp.difficulty for resp in responsibilities)
-    allowance = total_difficulty_points * family.price_per_difficulty_point
-  
-    child.total_money += allowance
-    child.save()
-        
-    family.last_allowance_date = today
-    family.save()
     
+    if responsibilities: 
+      total_difficulty_points = sum(resp.difficulty for resp in responsibilities)
+      allowance = total_difficulty_points * family.price_per_difficulty_point
+
+      child.total_money += allowance
+      child.save()
+
+      family.last_allowance_date = today
+      family.save()
+
   for account in family.financial_accounts.all():
     process_interest = False
-    
+
     if account.interest_period_type == 'Weekly' and day_of_week == account.interest_day:
       process_interest = True
     elif account.interest_period_type == 'Monthly' and day_of_month == account.interest_day:
@@ -63,26 +66,26 @@ def get_profile(request):
 
     if process_interest and account.last_interest_paid_date != today:
 
-      for investment in account.investments.all():   
+      for investment in account.investments.all():
 
-        if account.account_type == 'investment': 
+        if account.account_type == 'investment':
 
           change = random.choice(['gain', 'loss'])
           if change == 'gain':
-  
+
             potential_gain = investment.amount_invested * (account.potential_gain / 100)
             investment.returns += potential_gain
 
-          else:  
+          else:
             potential_loss = investment.amount_invested * (account.potential_loss / 100)
             investment.returns -= potential_loss
 
         else:
-          interest_earned = investment.amount_invested * (account.interest_rate / 100)
-          investment.returns += interest_earned
+            interest_earned = investment.amount_invested * (account.interest_rate / 100)
+            investment.returns += interest_earned
 
         investment.save()
-          
+
       account.last_interest_paid_date = today
       account.save()
 
