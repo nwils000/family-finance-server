@@ -6,23 +6,32 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username']
 
-class ResponsibilitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Responsibility
-        fields = '__all__'
 
 class ResponsibilitySeriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResponsibilitySeries
         fields = '__all__'
 
+class ResponsibilitySerializer(serializers.ModelSerializer):
+    series = ResponsibilitySeriesSerializer()
+    class Meta:
+        model = Responsibility
+        fields = '__all__'
+
+class IndividualInvestmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IndividualInvestment
+        fields = '__all__'
+        read_only_fields = ['child_profile']
+
 class ProfileSimpleSerializer(serializers.ModelSerializer):
     user = UserSerializer() 
     responsibilities = ResponsibilitySerializer(many=True) 
+    investments = IndividualInvestmentSerializer(many=True)
 
     class Meta:
         model = Profile
-        fields = ['id', 'user', 'first_name', 'last_name', 'parent', 'responsibilities', 'total_money']  
+        fields = ['id', 'user', 'first_name', 'last_name', 'parent', 'responsibilities', 'total_money', 'investments']  
 
 class FamilySerializer(serializers.ModelSerializer):
     members = ProfileSimpleSerializer(many=True)  
@@ -35,6 +44,8 @@ class ProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     responsibilities = ResponsibilitySerializer(many=True) 
     family = FamilySerializer()  
+    investments = IndividualInvestmentSerializer(many=True)
+
 
     class Meta:
         model = Profile
@@ -61,8 +72,3 @@ class FinancialAccountSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['family']
 
-class IndividualInvestmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = IndividualInvestment
-        fields = '__all__'
-        read_only_fields = ['child_profile']

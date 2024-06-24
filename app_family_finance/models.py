@@ -102,7 +102,7 @@ class FinancialAccount(models.Model):
     potential_loss = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.account_type.title()} Account - {self.family.name}"
+        return f"{self.account_type} Account - {self.family.name}"
     
 class IndividualInvestment(models.Model):
     financial_account = models.ForeignKey(FinancialAccount, on_delete=models.CASCADE, related_name='investments')
