@@ -26,8 +26,9 @@ so the refresh cookie is first-party and no cross-site CORS is needed. Native ap
   folder, so a package left out of the bundle fails the build, not the live site.
 - **Deploy:** both projects are connected to GitHub with `rebuild` as the production branch, so a
   push to `rebuild` deploys. Each `vercel.json` has an `ignoreCommand` so nothing else spends a
-  build: the app skips every other branch; the site also skips a push that did not touch `site/`,
-  `shared/` or `package-lock.json` since its last deploy (`VERCEL_GIT_PREVIOUS_SHA`). When `main`
+  build: both skip every other branch; the app also skips a push that only touched `site/` or
+  `docs/`, and the site one that did not touch `site/`, `shared/` or `package-lock.json`, since
+  their last deploy (`VERCEL_GIT_PREVIOUS_SHA`). When `main`
   becomes the Kid Kapital branch, change the production branch in both projects (Settings,
   Environments, Production) and the branch name in both `ignoreCommand`s. A manual
   `vercel deploy --prod` from the repo root still works (for the site, set `VERCEL_PROJECT_ID`).

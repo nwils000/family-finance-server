@@ -35,7 +35,11 @@ try {
     const page = await context.newPage();
     for (const path of pages) {
       await page.goto(`http://localhost:${PORT}${path}`, { waitUntil: 'load' });
-      await page.waitForTimeout(300);
+      // Give the hero's entrance (well under 2s) time to finish: a real blank section stays at
+      // opacity 0 forever, so waiting longer cannot hide one; judging too early made this flaky.
+      await page
+        .waitForFunction(() => ![...document.querySelectorAll('main *')].some((el) => el.getBoundingClientRect().height > 40 && getComputedStyle(el).opacity === '0'), undefined, { timeout: 3000 })
+        .catch(() => {});
       const found = await page.evaluate((phone) => {
         const vw = document.documentElement.clientWidth;
         const out = [];

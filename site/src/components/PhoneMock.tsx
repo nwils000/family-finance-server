@@ -28,16 +28,22 @@ import { Money, cx } from './ui';
 const STAR_VALUE = 25;
 
 /** Positioning (relative / absolute) comes from the caller, never from here: a built-in
- * `relative` silently beat a caller's `absolute` in Tailwind's order. */
+ * `relative` silently beat a caller's `absolute` in Tailwind's order.
+ * The shape is an iPhone screen (19.5:9) whatever the content, with the tab bar pinned to the
+ * bottom as in the app: sized by content, a screen with fewer rows came out short and squat. */
 export function PhoneFrame({ children, className, label }: { children: ReactNode; className?: string; label: string }) {
   return (
     <div
       role="img"
       aria-label={label}
-      className={cx('w-[290px] flex-none overflow-hidden rounded-[42px] border-[3px] border-ink bg-bg shadow-[0_6px_0_rgb(var(--ink)),0_30px_60px_-20px_rgb(var(--ink)/0.45)]', className)}
+      className={cx('aspect-[9/19.5] w-[290px] flex-none overflow-hidden rounded-[42px] border-[3px] border-ink bg-bg shadow-[0_6px_0_rgb(var(--ink)),0_30px_60px_-20px_rgb(var(--ink)/0.45)]', className)}
     >
-      <div className="mx-auto mt-2.5 h-5 w-24 rounded-full bg-ink" />
-      <div className="px-4 pb-3 pt-3">{children}</div>
+      {/* The column lives on an inner box: a caller's display class (`hidden sm:block`) on the
+          frame would otherwise switch off the flex that pins the tab bar. */}
+      <div className="flex h-full flex-col">
+        <div className="mx-auto mt-2.5 h-5 w-24 flex-none rounded-full bg-ink" />
+        <div className="flex flex-1 flex-col px-4 pb-3 pt-3">{children}</div>
+      </div>
     </div>
   );
 }
@@ -60,7 +66,7 @@ const KID_QUESTS: { icon: QuestIconId; title: string; stars: number; done?: bool
 
 function TabBar({ active, tabs }: { active: number; tabs: ((p: { size: number; active?: boolean }) => ReactNode)[] }) {
   return (
-    <div className="mt-3 flex justify-around rounded-2xl border-2 border-ink bg-surface px-2 py-1.5">
+    <div className="mt-auto flex justify-around rounded-2xl border-2 border-ink bg-surface px-2 py-1.5">
       {tabs.map((Tab, i) => (
         <span key={i} className={cx('flex h-9 w-9 items-center justify-center rounded-xl', i === active && 'bg-brand-light')}>
           <Tab size={24} active={i === active} />
@@ -130,6 +136,7 @@ const INBOX: { avatar: AvatarId; who: string; text: string; quest?: QuestIconId;
   { avatar: 'panda', who: 'Leo', text: 'finished Feed the fish', quest: 'fish', cta: 'Approve' },
   { avatar: 'fox', who: 'Maya', text: 'wants Movie night', reward: 'movie', cta: 'Hand over' },
   { avatar: 'panda', who: 'Leo', text: 'finished Tidy your toys', quest: 'toys', cta: 'Approve' },
+  { avatar: 'fox', who: 'Maya', text: 'finished Walk the dog', quest: 'dog', cta: 'Approve' },
 ];
 
 export function ParentPhone({ className }: { className?: string }) {
@@ -137,7 +144,7 @@ export function ParentPhone({ className }: { className?: string }) {
     <PhoneFrame className={className} label="The Kid Kapital grown-up inbox: approve finished quests and hand over rewards">
       <div className="flex items-center justify-between">
         <div className="font-display text-lg font-bold text-ink">Inbox</div>
-        <span className="rounded-full border-2 border-ink bg-coin px-2 text-xs font-extrabold text-ink">3 new</span>
+        <span className="rounded-full border-2 border-ink bg-coin px-2 text-xs font-extrabold text-ink">{INBOX.length} new</span>
       </div>
       <ul className="mt-2 flex flex-col gap-1.5">
         {INBOX.map((row, i) => (
