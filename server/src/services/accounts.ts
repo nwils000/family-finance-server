@@ -10,7 +10,7 @@ import { CoParentInvite } from '../models-account.js';
 import type { kidLoginBody, loginBody, signupBody, joinBody } from '../schemas.js';
 import { appLink, newToken, sha256 } from '../tokens.js';
 import { familyOf, type Actor } from './access.js';
-import { assertEmailVerified, sendVerificationLink } from './email-verification.js';
+import { assertEmailVerified, sendVerificationLink, startsVerified } from './email-verification.js';
 
 const PASSWORD_ROUNDS = 12;
 const PIN_ROUNDS = 10;
@@ -81,7 +81,7 @@ const createParent = async (familyId: unknown, body: NewParent, avatar: AvatarId
     email: body.email,
     avatar,
     passwordHash: body.password ? await hashPassword(body.password) : undefined,
-    emailVerifiedAt: body.emailVerified ? new Date() : null,
+    emailVerifiedAt: startsVerified(body.emailVerified) ? new Date() : null,
     legalAccepted: { ...LEGAL_VERSIONS, at: new Date() },
   });
   if (!user.emailVerifiedAt) sendVerificationLink(user);

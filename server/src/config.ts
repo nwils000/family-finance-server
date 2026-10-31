@@ -36,7 +36,12 @@ if (isHosted && clientOrigins.includes('*')) throw new Error(`CLIENT_ORIGINS may
 // Grown-ups must confirm their email before adding a kid (COPPA), and password resets and
 // invites are emailed. A hosted server that cannot send mail would sign people up into a
 // dead end, so it refuses to start instead.
-if (isHosted && !optional('SMTP_URL')) throw new Error(`SMTP_URL is required in ${appEnv}: sign-up, password reset and invites send email.`);
+// The one exception is a STAGING preview with PREVIEW_WITHOUT_EMAIL=true (Mentis
+// AUTO_VERIFY_EMAIL): new grown-ups count as verified and no mail is sent, so a test
+// deploy works before a mail domain exists. Production can never turn it on.
+if (process.env.PREVIEW_WITHOUT_EMAIL === 'true' && appEnv !== 'staging') throw new Error(`PREVIEW_WITHOUT_EMAIL is only allowed in staging, not ${appEnv}`);
+const previewWithoutEmail = appEnv === 'staging' && process.env.PREVIEW_WITHOUT_EMAIL === 'true';
+if (isHosted && !previewWithoutEmail && !optional('SMTP_URL')) throw new Error(`SMTP_URL is required in ${appEnv}: sign-up, password reset and invites send email.`);
 
 export const config = {
   mongoUrl: process.env.MONGO_URL ?? 'mongodb://127.0.0.1:27017/kid-kapital',
@@ -88,6 +93,12 @@ export const config = {
     /** Server-side REST key (sk_...), used only to re-sync a family after a native purchase. */
     secretApiKey: optional('REVENUECAT_SECRET_API_KEY'),
   },
+  /** See the SMTP check above: a staging preview where grown-ups start verified and no mail goes out. */
+  previewWithoutEmail,
+  /** Running as a Vercel function: no long-lived process for interval jobs, a smaller pool. */
+  serverless: !!process.env.VERCEL,
+  /** Vercel Cron sends it as a bearer token to the scheduled-job door (app.ts). Unset: the door is not mounted. */
+  cronSecret: optional('CRON_SECRET'),
   logRequests: optional('LOG_REQUESTS') !== 'false' && appEnv !== 'test',
   /** Built web app to serve from this origin (the production container sets it). Unset in dev: Vite serves it. */
   serveClientDir: optional('SERVE_CLIENT_DIR'),

@@ -7,6 +7,7 @@
 // (assertEmailVerified): adding a kid and inviting another grown-up, because both
 // bring new people's data in, and COPPA wants the parent's verified contact first.
 import type { AuthedUser } from '../auth.js';
+import { config } from '../config.js';
 import { HttpError } from '../http.js';
 import { User } from '../models.js';
 import { EmailVerificationToken } from '../models-account.js';
@@ -45,6 +46,12 @@ export const sendVerificationLink = (user: { _id: unknown; email?: string | null
     );
   });
 };
+
+/**
+ * Whether a new grown-up account starts verified: Google or Apple verified the email,
+ * or this is a staging preview without email (config.previewWithoutEmail).
+ */
+export const startsVerified = (providerVerified: boolean | undefined) => !!providerVerified || config.previewWithoutEmail;
 
 const INVALID = 'That link has expired or was already used. Sign in and ask for a new one.';
 

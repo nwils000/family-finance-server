@@ -224,6 +224,19 @@ export const requireLocalDev = (req: Request, res: Response, next: NextFunction)
   next();
 };
 
+/* ---------- Scheduled jobs ---------- */
+
+/**
+ * The door Vercel Cron knocks on (it sends `Authorization: Bearer $CRON_SECRET`).
+ * Compared in constant time; without the secret configured the door is not mounted at all.
+ */
+export const requireCron = (req: Request, res: Response, next: NextFunction) => {
+  const expected = Buffer.from(`Bearer ${config.cronSecret ?? ''}`);
+  const given = Buffer.from(req.get('Authorization') ?? '');
+  if (!config.cronSecret || given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) return res.status(404).json({ error: 'Not found' });
+  next();
+};
+
 /* ---------- Rate limits ---------- */
 
 /**

@@ -134,6 +134,8 @@ A fix that cannot name its guard is not done.
 | Re-checking a grown-up's password before a big step | `services/account-security.ts` `confirmPassword` | comparing a password in a route or another service |
 | Agreeing to the Terms and Privacy Policy | `@kk/shared` `LEGAL_VERSIONS`; enforced and recorded in `accounts.ts` `createParent` | a grown-up account created anywhere else |
 | The legal documents' text | `client/src/pages/legal.tsx` | a second copy (the marketing site links to the app's pages) |
+| Connecting to MongoDB and building indexes (server and Vercel function) | `server/src/db.ts` `connectDb()` | `mongoose.connect` anywhere else |
+| Hosting on Vercel (build output, routes, cron) | `scripts/vercel-build.mjs` + `server/src/vercel.ts`; the cron door is `security.ts` `requireCron` | a second build config or an unguarded job route |
 | Serving the built web app (production) and its page headers | `server/src/web-app.ts` + `security.ts` `webAppHeaders` | static serving or a page CSP anywhere else |
 
 ---
@@ -346,6 +348,13 @@ Demo logins after `npm run seed`: grown-up `demo@kidkapital.app` / `password123`
 kids use family code `DEMO42`, Maya PIN `1234`, Leo PIN `5678`.
 
 Native: `npm run cap:ios -w client` / `npm run cap:android -w client`.
+
+## PREVIEW WITHOUT EMAIL
+
+A hosted server needs `SMTP_URL`, except a `NODE_ENV=staging` deploy with
+`PREVIEW_WITHOUT_EMAIL=true` (Mentis `AUTO_VERIFY_EMAIL`): new grown-ups start verified
+(`email-verification.ts` `startsVerified`) and no mail is sent, so password reset and
+invite emails do not arrive. Production refuses to boot with it (`hosting.test.ts`).
 
 ## PRIVACY AND KIDS' DATA
 

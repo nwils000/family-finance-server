@@ -27,6 +27,8 @@ export const sendMail = async (mail: Mail) => {
     return;
   }
   if (config.isHosted) {
+    // A staging preview without email skips mail on purpose (config.previewWithoutEmail).
+    if (config.previewWithoutEmail) return;
     console.error(JSON.stringify({ level: 'error', msg: 'mail not sent: SMTP_URL is not configured', subject: mail.subject }));
     return;
   }

@@ -136,6 +136,11 @@ describe('repo guards', () => {
     expect(offenders(/createHash\(\s*'sha256'/, 'server/src', ['server/src/tokens.ts', 'server/src/services/social.ts', 'server/src/services/billing.ts'])).toEqual([]);
   });
 
+  it('the app connects to MongoDB only through db.ts connectDb (the server and the Vercel function share it)', () => {
+    // Tests and the seed script open their own throwaway connections.
+    expect(offenders(/mongoose\.connect\(/, 'server/src', ['server/src/db.ts', 'server/src/__tests__/testDb.ts', 'server/src/scripts/seed.ts'])).toEqual([]);
+  });
+
   it('every rate limiter and request guard lives in security.ts', () => {
     expect(offenders(/\brateLimit\(|\bhelmet\(/, 'server/src', ['server/src/security.ts'])).toEqual([]);
   });

@@ -12,3 +12,5 @@ legacy-django/db.sqlite3
 __pycache__/
 *.pyc
 .playwright-mcp/
+.vercel/
+.env.local

@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { config } from './config.js';
 import { createApp } from './app.js';
+import { connectDb } from './db.js';
 import { startGrowthJob } from './services/growth.js';
 
 // A crash we did not see coming is logged as one line and the process exits, so the host
@@ -12,15 +13,7 @@ const fatal = (kind: string) => (err: unknown) => {
 process.on('uncaughtException', fatal('uncaughtException'));
 process.on('unhandledRejection', fatal('unhandledRejection'));
 
-await mongoose.connect(config.mongoUrl, {
-  // Fail fast at boot and per query instead of hanging when the database is unreachable.
-  serverSelectionTimeoutMS: 10_000,
-  socketTimeoutMS: 45_000,
-  maxPoolSize: 20,
-});
-// Money and once-only rules lean on unique indexes (quest runs, chests, lesson progress,
-// webhook ids). Build them before taking traffic, so a missing index fails the boot loudly.
-await Promise.all(Object.values(mongoose.models).map((m) => m.init()));
+await connectDb();
 
 const growth = startGrowthJob();
 const server = createApp().listen(config.port, () => console.log(`Kid Kapital API on http://localhost:${config.port}`));

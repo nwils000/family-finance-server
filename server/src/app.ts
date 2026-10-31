@@ -4,10 +4,11 @@ import { config } from './config.js';
 import { webApp } from './web-app.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import { errorHandler, notFound } from './http.js';
+import { errorHandler, handle, notFound } from './http.js';
+import { runGrowth } from './services/growth.js';
 import { routes } from './routes.js';
 import { accountRoutes, rawBodyRoutes } from './routes-account.js';
-import { corsOptions, csrfGuard, noStore, requestId, requestLog, requestShapeGuard, securityHeaders, writeLimiter } from './security.js';
+import { corsOptions, csrfGuard, noStore, requireCron, requestId, requestLog, requestShapeGuard, securityHeaders, writeLimiter } from './security.js';
 
 export const createApp = () => {
   const app = express();
@@ -36,6 +37,10 @@ export const createApp = () => {
     const ready = mongoose.connection.readyState === 1 && (await mongoose.connection.db?.admin().ping().then(() => true, () => false));
     res.status(ready ? 200 : 503).json({ ok: !!ready });
   });
+  // On Vercel there is no long-lived process for startGrowthJob, so Vercel Cron calls this
+  // instead. Cron can only send GET; runGrowth is idempotent (each week is claimed once),
+  // so a repeat or a stray call pays nothing twice. Only the cron secret opens it.
+  if (config.cronSecret) app.get('/api/cron/growth', requireCron, handle(async () => (await runGrowth(), { ok: true })));
   app.use('/api', accountRoutes);
   app.use('/api', routes);
 
