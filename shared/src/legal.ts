@@ -14,5 +14,12 @@ export const LEGAL_PATHS: Record<LegalDoc, string> = { terms: '/terms', privacy:
  */
 export const OPERATOR_NAME = 'Nathan Wilson';
 
+/**
+ * Retention limit (COPPA requires a published one, never indefinite): a family nobody has
+ * signed in to for this many months is deleted with all its data
+ * (server/src/services/personal-data.ts eraseInactiveFamilies). The Privacy Policy reads it.
+ */
+export const INACTIVE_FAMILY_MONTHS = 12;
+
 /** Contact for legal and privacy requests (access, deletion, consent questions). A real, read inbox. */
 export const PRIVACY_CONTACT = 'nwils000@gmail.com';

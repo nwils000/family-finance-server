@@ -96,6 +96,10 @@ so the refresh cookie is first-party and no cross-site CORS is needed. Native ap
 
 ## Before the first real family
 
+The written information security program COPPA requires is `docs/SECURITY_PROGRAM.md`; review it
+yearly and after any incident.
+
+
 - [ ] Privacy Policy and Terms (`client/src/pages/legal.tsx`) reviewed by a lawyer.
       Kid Kapital is used by children under 13: COPPA applies (verifiable parental
       consent, direct notice to parents, data retention and security program), plus

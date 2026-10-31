@@ -5,7 +5,7 @@ import { webApp } from './web-app.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { errorHandler, handle, notFound } from './http.js';
-import { runGrowth } from './services/growth.js';
+import { runScheduledJobs } from './services/jobs.js';
 import { routes } from './routes.js';
 import { accountRoutes, rawBodyRoutes } from './routes-account.js';
 import { botProtection, watchFailedSignIns } from './bot-protection.js';
@@ -40,10 +40,12 @@ export const createApp = () => {
     const ready = mongoose.connection.readyState === 1 && (await mongoose.connection.db?.admin().ping().then(() => true, () => false));
     res.status(ready ? 200 : 503).json({ ok: !!ready });
   });
-  // On Vercel there is no long-lived process for startGrowthJob, so Vercel Cron calls this
-  // instead. Cron can only send GET; runGrowth is idempotent (each week is claimed once),
-  // so a repeat or a stray call pays nothing twice. Only the cron secret opens it.
-  if (config.cronSecret) app.get('/api/cron/growth', requireCron, handle(async () => (await runGrowth(), { ok: true })));
+  // On Vercel there is no long-lived process for startScheduledJobs, so Vercel Cron calls this
+  // instead (the path keeps its old name: vercel-build.mjs and the firewall's cron bypass
+  // point at it). Cron can only send GET; every scheduled job is idempotent (each growth
+  // week is claimed once), so a repeat or a stray call does nothing twice. Only the cron
+  // secret opens it.
+  if (config.cronSecret) app.get('/api/cron/growth', requireCron, handle(async () => (await runScheduledJobs(), { ok: true })));
   app.use('/api', accountRoutes);
   app.use('/api', routes);
 

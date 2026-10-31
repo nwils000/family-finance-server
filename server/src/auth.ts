@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken';
 import type { Request, Response, NextFunction, CookieOptions } from 'express';
 import { config } from './config.js';
 import { HttpError } from './http.js';
-import { RefreshToken, User, type UserDoc } from './models.js';
+import { Family, RefreshToken, User, type UserDoc } from './models.js';
 import { RevokedJti, SessionCutoff, SpentRefreshToken } from './models-account.js';
 import { newToken, sha256 } from './tokens.js';
 
@@ -75,7 +75,19 @@ const sessionReply = (req: Request, res: Response, user: UserDoc, refreshToken: 
   };
 };
 
+/**
+ * Every sign-in and session renewal passes through issueSession, so this is where a family
+ * counts as in use (the retention limit, personal-data.ts eraseInactiveFamilies). At most one
+ * write a day per family, and it never fails a sign-in.
+ */
+const DAY_MS = 86_400_000;
+const noteFamilyActive = (familyId: UserDoc['familyId']) =>
+  Family.updateOne({ _id: familyId, lastActiveAt: { $lt: new Date(Date.now() - DAY_MS) } }, { $set: { lastActiveAt: new Date() } }).catch((err) =>
+    console.warn(JSON.stringify({ level: 'warn', msg: 'could not note family activity', err: String(err) })),
+  );
+
 export const issueSession = async (req: Request, res: Response, user: UserDoc) => {
+  void noteFamilyActive(user.familyId);
   const refreshToken = newToken(48);
   await RefreshToken.create({
     userId: user._id,

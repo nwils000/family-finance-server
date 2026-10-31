@@ -3,6 +3,7 @@
 // delete their child's data, so nothing a kid or family owns may be left behind.
 // guards.test.ts checks that every model holding kidId / familyId / userId is listed here.
 import type { Types } from 'mongoose';
+import { INACTIVE_FAMILY_MONTHS } from '@kk/shared';
 import { HttpError } from '../http.js';
 import { CoParentInvite, EmailVerificationToken, PasswordResetToken, SessionCutoff, SocialIdentity, SpentRefreshToken } from '../models-account.js';
 import {
@@ -72,6 +73,31 @@ export const eraseFamily = async (familyId: Types.ObjectId) => {
   for (const m of members.filter((u) => u.role === 'parent')) await eraseUser(m._id);
   await Promise.all([...FAMILY_DATA.map((M) => (M as typeof Reward).deleteMany({ familyId })), forgetEntitlement(familyId)]);
   await Family.deleteOne({ _id: familyId });
+};
+
+/**
+ * The retention limit (COPPA: published, never indefinite; the number is @kk/shared
+ * INACTIVE_FAMILY_MONTHS and the Privacy Policy reads it). A family nobody signed in to for
+ * that long is erased whole. A family that predates lastActiveAt counts from its creation.
+ * One family failing (say, a paid plan that still renews) never stops the rest.
+ */
+export const eraseInactiveFamilies = async (now = new Date()) => {
+  const cutoff = new Date(now);
+  cutoff.setMonth(cutoff.getMonth() - INACTIVE_FAMILY_MONTHS);
+  const stale = await Family.find({
+    $or: [{ lastActiveAt: { $lt: cutoff } }, { lastActiveAt: { $exists: false }, createdAt: { $lt: cutoff } }],
+  }).select('_id');
+  let erased = 0;
+  for (const f of stale) {
+    try {
+      await eraseFamily(f._id);
+      erased++;
+    } catch (err) {
+      console.warn(JSON.stringify({ level: 'warn', msg: 'inactive family not erased', familyId: String(f._id), err: String(err) }));
+    }
+  }
+  if (erased) console.info(JSON.stringify({ level: 'info', msg: 'erased inactive families', erased }));
+  return { erased };
 };
 
 /** A grown-up deletes their own account. The last grown-up takes the family with them. */

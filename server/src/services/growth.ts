@@ -41,9 +41,3 @@ export const runGrowth = async (now = new Date(), random = Math.random) => {
     }
   }
 };
-
-export const startGrowthJob = () => {
-  const tick = () => runGrowth().catch((err) => console.error('growth job failed', err));
-  tick();
-  return setInterval(tick, 60 * 60_000);
-};

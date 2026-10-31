@@ -8,13 +8,13 @@
 // Facts this relies on: PAID_PLANS is off (shared/src/plans.ts); the preview sends no
 // email (config.ts PREVIEW_WITHOUT_EMAIL); the free database tier keeps no backups
 // (docs/DEPLOY.md); IP bans expire within 24 hours and offenses after 7 days
-// (services/abuse.ts); Google and Apple sign-in are not configured, so they are not mentioned.
+// (services/abuse.ts); idle families are erased after INACTIVE_FAMILY_MONTHS (personal-data.ts); Google and Apple sign-in are not configured, so they are not mentioned.
 //
 // NOT REVIEWED BY A LAWYER. Kid Kapital is used by children under 13, so COPPA applies.
 // Have these reviewed before the app is promoted to real families.
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LEGAL_PATHS, LEGAL_VERSIONS, OPERATOR_NAME, PRIVACY_CONTACT, type LegalDoc } from '@kk/shared';
+import { INACTIVE_FAMILY_MONTHS, LEGAL_PATHS, LEGAL_VERSIONS, OPERATOR_NAME, PRIVACY_CONTACT, type LegalDoc } from '@kk/shared';
 import { IconBack, Penny } from '@/art';
 import { Button, Card, Heading, Text } from '@/components/ui';
 
@@ -73,7 +73,7 @@ const PRIVACY: Section[] = [
   {
     heading: 'Who else handles data',
     body: [
-      'Two companies run the computers Kid Kapital lives on, and process data only to provide that service to us: Vercel (hosting) and MongoDB Atlas (database, run on Amazon Web Services). Data is stored in the United States.',
+      'Two companies run the computers Kid Kapital lives on, and process data only to provide that service to us, under their written data protection and security terms: Vercel (hosting) and MongoDB Atlas (database, run on Amazon Web Services). Data is stored in the United States.',
       'We do not send email yet, so no email company receives your address. There are no payments, so no payment company is involved.',
       'We disclose information only if the law requires it, or to protect the safety of a person or the service.',
     ],
@@ -87,7 +87,8 @@ const PRIVACY: Section[] = [
   {
     heading: 'How long we keep it',
     body: [
-      'For as long as the family uses Kid Kapital. When you delete a kid, your account or the family, that data is deleted from the service right away. We do not keep backup copies right now, so deleted data cannot be recovered, by you or by us.',
+      "We keep a family's information only while the family uses Kid Kapital, because the app needs it to show each person their quests, coins and lessons. We never keep it indefinitely:",
+      `When you delete a kid, your account or the family, that data is deleted right away. If nobody in a family signs in for ${INACTIVE_FAMILY_MONTHS} months, we delete the whole family and everything in it automatically. We do not keep backup copies right now, so deleted data cannot be recovered, by you or by us.`,
       'To block attacks, we may record an internet address that sends suspicious traffic. These records delete themselves within 7 days. Our host keeps short-lived technical logs of requests, which contain no names, emails or family content.',
     ],
   },

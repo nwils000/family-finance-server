@@ -106,6 +106,7 @@ A fix that cannot name its guard is not done.
 | Formatting money | `@kk/shared` `formatCents()` via `<Money>` | `toFixed(2)` / `/ 100` in UI |
 | Allowed avatars, quest icons, reward icons | `@kk/shared` lists | inline string arrays |
 | Weekly growth | `server/src/services/growth.ts` `runGrowth()` | growth math anywhere else |
+| Scheduled work (what runs, and when) | `server/src/services/jobs.ts` `runScheduledJobs()` | a `setInterval` or a cron route for one job |
 | Streaks and badges | `server/src/services/stats.ts` | recomputing on the client |
 | Earning XP (and the level-up bonus and level prizes it triggers) | `server/src/services/game.ts` `awardXp()` | `$inc: { xp }` anywhere else |
 | Unlocking milestone prizes (helper points or level) | `game.ts` `unlockMilestones()` | creating a `MilestoneClaim` elsewhere |
@@ -176,8 +177,16 @@ workers can never pay twice. Copy this shape for any new state transition.
 
 ## TIME-BASED WORK RUNS IN A JOB, NEVER IN A READ
 
-Nothing that moves money runs inside a GET handler. Growth runs from
-`startGrowthJob()` hourly and is idempotent.
+Nothing that moves money runs inside a GET handler. Scheduled work has one owner,
+`services/jobs.ts` `runScheduledJobs()` (weekly growth and the retention limit), ticked hourly by
+a long-running server and daily by Vercel Cron; every job in it is idempotent.
+
+## RETENTION (COPPA: published and never indefinite)
+
+A family nobody has signed in to for `INACTIVE_FAMILY_MONTHS` (`@kk/shared` legal.ts, 12) is
+erased whole by `personal-data.ts` `eraseInactiveFamilies`. Activity is noted in `auth.ts`
+`issueSession` (every sign-in and renewal), at most daily. The Privacy Policy reads the number,
+so changing it changes the policy; bump `LEGAL_VERSIONS` when you do.
 
 ---
 

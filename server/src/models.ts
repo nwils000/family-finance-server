@@ -21,6 +21,8 @@ const familySchema = new Schema(
     levelUpBonusCents: { type: Number, default: 0, min: 0 },
     // 'open': kids see the whole library for their age; 'assigned': only lessons a grown-up picked.
     learnMode: { type: String, enum: ['open', 'assigned'], default: 'open' },
+    /** Last time anyone in the family signed in or renewed a session (auth.ts issueSession), at most daily. Drives the retention limit. */
+    lastActiveAt: { type: Date, default: () => new Date(), index: true },
     features: {
       type: new Schema(Object.fromEntries(FEATURES.map((f) => [f, { type: Boolean, default: DEFAULT_FEATURES[f] }])), { _id: false }),
       default: () => ({ ...DEFAULT_FEATURES }),

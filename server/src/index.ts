@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { config } from './config.js';
 import { createApp } from './app.js';
 import { connectDb } from './db.js';
-import { startGrowthJob } from './services/growth.js';
+import { startScheduledJobs } from './services/jobs.js';
 
 // A crash we did not see coming is logged as one line and the process exits, so the host
 // restarts a clean process instead of one in an unknown state.
@@ -15,7 +15,7 @@ process.on('unhandledRejection', fatal('unhandledRejection'));
 
 await connectDb();
 
-const growth = startGrowthJob();
+const jobs = startScheduledJobs();
 const server = createApp().listen(config.port, () => console.log(`Kid Kapital API on http://localhost:${config.port}`));
 
 // Deploys send SIGTERM: stop taking requests, let in-flight ones finish, then close the database.
@@ -24,7 +24,7 @@ const shutdown = (signal: string) => {
   if (stopping) return;
   stopping = true;
   console.log(JSON.stringify({ level: 'info', msg: 'shutting down', signal }));
-  clearInterval(growth);
+  clearInterval(jobs);
   const force = setTimeout(() => process.exit(1), 15_000);
   force.unref();
   server.close(async () => {

@@ -1,12 +1,12 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import mongoose, { Types } from 'mongoose';
 import request from 'supertest';
-import { LEGAL_VERSIONS } from '@kk/shared';
+import { INACTIVE_FAMILY_MONTHS, LEGAL_VERSIONS } from '@kk/shared';
 import { createApp } from '../app.js';
 import { useTestDb } from './testDb.js';
 import { Account, Family, LessonProgress, Purchase, Quest, QuestRun, RefreshToken, TeamGoal, Txn, User } from '../models.js';
 import { Entitlement } from '../models-account.js';
-import { eraseFamily, eraseKid, eraseParent, exportFamily, FAMILY_DATA, KID_DATA, NOT_PERSONAL, USER_DATA } from '../services/personal-data.js';
+import { eraseFamily, eraseInactiveFamilies, eraseKid, eraseParent, exportFamily, FAMILY_DATA, KID_DATA, NOT_PERSONAL, USER_DATA } from '../services/personal-data.js';
 import '../models-account.js';
 
 useTestDb('personal-data');
@@ -117,6 +117,37 @@ describe('personal data', () => {
     expect(res.status).toBe(200);
     expect(res.body.members[0].email).toBe('exp@x.com');
     expect(JSON.stringify(res.body)).not.toMatch(/Hash/);
+  });
+
+  it('retention: a family nobody signed in to for the published limit is erased whole; an active one stays', async () => {
+    const monthsAgo = (m: number) => { const d = new Date(); d.setMonth(d.getMonth() - m); return d; };
+    const stale = await seed();
+    const fresh = await seed();
+    const legacy = await seed();
+    await Family.updateOne({ _id: stale.familyId }, { lastActiveAt: monthsAgo(INACTIVE_FAMILY_MONTHS + 1) });
+    await Family.updateOne({ _id: fresh.familyId }, { lastActiveAt: monthsAgo(INACTIVE_FAMILY_MONTHS - 1) });
+    // A family from before lastActiveAt existed counts from when it was created.
+    await Family.collection.updateOne({ _id: legacy.familyId }, { $unset: { lastActiveAt: '' }, $set: { createdAt: monthsAgo(INACTIVE_FAMILY_MONTHS + 2) } });
+    await eraseInactiveFamilies();
+    expect(await Family.exists({ _id: stale.familyId })).toBeNull();
+    expect(await User.countDocuments({ familyId: stale.familyId })).toBe(0);
+    expect(await kidRows(stale.a._id)).toBe(0);
+    expect(await Family.exists({ _id: legacy.familyId })).toBeNull();
+    expect(await Family.exists({ _id: fresh.familyId })).not.toBeNull();
+    expect(await kidRows(fresh.a._id)).toBeGreaterThan(0);
+  });
+
+  it('signing in counts as activity, so an active family is never erased', async () => {
+    const app = createApp();
+    const signup = await request(app).post('/api/auth/signup').send({ name: 'Pat', email: 'active@x.com', password: 'Password123!', familyName: 'Act', acceptLegal: true });
+    const familyId = (await User.findOne({ email: 'active@x.com' }))!.familyId;
+    await Family.updateOne({ _id: familyId }, { lastActiveAt: new Date(2000, 0, 1) });
+    expect(signup.status).toBe(200);
+    expect((await request(app).post('/api/auth/login').send({ email: 'active@x.com', password: 'Password123!' })).status).toBe(200);
+    await new Promise((r) => setTimeout(r, 50)); // the activity note is not awaited by sign-in
+    expect((await Family.findById(familyId))!.lastActiveAt!.getFullYear()).toBe(new Date().getFullYear());
+    await eraseInactiveFamilies();
+    expect(await Family.exists({ _id: familyId })).not.toBeNull();
   });
 
   it('no grown-up account exists without agreeing to the Terms and Privacy Policy, and the versions are kept', async () => {

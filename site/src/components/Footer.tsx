@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { OPERATOR_NAME } from '@kk/shared';
 import { APP_LINKS, CONTACT_EMAIL, SECTIONS, SITE_NAME } from '@/lib/site';
 import { Logo } from './Logo';
 
@@ -60,7 +61,7 @@ export function Footer() {
       </div>
       <div className="mx-auto mt-12 flex max-w-6xl flex-col items-center justify-between gap-3 border-t border-bg/15 pt-6 text-sm text-bg/60 sm:flex-row">
         <p>
-          &copy; {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
+          &copy; {new Date().getFullYear()} {OPERATOR_NAME}. {SITE_NAME} is a free early preview. All rights reserved.
         </p>
         <p>No ads for kids. No trackers on this site.</p>
       </div>
