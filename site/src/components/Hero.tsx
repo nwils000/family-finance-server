@@ -1,14 +1,15 @@
 import { Cloud, Coin, HillsBand, PiggyBank, Rocket, Sparkle, Sun } from '@art';
+import { FREE_LINE } from '@/lib/plans';
 import { APP_LINKS } from '@/lib/site';
 import { Enter, Floating } from './Reveal';
 import { KidPhone, ParentPhone } from './PhoneMock';
 import { ButtonLink, Tick } from './ui';
 
 /** One promise, one picture, one button (the Mentis hero rule). */
-const PROOF = ['Free for up to 2 kids', 'No ads for kids, ever', 'Grown-ups control every setting'];
+const PROOF = [FREE_LINE, 'No ads for kids, ever', 'Grown-ups control every setting'];
 
-export function Hero({ freeKids }: { freeKids: number }) {
-  const proof = [PROOF[0].replace('2', String(freeKids)), PROOF[1], PROOF[2]];
+export function Hero() {
+  const proof = PROOF;
 
   return (
     <section className="relative overflow-hidden pb-40 pt-24 sm:pb-48 sm:pt-32 lg:pt-36">

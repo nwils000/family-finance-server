@@ -11,7 +11,7 @@ import crypto from 'crypto';
 import Stripe from 'stripe';
 import { Types } from 'mongoose';
 import {
-  PLAN_LIMITS, PLAN_LIMIT_CODE, PLAN_NAMES, PLUS_ENTITLEMENT, canAddMore, planAllows, planLimit,
+  PAID_PLANS, PLAN_LIMITS, PLAN_LIMIT_CODE, PLAN_NAMES, PLUS_ENTITLEMENT, canAddMore, planAllows, planLimit,
   type Plan, type PlanFeature, type PlanLimitKey,
 } from '@kk/shared';
 import { config } from '../config.js';
@@ -138,6 +138,8 @@ const stripeCustomerFor = async (actor: Actor, s: Stripe) => {
 };
 
 export const createCheckout = async (actor: Actor) => {
+  // Free for everyone (PAID_PLANS): no checkout can start, even if Stripe keys get set.
+  if (!PAID_PLANS) throw new HttpError(501, 'Kid Kapital is free for everyone right now', 'NOT_CONFIGURED');
   const s = stripe();
   if (!s || !config.stripe.pricePlus) throw stripeOff();
   if ((await getFamilyPlan(familyOf(actor))) === 'plus') throw new HttpError(409, 'Your family already has Kapital Plus', 'ALREADY_PLUS');

@@ -1,13 +1,20 @@
 // The Privacy Policy and Terms of Use. Public pages (no sign-in), linked from sign-up,
 // Settings and the marketing site. The version a parent agrees to lives in @kk/shared
-// LEGAL_VERSIONS; bump it there when a change here needs fresh agreement.
+// LEGAL_VERSIONS; bump it there when a change here needs fresh agreement. The operator
+// and contact come from @kk/shared OPERATOR_NAME / PRIVACY_CONTACT, never typed here.
 //
-// DRAFT FOR LEGAL REVIEW: this describes what the app actually stores and does today,
-// but it has not been reviewed by a lawyer. Kid Kapital is used by children under 13,
-// so COPPA (and GDPR-K / the UK Children's Code for EU/UK families) apply.
+// Every sentence must describe what the app does TODAY. Before changing a fact here
+// (backups, email, payments, a new provider), change the code first, or the policy lies.
+// Facts this relies on: PAID_PLANS is off (shared/src/plans.ts); the preview sends no
+// email (config.ts PREVIEW_WITHOUT_EMAIL); the free database tier keeps no backups
+// (docs/DEPLOY.md); IP bans expire within 24 hours and offenses after 7 days
+// (services/abuse.ts); Google and Apple sign-in are not configured, so they are not mentioned.
+//
+// NOT REVIEWED BY A LAWYER. Kid Kapital is used by children under 13, so COPPA applies.
+// Have these reviewed before the app is promoted to real families.
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LEGAL_PATHS, LEGAL_VERSIONS, PRIVACY_CONTACT, type LegalDoc } from '@kk/shared';
+import { LEGAL_PATHS, LEGAL_VERSIONS, OPERATOR_NAME, PRIVACY_CONTACT, type LegalDoc } from '@kk/shared';
 import { IconBack, Penny } from '@/art';
 import { Button, Card, Heading, Text } from '@/components/ui';
 
@@ -20,100 +27,181 @@ const PRIVACY: Section[] = [
   {
     heading: 'The short version',
     body: [
-      'Kid Kapital helps families run chores, allowance and money lessons. A grown-up sets up the family and stays in charge of it. We collect only what the app needs to work, we never sell it, we never show ads, and we never use third-party analytics or tracking in the app.',
-      'A grown-up can see, download or delete the family\'s data at any time from Settings.',
+      'Kid Kapital helps families run chores, allowance and money lessons. A grown-up sets up the family and stays in charge of it. We collect only what the app needs to work. We never sell data, never show ads, and never use third-party analytics, advertising or tracking in the app or on our website.',
+      "A grown-up can see, download or delete the family's data at any time from Settings.",
+    ],
+  },
+  {
+    heading: 'Who we are',
+    body: [
+      `Kid Kapital is run by ${OPERATOR_NAME}, an individual, who is responsible for the information described here. You can reach us at ${PRIVACY_CONTACT} about anything in this policy, including a child's information.`,
+      'Kid Kapital is an early, free preview made for families in the United States.',
     ],
   },
   {
     heading: 'What we collect from grown-ups',
     body: [
-      'Your name, your email address, and a password (stored only as a one-way hash). If you sign in with Google or Apple, we receive your name, email and an account id from them, and nothing else.',
-      'The family name and the settings you choose (quests, rewards, coin values, lesson picks and so on).',
+      'Your name, your email address, and a password (stored only as a one-way hash, never readable, even by us).',
+      'The family name and the settings you choose: quests, rewards, coin values, lesson picks and so on.',
+      'The date you agreed to these terms and which version you agreed to.',
     ],
   },
   {
     heading: 'What we collect about kids',
     body: [
-      'A grown-up creates each kid\'s profile. A kid never signs up on their own and never gives us an email address, phone number, photo or location.',
-      'For each kid we store: a first name or nickname, a picture they pick from our drawn avatars, an optional birth year (only to choose lessons for their age), and a 4-digit PIN (stored only as a one-way hash).',
-      'As a kid uses the app we store their activity in the family: quests finished, coins earned, saved and spent, rewards picked, lessons and quiz results, XP, badges and hats.',
+      "A grown-up creates each kid's profile; a kid can never sign up on their own. We ask the grown-up for a first name or nickname only. Please do not enter a kid's full name.",
+      'For each kid we store: that first name or nickname, a picture they pick from our own drawings (never a photo), an optional birth year (only to choose lessons for their age), and a 4-digit PIN (stored only as a one-way hash).',
+      "As a kid uses the app, we store their activity inside the family: quests finished, coins earned, saved and spent, rewards picked, lessons and quiz answers, XP, badges and hats. Grown-ups in the family can see all of it.",
+      'We never ask a kid for, and the app has no place to enter, an email address, phone number, home address, photo, voice, location or any way to contact them. Kids cannot message anyone, and nothing a kid does is visible outside their own family.',
     ],
   },
   {
-    heading: 'How we use it',
+    heading: "Parents' consent and rights",
     body: [
-      'Only to run Kid Kapital for your family: to sign you in, show each person their quests, coins and lessons, and send grown-ups the emails the app needs (like a sign-in link or password reset).',
-      'We do not use anyone\'s data for advertising, do not build profiles for marketing, and do not sell or rent data to anyone.',
+      "When a grown-up creates a family, they confirm they are 18 or older and the kids' parent or legal guardian, and they agree to this policy for those kids. Each grown-up account records which version they agreed to.",
+      "A parent can, at any time: review everything stored about their kid (Settings, Your data), download it, change it, remove the kid (which deletes that kid's profile and history right away), or stop all further collection by removing the kid. A parent can also write to us to do any of this; we will answer within 30 days.",
+      "A parent can let their kid use the app without agreeing that we share the kid's information with anyone, because we do not share it (see Who else handles data).",
+    ],
+  },
+  {
+    heading: 'How we use information',
+    body: [
+      'Only to run Kid Kapital for your family: to sign people in, show each person their quests, coins and lessons, keep the service secure, and fix problems.',
+      "We do not use anyone's information for advertising, do not build profiles for marketing, do not use it to train AI models, and do not sell, rent or trade it.",
     ],
   },
   {
     heading: 'Who else handles data',
     body: [
-      'Companies that run parts of the service for us, under contract and only for that purpose: our hosting and database providers, and our email provider for grown-up emails. If a grown-up buys Kapital Plus, the payment is handled by Stripe (on the web) and we keep only the subscription status, never card details.',
-      'We share data with authorities only when the law requires it.',
+      'Two companies run the computers Kid Kapital lives on, and process data only to provide that service to us: Vercel (hosting) and MongoDB Atlas (database, run on Amazon Web Services). Data is stored in the United States.',
+      'We do not send email yet, so no email company receives your address. There are no payments, so no payment company is involved.',
+      'We disclose information only if the law requires it, or to protect the safety of a person or the service.',
     ],
   },
   {
-    heading: 'Grown-ups are in control',
+    heading: 'Cookies',
     body: [
-      'From Settings, a grown-up can review everything stored about the family, download it, remove a kid (which deletes that kid\'s profile and history), or delete their own account. When the last grown-up deletes their account, the whole family and all its data are deleted.',
-      'A grown-up can also stop any further collection about a kid at any time by removing that kid. To ask us anything about a kid\'s data, write to the address below.',
+      'The app uses one cookie of its own, which keeps you signed in, and nothing else. Our website sets no cookies of its own. When our host checks that a visitor is a person and not a bot, it may set a short-lived security cookie for that check. There are no tracking, advertising or analytics cookies anywhere.',
     ],
   },
   {
     heading: 'How long we keep it',
     body: [
-      'As long as the family uses Kid Kapital. Deleted data is removed from the live service right away and from backups when they roll over, within 30 days.',
+      'For as long as the family uses Kid Kapital. When you delete a kid, your account or the family, that data is deleted from the service right away. We do not keep backup copies right now, so deleted data cannot be recovered, by you or by us.',
+      'To block attacks, we may record an internet address that sends suspicious traffic. These records delete themselves within 7 days. Our host keeps short-lived technical logs of requests, which contain no names, emails or family content.',
     ],
   },
   {
     heading: 'Keeping it safe',
     body: [
-      'Passwords and PINs are hashed, connections are encrypted, sign-in sessions are short-lived and can be ended from Settings, repeated wrong PINs lock the profile for a while, and every request is checked so one family can never see another family\'s data.',
+      "Passwords and PINs are hashed, connections are encrypted, sign-in sessions are short-lived and can be ended from Settings, repeated wrong guesses lock sign-in for a while, and every request is checked so one family can never see another family's data.",
+      'No system is perfectly secure. If we learn of a breach that affects your information, we will tell affected grown-ups as the law requires.',
+    ],
+  },
+  {
+    heading: 'Children and grown-up accounts',
+    body: [
+      'Grown-up accounts are only for adults 18 or older. If we learn that someone under 18 created a grown-up account, we will delete it and its family.',
+    ],
+  },
+  {
+    heading: 'Changes to this policy',
+    body: [
+      'If we change this policy, we will update the date at the top. If a change affects how we handle kids\' information in a meaningful way, we will ask grown-ups to agree again before it applies to their family.',
     ],
   },
   {
     heading: 'Contact',
-    body: [`Questions or requests about privacy, including anything about a child's data: ${PRIVACY_CONTACT}.`],
+    body: [`${OPERATOR_NAME}, ${PRIVACY_CONTACT}. Questions, requests or concerns about privacy, including anything about a child's information, are welcome.`],
   },
 ];
 
 const TERMS: Section[] = [
   {
+    heading: 'Who we are and what this is',
+    body: [
+      `Kid Kapital is run by ${OPERATOR_NAME}, an individual ("we", "us"). These terms are an agreement between us and the grown-up who creates or joins a family ("you"). By creating an account you agree to them.`,
+      'Kid Kapital is an early, free preview. Features may change, break or disappear, and the service may be paused or shut down at any time, with or without notice. Please do not rely on it as the only record of anything that matters to you.',
+    ],
+  },
+  {
     heading: 'Who can use Kid Kapital',
     body: [
-      'An adult creates the family account and is responsible for it and for how the kids in it use the app. Kids use Kid Kapital only inside a family a grown-up set up.',
+      "You must be 18 or older, and the parent or legal guardian of every kid you add (or have that parent's permission). Kid Kapital is made for families in the United States.",
+      'Kids use Kid Kapital only inside a family a grown-up set up. You are responsible for your family account, for the kid profiles you create, and for supervising how the kids in your family use the app.',
+    ],
+  },
+  {
+    heading: 'It is free',
+    body: [
+      'Kid Kapital is free. There are no paid plans, no purchases and no ads. If we ever offer something paid, we will tell you first, and nothing will be charged unless you choose to buy it.',
     ],
   },
   {
     heading: 'Coins are pretend money',
     body: [
-      'Coins, prices, interest, the piggy bank and the rocket fund are a teaching game. They are not a bank account, they are not real money, and they cannot be cashed out by us. What a coin is worth in real life, and what rewards a kid gets, is up to the family.',
-      'Money lessons are for learning and are not financial advice.',
+      'Coins, prices, interest, the piggy bank, the rocket fund and everything else in the app are a teaching game. They are not real money, not a bank account, not a payment service and not an investment. We never hold, move or pay out real money, and coins cannot be cashed out.',
+      "Any real-world reward or allowance is a private arrangement inside your family. We are not part of it and are not responsible for it, even if the app helps you keep track.",
     ],
   },
   {
-    heading: 'Your account',
+    heading: 'Lessons are not advice',
     body: [
-      'Keep your password and the kids\' PINs private. Tell us if you think someone else got into your family. Do not try to get into another family, break the service, or use it for anything unlawful.',
+      'Money school lessons and quizzes are general education for kids. They are not financial, investment, legal or tax advice, and they may be simplified or contain mistakes. Talk to a qualified professional before making real financial decisions.',
     ],
   },
   {
-    heading: 'Kapital Plus',
+    heading: 'Using it fairly',
     body: [
-      'Kapital Plus is an optional paid plan for the family. The price and billing period are shown before you buy. It renews until you cancel; you can cancel any time and keep Plus until the end of the period you paid for.',
+      "Keep your password and the kids' PINs private, and tell us if you think someone else got into your family.",
+      'Do not try to get into another family, break, overload or probe the service, copy it, use bots or scrapers on it, or use it for anything unlawful or harmful. Do not enter anything into the app that you do not have the right to share.',
     ],
   },
   {
-    heading: 'Changes and ending',
+    heading: 'Your information and ours',
     body: [
-      'We may update the app and these terms; if a change matters, we will ask you to agree again. You can delete your account at any time from Settings. We may suspend an account that breaks these terms.',
+      "Your family's information belongs to you. You let us store and process it only to run Kid Kapital for you, as the Privacy Policy describes.",
+      'The app, its art, lessons and code belong to us. You may use them only to run your family in Kid Kapital.',
     ],
   },
   {
-    heading: 'The fine print',
+    heading: 'Ending',
     body: [
-      'Kid Kapital is provided as is. To the extent the law allows, we are not liable for indirect losses. Nothing here limits rights you have under consumer law where you live.',
+      'You can delete your account or your family at any time from Settings. We may suspend or delete an account that breaks these terms or puts other people or the service at risk, and we may end the service for everyone.',
+    ],
+  },
+  {
+    heading: 'No warranties',
+    body: [
+      'Kid Kapital is provided "as is" and "as available", without any warranty of any kind, express or implied, including any warranty of merchantability, fitness for a particular purpose, accuracy, availability or non-infringement. We do not promise that it will be error-free, secure, uninterrupted or that data will never be lost.',
+    ],
+  },
+  {
+    heading: 'Limits on liability',
+    body: [
+      'To the fullest extent the law allows, we will not be liable for any indirect, incidental, special, consequential or punitive damages, or for any lost data, lost profits or loss of goodwill, arising from or related to Kid Kapital, even if we were told they were possible.',
+      'To the fullest extent the law allows, our total liability for any claim arising from or related to Kid Kapital is limited to fifty US dollars (USD 50).',
+      'Some places do not allow some of these limits. Nothing in these terms limits rights you have under consumer law that cannot be waived.',
+    ],
+  },
+  {
+    heading: 'Your responsibility',
+    body: [
+      "To the extent the law allows, you agree to cover any claims, losses and costs (including reasonable legal fees) that come from your breaking these terms, your misuse of Kid Kapital, or the information you or the kids in your family put into it.",
+    ],
+  },
+  {
+    heading: 'Changes to these terms',
+    body: [
+      'We may update these terms. We will change the date at the top, and if a change matters, we will ask you to agree again. If you do not agree, you can stop using Kid Kapital and delete your account.',
+    ],
+  },
+  {
+    heading: 'The rest',
+    body: [
+      'If you have a problem with Kid Kapital, please write to us first and we will try to sort it out within 30 days.',
+      'If any part of these terms cannot be enforced, the rest still applies. Our not enforcing a part is not a waiver of it. These terms and the Privacy Policy are the whole agreement between you and us about Kid Kapital. You may not transfer your account; we may transfer these terms to someone who takes over Kid Kapital.',
+      `Questions: ${OPERATOR_NAME}, ${PRIVACY_CONTACT}.`,
     ],
   },
 ];

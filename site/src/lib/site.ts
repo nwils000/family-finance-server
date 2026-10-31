@@ -38,6 +38,6 @@ export const SECTIONS = [
   { id: 'features', label: 'Features' },
   { id: 'school', label: 'Money school' },
   { id: 'parents', label: 'For grown-ups' },
-  { id: 'plans', label: 'Plans' },
+  { id: 'plans', label: 'Pricing' },
   { id: 'faq', label: 'FAQ' },
 ] as const;

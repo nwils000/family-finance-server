@@ -137,6 +137,8 @@ A fix that cannot name its guard is not done.
 | Re-checking a grown-up's password before a big step | `services/account-security.ts` `confirmPassword` | comparing a password in a route or another service |
 | Agreeing to the Terms and Privacy Policy | `@kk/shared` `LEGAL_VERSIONS`; enforced and recorded in `accounts.ts` `createParent` | a grown-up account created anywhere else |
 | The legal documents' text | `client/src/pages/legal.tsx` | a second copy (the marketing site links to the app's pages) |
+| Who runs Kid Kapital and how to reach them | `@kk/shared` `OPERATOR_NAME` / `PRIVACY_CONTACT` | a name or email typed into a page |
+| Whether anything is paid | `@kk/shared` `PAID_PLANS` | a price, plan card or upgrade button that ignores it |
 | Connecting to MongoDB and building indexes (server and Vercel function) | `server/src/db.ts` `connectDb()` | `mongoose.connect` anywhere else |
 | Hosting on Vercel (build output, routes, cron) | `scripts/vercel-build.mjs` + `server/src/vercel.ts`; the cron door is `security.ts` `requireCron` | a second build config or an unguarded job route |
 | Serving the built web app (production) and its page headers | `server/src/web-app.ts` + `security.ts` `webAppHeaders` | static serving or a page CSP anywhere else |
@@ -273,6 +275,13 @@ Nothing that moves money runs inside a GET handler. Growth runs from
 ---
 
 ## KAPITAL PLUS (subscriptions, one per FAMILY)
+
+**Right now Kid Kapital is FREE FOR EVERYONE:** `PAID_PLANS = false` in `shared/src/plans.ts`.
+While it is off, Free allows everything Plus does (no gate ever refuses), checkout answers 501,
+and the Settings plan card, the upsell sheet and the site's plan cards render nothing (they read
+the switch). Turning it on means, in the same change: rewrite the Terms ("It is free"), add the
+payment provider to the Privacy Policy, and bump `LEGAL_VERSIONS` (`guards.test.ts` fails if the
+Terms and the switch disagree). The limit tests run only while it is on.
 
 - `PLAN_LIMITS` in `shared/src/plans.ts` is the only table. Free: 2 kids, quests,
   shop, piggy, chest, savings goals, 1 team goal, co-parent invites. Plus: unlimited

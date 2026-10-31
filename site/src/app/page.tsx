@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { PLAN_LIMITS } from '@kk/shared';
 import { pageMetadata } from '@/lib/seo';
 import { SiteNav } from '@/components/SiteNav';
 import { Hero } from '@/components/Hero';
@@ -27,7 +26,7 @@ export default function Home() {
     <>
       <SiteNav />
       <main id="main">
-        <Hero freeKids={PLAN_LIMITS.free.limits.kids ?? 0} />
+        <Hero />
         <HowItWorks />
         <Features />
         <TwoWaysToGrow />

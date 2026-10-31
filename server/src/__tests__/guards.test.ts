@@ -2,7 +2,7 @@
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, relative } from 'path';
 import { describe, expect, it } from 'vitest';
-import { LESSON_ART, LESSON_CATEGORIES, LESSONS } from '@kk/shared';
+import { LESSON_ART, LESSON_CATEGORIES, LESSONS, PAID_PLANS } from '@kk/shared';
 
 const ROOT = join(import.meta.dirname, '../../..');
 const SKIP = new Set(['node_modules', 'dist', 'legacy-django', '.git', 'ios', 'android', 'coverage']);
@@ -24,6 +24,13 @@ const offenders = (pattern: RegExp, scope: string, allowed: string[] = []) =>
   code.filter((f) => f.path.startsWith(scope) && !allowed.includes(f.path) && pattern.test(f.text)).map((f) => f.path);
 
 describe('repo guards', () => {
+  it('the Terms match the paid-plans switch: they cannot promise free while plans are on, or skip it while off', () => {
+    // Turning PAID_PLANS on means rewriting the Terms ("It is free"), adding the payment
+    // provider to the Privacy Policy, and bumping LEGAL_VERSIONS, in the same change.
+    const legal = readFileSync(join(ROOT, 'client/src/pages/legal.tsx'), 'utf8');
+    expect(legal.includes("heading: 'It is free'")).toBe(!PAID_PLANS);
+  });
+
   it('has no em or en dashes anywhere', () => {
     expect(files.filter((f) => /[–—]/.test(f.text)).map((f) => f.path)).toEqual([]);
   });

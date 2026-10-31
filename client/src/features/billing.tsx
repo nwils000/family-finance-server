@@ -5,7 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { PLAN_LIMITS, PLAN_NAMES, canAddMore, planAllows, type PlanFeature, type PlanLimitKey } from '@kk/shared';
+import { PAID_PLANS, PLAN_LIMITS, PLAN_NAMES, canAddMore, planAllows, type PlanFeature, type PlanLimitKey } from '@kk/shared';
 import { Avatar, BadgeHelper, Rocket, Sparkle, Trophy } from '@/art';
 import { Button, Card, Heading, PennySays, Pill, ProgressBar, Sheet, Text } from '@/components/ui';
 import { endpoints, errorMessage, setOnPlanLimit } from '@/lib/api';
@@ -151,8 +151,10 @@ function RestoreButton() {
 
 const formatDay = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
 
-/** The plan section in grown-up Settings. */
-export function PlanCard() {
+/** The plan section in grown-up Settings. Absent while Kid Kapital is free for everyone (PAID_PLANS). */
+export const PlanCard = () => (PAID_PLANS ? <PlanCardBody /> : null);
+
+function PlanCardBody() {
   const { data, plan, refetch } = usePlan();
   const [params, setParams] = useSearchParams();
 
@@ -226,7 +228,9 @@ export function PlanCard() {
  * Mounted once in App. Any API call refused with PLAN_LIMIT opens this sheet with
  * the server's own explanation. Kids are sent to a grown-up instead of a store.
  */
-export function PlanUpsellHost() {
+export const PlanUpsellHost = () => (PAID_PLANS ? <PlanUpsellSheet /> : null);
+
+function PlanUpsellSheet() {
   const [message, setMessage] = useState<string | null>(null);
   const role = useAuth((s) => s.user?.role);
   const navigate = useNavigate();

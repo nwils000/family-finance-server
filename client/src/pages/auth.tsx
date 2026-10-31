@@ -196,7 +196,7 @@ export function GrownUpPage({ mode }: { mode: Mode }) {
           {mode !== 'login' && (
             // Direct notice to the parent before any account (and later, any kid data) exists.
             <Checkbox checked={agreed} onChange={setAgreed}>
-              I am a parent or guardian, and I agree to the{' '}
+              I am 18 or older and a parent or legal guardian, and I agree to the{' '}
               <Link to={LEGAL_PATHS.terms} className="font-bold text-brand underline">
                 Terms
               </Link>{' '}

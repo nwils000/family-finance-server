@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { PLAN_LIMITS, PLAN_NAMES, PLANS, type Plan } from '@kk/shared';
+import { PAID_PLANS, PLAN_LIMITS, PLAN_NAMES, PLANS, type Plan } from '@kk/shared';
 import { Coin, Gem } from '@art';
 import { APP_LINKS } from '@/lib/site';
 import { Reveal } from './Reveal';
@@ -31,7 +31,43 @@ const PLAN_BLURB: Record<Plan, string> = {
   plus: 'Room for a bigger family, and the extras.',
 };
 
+/** Everything a family gets while there are no paid plans: the core loop plus every extra. */
+const EVERYTHING = [...CORE, 'As many kids as you like', 'Team goals', 'The rocket fund', 'Helper points'];
+
+/** While Kid Kapital is free for everyone (PAID_PLANS off): one card, nothing to compare. */
+function FreeForEveryone() {
+  return (
+    <section id="plans" className="px-4 py-20 sm:px-6 sm:py-28">
+      <SectionHeading
+        eyebrow="Pricing"
+        title="Free. All of it."
+        subtitle="Kid Kapital is free for every family right now: every feature, every kid, no card and no ads. Kids never see a price."
+      />
+      <Reveal className="mx-auto mt-12 max-w-xl">
+        <Card tone="brand" pad="lg" className="flex flex-col">
+          <div className="flex items-start justify-between gap-3">
+            <Coin size={56} />
+            <Chip tone="good">No card needed</Chip>
+          </div>
+          <h3 className="mt-4 font-display text-3xl font-bold text-ink">Free for every family</h3>
+          <ul className="mt-6 grid gap-x-6 gap-y-3 font-bold text-ink sm:grid-cols-2">
+            {EVERYTHING.map((c) => (
+              <Tick key={c}>{c}</Tick>
+            ))}
+          </ul>
+          <div className="pt-8">
+            <ButtonLink href={APP_LINKS.signup} size="lg" block>
+              Start your family free
+            </ButtonLink>
+          </div>
+        </Card>
+      </Reveal>
+    </section>
+  );
+}
+
 export function Plans() {
+  if (!PAID_PLANS) return <FreeForEveryone />;
   return (
     <section id="plans" className="px-4 py-20 sm:px-6 sm:py-28">
       <SectionHeading

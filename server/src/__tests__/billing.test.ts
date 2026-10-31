@@ -16,6 +16,7 @@ import request from 'supertest';
 import Stripe from 'stripe';
 import { createApp } from '../app.js';
 import { Entitlement } from '../models-account.js';
+import { PAID_PLANS } from '@kk/shared';
 import { effectivePlan, GRACE_DAYS } from '../services/billing.js';
 
 const app = createApp();
@@ -65,7 +66,17 @@ const rcEvent = (familyId: string, id: string, type: string, extra: object = {})
 const postRc = (body: object, auth = 'Bearer rc_hook_secret') => request(app).post('/api/billing/webhooks/revenuecat').set('Authorization', auth).send(body);
 
 describe('plan limits', () => {
-  it('a free family can add 2 kids and gets 402 PLAN_LIMIT on the third', async () => {
+  // The limit tests run while paid plans exist; while Kid Kapital is free for everyone
+  // (PAID_PLANS off) Free allows everything, which the next test pins instead.
+  it.runIf(!PAID_PLANS)('while free for everyone, nothing is refused and no checkout can start', async () => {
+    const f = await makeFamily('allfree');
+    for (const name of ['A', 'B', 'C', 'D']) expect((await addKid(f.parent, name)).status).toBe(200);
+    expect((await request(app).post('/api/milestones').set(bearer(f.parent)).send({ title: 'Pick dinner', icon: 'pickdinner', points: 3 })).status).toBe(200);
+    const checkout = await request(app).post('/api/billing/checkout').set(bearer(f.parent));
+    expect(checkout.status).toBe(501);
+  });
+
+  it.runIf(PAID_PLANS)('a free family can add 2 kids and gets 402 PLAN_LIMIT on the third', async () => {
     const f = await makeFamily();
     expect((await addKid(f.parent, 'A')).status).toBe(200);
     expect((await addKid(f.parent, 'B')).status).toBe(200);
@@ -120,7 +131,7 @@ describe('effective plan (expiry and grace)', () => {
 });
 
 describe('plan limit races', () => {
-  it('simultaneous adds never push a free family past its kid limit', async () => {
+  it.runIf(PAID_PLANS)('simultaneous adds never push a free family past its kid limit', async () => {
     const f = await makeFamily('race');
     const adds = await Promise.all(['A', 'B', 'C', 'D'].map((name) => addKid(f.parent, name)));
     expect(adds.filter((r) => r.status === 200).length).toBe(2);

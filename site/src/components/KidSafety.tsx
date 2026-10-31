@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { PIN_LENGTH } from '@kk/shared';
+import { PAID_PLANS, PIN_LENGTH } from '@kk/shared';
 import { Heart, IconEyeOff, IconLock, Penny, Wallet } from '@art';
 import { Reveal } from './Reveal';
 import { Card, SectionHeading, type CardTone } from './ui';
@@ -18,7 +18,9 @@ const PROMISES: { art: ReactNode; title: string; body: string; tone: CardTone }[
   {
     art: <IconLock size={52} />,
     title: 'No paywalls for kids',
-    body: 'Kids never see an upgrade screen or a price. Plans and billing live only on the grown-up side.',
+    body: PAID_PLANS
+      ? 'Kids never see an upgrade screen or a price. Plans and billing live only on the grown-up side.'
+      : 'Kids never see an upgrade screen or a price. Right now there is nothing to buy at all.',
     tone: 'brand',
   },
   {
