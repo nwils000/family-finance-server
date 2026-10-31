@@ -75,7 +75,8 @@ const PRIVACY: Section[] = [
     body: [
       'Two companies run the computers Kid Kapital lives on, and process data only to provide that service to us, under their written data protection and security terms: Vercel (hosting) and MongoDB Atlas (database, run on Amazon Web Services). Data is stored in the United States.',
       'If a grown-up writes to us with the contact form in Settings, their name, email address and message are delivered to our inbox by EmailJS (emailjs.com/legal/privacy-policy). Kids never see the form. Apart from that, we do not send email yet.',
-      'If a grown-up chooses to leave a tip, it is paid on Stripe\'s own page (stripe.com/privacy), which handles the payment details; we never see or store card details. There are no other payments.',
+      'If a grown-up chooses to leave a tip, it is paid on Stripe\'s own page (stripe.com/privacy). Stripe receives what the grown-up enters there (such as name, email and card details); we never see or store card details. There are no other payments.',
+      'EmailJS and Stripe only ever receive information a grown-up chooses to send them. The contact form and the tip link are in grown-up Settings only, so neither ever receives a child\'s information.',
       'We disclose information only if the law requires it, or to protect the safety of a person or the service.',
     ],
   },
@@ -137,7 +138,15 @@ const TERMS: Section[] = [
     heading: 'It is free',
     body: [
       'Kid Kapital is free. There are no paid plans, no purchases and no ads. If we ever offer something paid, we will tell you first, and nothing will be charged unless you choose to buy it.',
-      'A grown-up may choose to leave a tip to support the creator. A tip is optional, is paid on Stripe\'s page, unlocks nothing, is not a purchase or a donation and is not tax-deductible. Kids never see the tip link.',
+    ],
+  },
+  {
+    heading: 'Tips',
+    body: [
+      `On the web, a grown-up may choose to leave a tip (donation) to support Kid Kapital. A tip is a voluntary gift to ${OPERATOR_NAME} personally, for an app that is already free.`,
+      'A tip unlocks nothing, buys nothing, and creates no account, subscription or obligation on either side. It is not a charitable donation and is not tax-deductible.',
+      `Tips are processed by Stripe on Stripe's own page, so Kid Kapital never sees card details. Tips are not refundable, except that if you tipped by mistake you can email ${PRIVACY_CONTACT} within 30 days for a refund, and except where consumer law requires otherwise.`,
+      'Kids never see the tip link.',
     ],
   },
   {
