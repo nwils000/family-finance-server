@@ -6,6 +6,15 @@ import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import rateLimit, { type Options } from 'express-rate-limit';
 import { config } from './config.js';
+import { MongoRateLimitStore } from './services/abuse.js';
+
+/**
+ * Which automatic defences are live. Rate limits run everywhere but tests. Bans and
+ * user-agent blocks (bot-protection.ts) run only on a hosted server, as in Mentis:
+ * locally, curl and a reloading laptop would ban the developer. Test files switch them
+ * on for themselves; nothing else changes these.
+ */
+export const protection = { limits: !config.isTest, bans: config.isHosted };
 
 /* ---------- Headers ---------- */
 
@@ -264,52 +273,64 @@ export const ipKey = (ip: string | undefined | null) => {
 const bodyField = (req: Request, field: string) => String((req.body as Record<string, unknown> | undefined)?.[field] ?? '').trim().toLowerCase().slice(0, 254);
 const userOrIp = (req: Request) => (req.auth?.userId ? `user:${req.auth.userId}` : ipKey(req.ip));
 
-const limiter = (windowMs: number, limit: number, extra: Partial<Options> = {}) =>
+/**
+ * The one way a limiter is made. Every limiter counts in MongoDB through its own
+ * named MongoRateLimitStore, so on Vercel the limit holds across every instance (the
+ * default memory store would give each instance its own count). `store` cannot be
+ * passed in, and the name must be unique (guards.test.ts), or two limiters keyed by
+ * the same IP would share one count. If the database errors, the store lets the
+ * request through and logs it.
+ */
+export const limiter = (name: string, windowMs: number, limit: number, { skip, ...extra }: Omit<Partial<Options>, 'store'> = {}) =>
   rateLimit({
     windowMs,
     limit,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: () => config.isTest,
     keyGenerator: (req) => ipKey(req.ip),
     message: { error: 'Too many tries. Take a breather and try again in a few minutes.', code: 'RATE_LIMITED' },
+    passOnStoreError: true,
     ...extra,
+    skip: async (req, res) => !protection.limits || !!(await skip?.(req, res)),
+    store: new MongoRateLimitStore(name),
   });
 
 /** Social sign-in and other public auth calls: 30 per 15 minutes per IP. */
-export const authLimiter = limiter(15 * 60_000, 30);
+export const authLimiter = limiter('auth', 15 * 60_000, 30);
 /** Signed-in credential changes (change password, sign out everywhere): tight. */
-export const strictLimiter = limiter(60 * 60_000, 10);
+export const strictLimiter = limiter('strict', 60 * 60_000, 10);
 /** Provider webhooks: generous, but bounded (Mentis uses 120 per minute). */
-export const webhookLimiter = limiter(60_000, 120);
+export const webhookLimiter = limiter('webhook', 60_000, 120);
+/** Every API call, per IP: generous (a busy family on one home connection), but a script reading in a loop stops. */
+export const apiLimiter = limiter('api', 15 * 60_000, 3000);
 /** Every write on the API, per IP. Generous for a busy family, hostile for a script. */
-export const writeLimiter = limiter(15 * 60_000, 600, { skip: (req) => config.isTest || req.method === 'GET' || req.method === 'OPTIONS' });
+export const writeLimiter = limiter('write', 15 * 60_000, 600, { skip: (req) => req.method === 'GET' || req.method === 'OPTIONS' });
 
 /** New accounts (signup, join by invite): 5 per hour per IP. */
-export const signupLimiter = limiter(60 * 60_000, 5);
+export const signupLimiter = limiter('signup', 60 * 60_000, 5);
 /** Grown-up login, per IP + email, failures only (Mentis loginLimiter). */
-export const loginLimiter = limiter(15 * 60_000, 10, { skipSuccessfulRequests: true, keyGenerator: (req) => `${ipKey(req.ip)}|${bodyField(req, 'email')}` });
+export const loginLimiter = limiter('login', 15 * 60_000, 10, { skipSuccessfulRequests: true, keyGenerator: (req) => `${ipKey(req.ip)}|${bodyField(req, 'email')}` });
 /** Grown-up login, per email from anywhere, failures only: stops a proxy farm guessing one account (Mentis loginEmailOnlyLimiter). */
-export const loginEmailLimiter = limiter(60 * 60_000, 20, { skipSuccessfulRequests: true, keyGenerator: (req) => `email:${bodyField(req, 'email')}` });
+export const loginEmailLimiter = limiter('login-email', 60 * 60_000, 20, { skipSuccessfulRequests: true, keyGenerator: (req) => `email:${bodyField(req, 'email')}` });
 /** Kid PIN tries per kid, from anywhere, failures only. The account lockout in accounts.ts is the hard stop. */
-export const kidPinLimiter = limiter(15 * 60_000, 10, { skipSuccessfulRequests: true, keyGenerator: (req) => `kid:${bodyField(req, 'kidId')}` });
+export const kidPinLimiter = limiter('kid-pin', 15 * 60_000, 10, { skipSuccessfulRequests: true, keyGenerator: (req) => `kid:${bodyField(req, 'kidId')}` });
 /** Kid PIN tries across one family, failures only, so guessing every sibling in turn is bounded too. */
-export const familyPinLimiter = limiter(15 * 60_000, 30, { skipSuccessfulRequests: true, keyGenerator: (req) => `family:${bodyField(req, 'code')}` });
+export const familyPinLimiter = limiter('family-pin', 15 * 60_000, 30, { skipSuccessfulRequests: true, keyGenerator: (req) => `family:${bodyField(req, 'code')}` });
 /** Session refresh: failures only, so busy tabs never trip it. */
-export const refreshLimiter = limiter(15 * 60_000, 100, { skipSuccessfulRequests: true });
+export const refreshLimiter = limiter('refresh', 15 * 60_000, 100, { skipSuccessfulRequests: true });
 /** Password reset emails: per IP across all emails, then per IP + email (Mentis passwordResetIpLimiter + passwordResetLimiter). */
-export const resetRequestIpLimiter = limiter(60 * 60_000, 10);
-export const resetRequestLimiter = limiter(60 * 60_000, 3, { keyGenerator: (req) => `${ipKey(req.ip)}|${bodyField(req, 'email')}` });
+export const resetRequestIpLimiter = limiter('reset-request-ip', 60 * 60_000, 10);
+export const resetRequestLimiter = limiter('reset-request', 60 * 60_000, 3, { keyGenerator: (req) => `${ipKey(req.ip)}|${bodyField(req, 'email')}` });
 /** Using a reset link: failures only. */
-export const resetExecuteLimiter = limiter(60 * 60_000, 10, { skipSuccessfulRequests: true });
+export const resetExecuteLimiter = limiter('reset-execute', 60 * 60_000, 10, { skipSuccessfulRequests: true });
 /** Checking a link (reset, email verification, invite): counts every call, since a miss still answers 200. */
-export const linkCheckLimiter = limiter(60 * 60_000, 30);
+export const linkCheckLimiter = limiter('link-check', 60 * 60_000, 30);
 /** Resending the verification email: per signed-in grown-up. */
-export const resendVerificationLimiter = limiter(60 * 60_000, 5, { keyGenerator: userOrIp });
+export const resendVerificationLimiter = limiter('resend-verification', 60 * 60_000, 5, { keyGenerator: userOrIp });
 /** Making invite links and changing the family code: per signed-in grown-up. */
-export const familyAccessLimiter = limiter(60 * 60_000, 20, { keyGenerator: userOrIp });
+export const familyAccessLimiter = limiter('family-access', 60 * 60_000, 20, { keyGenerator: userOrIp });
 
 /** Downloading the family's data: a few times a day per grown-up (Mentis: 1 per day). */
-export const dataExportLimiter = limiter(24 * 60 * 60_000, 3, { keyGenerator: userOrIp });
+export const dataExportLimiter = limiter('data-export', 24 * 60 * 60_000, 3, { keyGenerator: userOrIp });
 /** Deleting an account re-checks the password, so it is also a password guess: keep it tight. */
-export const accountDeleteLimiter = limiter(60 * 60_000, 5, { keyGenerator: userOrIp });
+export const accountDeleteLimiter = limiter('account-delete', 60 * 60_000, 5, { keyGenerator: userOrIp });

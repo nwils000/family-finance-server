@@ -6,10 +6,11 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LEGAL_PATHS, PASSWORD_HINT, PIN_LENGTH } from '@kk/shared';
 import { Avatar, Cloud, Coin, HillsBand, IconBack, IconKey, IconMail, Penny, SceneFamily, SceneWelcome, Sparkle, Sun } from '@/art';
-import { Button, Card, Checkbox, Field, Heading, Input, PennySays, PinPad, Spinner, Text } from '@/components/ui';
+import { Button, Card, Checkbox, Field, Heading, Honeypot, Input, PennySays, PinPad, Spinner, Text } from '@/components/ui';
 import { SocialLogin } from '@/features/social-login';
 import { endpoints, errorMessage, errorStatus } from '@/lib/api';
 import { celebrate } from '@/lib/celebrate';
+import { useFormGuard } from '@/lib/form-guard';
 import { clearFragment, readFragment } from '@/lib/link';
 import { popIn, stagger } from '@/lib/motion';
 import { prefs } from '@/lib/prefs';
@@ -116,6 +117,7 @@ export function GrownUpPage({ mode }: { mode: Mode }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const { invite, familyName: invitedTo } = useInvite(mode === 'join');
+  const guard = useFormGuard(mode);
   const redirect = useSignedInRedirect();
   if (redirect) return redirect;
 
@@ -154,10 +156,10 @@ export function GrownUpPage({ mode }: { mode: Mode }) {
     try {
       const request =
         mode === 'login'
-          ? endpoints.login({ email: form.email, password: form.password })
+          ? endpoints.login({ email: form.email, password: form.password }, guard.body())
           : mode === 'signup'
-            ? endpoints.signup({ name: form.name, email: form.email, password: form.password, familyName: form.familyName, acceptLegal: agreed })
-            : endpoints.join({ name: form.name, email: form.email, password: form.password, invite, acceptLegal: agreed });
+            ? endpoints.signup({ name: form.name, email: form.email, password: form.password, familyName: form.familyName, acceptLegal: agreed }, guard.body())
+            : endpoints.join({ name: form.name, email: form.email, password: form.password, invite, acceptLegal: agreed }, guard.body());
       await signIn(request);
       celebrate('done');
     } catch (err) {
@@ -175,6 +177,7 @@ export function GrownUpPage({ mode }: { mode: Mode }) {
       <Card pad="lg" className="kk-pop">
         <form onSubmit={submit} className="flex flex-col gap-4">
           <Heading size="md">{copy.title}</Heading>
+          <Honeypot {...guard.honeypot} />
           {mode !== 'login' && (
             <Field label="Your name">{(id) => <Input id={id} value={form.name} onChange={set('name')} placeholder="Sam" autoComplete="given-name" required />}</Field>
           )}
@@ -234,6 +237,7 @@ export function KidLoginPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [shake, setShake] = useState(0);
+  const guard = useFormGuard('kidLogin');
   const redirect = useSignedInRedirect();
   if (redirect) return redirect;
 
@@ -261,7 +265,7 @@ export function KidLoginPage() {
     setBusy(true);
     setError('');
     try {
-      await signIn(endpoints.kidLogin({ code: code.trim().toUpperCase(), kidId: kid.id, pin }));
+      await signIn(endpoints.kidLogin({ code: code.trim().toUpperCase(), kidId: kid.id, pin }, guard.body()));
       celebrate('coins');
     } catch (err) {
       setError(errorMessage(err));
@@ -332,6 +336,7 @@ export function KidLoginPage() {
       <PennySays mood="cheer">What's your family code? A grown-up can find it in Settings.</PennySays>
       <Card pad="lg">
         <form onSubmit={findFamily} className="flex flex-col gap-4">
+          <Honeypot {...guard.honeypot} />
           <Field label="Family code">
             {(id) => (
               <Input

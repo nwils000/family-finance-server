@@ -5,6 +5,7 @@ import type { z } from 'zod';
 import { LEGAL_VERSIONS, type AvatarId } from '@kk/shared';
 import { config } from '../config.js';
 import { HttpError, notFound } from '../http.js';
+import { Types } from 'mongoose';
 import { Family, User } from '../models.js';
 import { CoParentInvite } from '../models-account.js';
 import type { kidLoginBody, loginBody, signupBody, joinBody } from '../schemas.js';
@@ -64,17 +65,17 @@ interface NewParent {
 const emailTaken = () => new HttpError(409, 'That email already has an account');
 
 /**
- * No password means a Google or Apple sign-in account; "forgot password" can add one
- * later. An email/password account gets a verification link right after it is made.
+ * Every check and field of a new grown-up, not yet saved. createParent stores it;
+ * the form guard's decoy (decoyParent) only shows it, so both answer the same way.
  */
-const createParent = async (familyId: unknown, body: NewParent, avatar: AvatarId) => {
+const buildParent = async (familyId: unknown, body: NewParent, avatar: AvatarId) => {
   // Every way a grown-up account is made (email, invite, Google, Apple) comes through here,
   // so no account exists without the parent's agreement on record.
   if (body.acceptLegal !== true) {
     throw new HttpError(400, 'Please confirm you are a parent or guardian and agree to the Terms and Privacy Policy.', 'LEGAL_REQUIRED');
   }
   if (await User.exists({ email: body.email })) throw emailTaken();
-  const user = await User.create({
+  return new User({
     familyId,
     role: 'parent',
     name: body.name,
@@ -84,6 +85,15 @@ const createParent = async (familyId: unknown, body: NewParent, avatar: AvatarId
     emailVerifiedAt: startsVerified(body.emailVerified) ? new Date() : null,
     legalAccepted: { ...LEGAL_VERSIONS, at: new Date() },
   });
+};
+
+/**
+ * No password means a Google or Apple sign-in account; "forgot password" can add one
+ * later. An email/password account gets a verification link right after it is made.
+ */
+const createParent = async (familyId: unknown, body: NewParent, avatar: AvatarId) => {
+  const user = await buildParent(familyId, body, avatar);
+  await user.save();
   if (!user.emailVerifiedAt) sendVerificationLink(user);
   return user;
 };
@@ -145,6 +155,19 @@ export const joinWithInvite = async (token: string, parent: NewParent) => {
 };
 
 export const joinFamily = (body: z.infer<typeof joinBody>) => joinWithInvite(body.invite, body);
+
+/**
+ * What signup (or join, with its invite) answers, for a submission the form guard
+ * caught (bot-protection.ts): the same checks and the same password hashing cost, a
+ * real-looking grown-up, and nothing stored, claimed or emailed.
+ */
+export const decoyParent = async (body: NewParent, invite?: string) => {
+  if (invite !== undefined) {
+    if (await User.exists({ email: body.email })) throw emailTaken();
+    if (!(await CoParentInvite.exists(liveInvite(invite)))) throw new HttpError(400, INVITE_INVALID, 'INVITE_INVALID');
+  }
+  return buildParent(new Types.ObjectId(), body, invite === undefined ? 'owl' : 'bear');
+};
 
 /**
  * A new kid sign-in code, for when the old one got around. Kids already signed in
@@ -214,13 +237,16 @@ const verifySecret = async (user: InstanceType<typeof User>, secret: string, has
   throw new HttpError(401, wrong);
 };
 
+const WRONG_LOGIN = 'Wrong email or password';
+const WRONG_PIN = 'Oops, wrong PIN';
+
 export const parentLogin = async (body: z.infer<typeof loginBody>) => {
   const user = await User.findOne({ email: body.email, role: 'parent' });
   if (!user) {
     await checkSecret(body.password, null);
-    throw new HttpError(401, 'Wrong email or password');
+    throw new HttpError(401, WRONG_LOGIN);
   }
-  return verifySecret(user, body.password, user.passwordHash, 'Wrong email or password');
+  return verifySecret(user, body.password, user.passwordHash, WRONG_LOGIN);
 };
 
 export const kidLogin = async (body: z.infer<typeof kidLoginBody>) => {
@@ -228,9 +254,24 @@ export const kidLogin = async (body: z.infer<typeof kidLoginBody>) => {
   const kid = await User.findOne({ _id: body.kidId, familyId: family._id, role: 'kid' });
   if (!kid) {
     await checkSecret(body.pin, null, DUMMY_PIN_HASH);
-    throw new HttpError(401, 'Oops, wrong PIN');
+    throw new HttpError(401, WRONG_PIN);
   }
-  return verifySecret(kid, body.pin, kid.pinHash, 'Oops, wrong PIN', DUMMY_PIN_HASH);
+  return verifySecret(kid, body.pin, kid.pinHash, WRONG_PIN, DUMMY_PIN_HASH);
+};
+
+/**
+ * The wrong-credentials answer, for a login the form guard caught. It costs one full
+ * compare like a real miss, so its timing cannot give the trap away, and it touches
+ * no account (no failed-try count, no lock).
+ */
+export const decoyLogin = async (body: z.infer<typeof loginBody>): Promise<never> => {
+  await checkSecret(body.password, null);
+  throw new HttpError(401, WRONG_LOGIN);
+};
+export const decoyKidLogin = async (body: z.infer<typeof kidLoginBody>): Promise<never> => {
+  await findFamilyByCode(body.code);
+  await checkSecret(body.pin, null, DUMMY_PIN_HASH);
+  throw new HttpError(401, WRONG_PIN);
 };
 
 /** Public kid picker for the login screen: names and avatars only. */

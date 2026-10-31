@@ -125,6 +125,9 @@ A fix that cannot name its guard is not done.
 | Stripe and RevenueCat on the server | `server/src/services/billing.ts` | `import Stripe` anywhere else |
 | Native store purchases | `client/src/lib/purchases.ts` | importing `@revenuecat/purchases-capacitor` elsewhere |
 | Request hardening (headers, CORS, CSRF guard, shape guard, rate limits and their IP keys, request ids, logs, the dev-door loopback check) | `server/src/security.ts` | a new `rateLimit(...)` or `helmet(...)` in a route file |
+| Rate-limit counts, shared by every serverless instance | `security.ts` `limiter(name, ...)`, which always uses `services/abuse.ts` `MongoRateLimitStore` | `MemoryStore`, a `store:` option, two limiters with one name |
+| Bot protection (IP bans and their ladder, honeypot paths, scanner and empty user agents, failed sign-ins per IP, the form guard and its decoy replies) | `server/src/bot-protection.ts`; counters and bans in `services/abuse.ts` (`countHit`, `recordBotSignal`, `recordFailedSignIn`) | a ban, a user-agent list or a honeypot check anywhere else; `IpBan` / `AbuseCounter` writes outside `abuse.ts` |
+| Form-guard fields, floors and signals | `@kk/shared` `form-guard.ts`; client `lib/form-guard.ts` `useFormGuard()` + `<Honeypot>` | a hand-rolled hidden input or fill timer in a page |
 | Making and hashing secret tokens; links that carry them | `server/src/tokens.ts` `newToken` / `sha256` / `appLink` / `linkToken` | `crypto.randomBytes` + `createHash` for a token anywhere else, a token in a URL path |
 | Login lockouts (claim an attempt, then lock atomically) | `server/src/services/accounts.ts` `verifySecret` | reading `failedLogins` into memory and writing it back |
 | Grown-up invites, the kid family code | `services/accounts.ts` `createInvite` / `joinWithInvite` / `rotateFamilyCode` | creating a grown-up from a family code |
@@ -245,6 +248,22 @@ Nothing that moves money runs inside a GET handler. Growth runs from
   only pre-session auth calls and signed webhooks are exempt; sign out is not), no
   ETags, and an error handler that answers body-parser 4xx generically and logs a 500
   as one structured line, never the raw error (it carries the request body).
+- **Bot protection** (`bot-protection.ts`, ported from Mentis botProtection/formGuard; no
+  Redis, everything is in Mongo with TTLs through `services/abuse.ts`, and every step
+  FAILS OPEN with one log line). Every limiter counts in Mongo (`limiter(name, ...)`), so
+  limits hold across Vercel instances; `apiLimiter` caps all API calls per IP. Mounted
+  first: a banned address gets a bare 403 everywhere. Honeypot paths (`/wp-admin`,
+  `/.env`, ...) answer 404 and score; attack-tool agents get 403 and score; empty or
+  generic-client agents (curl, python-requests) get 403 on `/api` without scoring
+  (webhooks and cron exempt). Scores reaching 15 in 6 h, or 40 wrong sign-ins in 15 min
+  from one address, ban it on the ladder 15 min, 1 h, 6 h, 24 h (offenses remembered 7
+  days). Bans and agent checks run only on hosted servers (`protection.bans`). The
+  public forms (signup, join, login, kid login, forgot password) send a honeypot and
+  fill signals (`useFormGuard`); a filled honeypot, or too fast AND no interaction,
+  gets the endpoint's NORMAL reply (a decoy session, the usual wrong-password 401 at
+  full bcrypt cost, the usual reset answer) and nothing is stored. No signals is never
+  punished. `FORM_GUARD_MODE=monitor` logs without dropping. No CAPTCHA (no third-party
+  scripts in a kids' app); one would slot into `formGuard`.
 - **Environments** (`config.ts`): `NODE_ENV` must be production, staging, development
   or test; anything else, or unset, is HOSTED (secure cookies, HSTS, strong
   `JWT_SECRET` and no `CLIENT_ORIGINS=*` or it refuses to boot). The demo quick login

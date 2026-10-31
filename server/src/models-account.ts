@@ -139,3 +139,37 @@ billingEventSchema.index({ provider: 1, eventId: 1 }, { unique: true });
 // Keep 90 days of history for support, then let Mongo clean up.
 billingEventSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 86_400 });
 export const BillingEvent = model('BillingEvent', billingEventSchema);
+
+/**
+ * Fixed-window counters shared by every serverless instance (Mentis keeps these in
+ * Redis): rate limits (`rl:<limiter>:<hashed key>`), and the bot counters in
+ * services/abuse.ts (`risk:`, `fail:`, `offense:` + an ipKey). Written only through
+ * services/abuse.ts countHit, one atomic upsert. Mongo's TTL monitor removes a row
+ * soon after its window ends; until then countHit treats it as a fresh window.
+ */
+const abuseCounterSchema = new Schema(
+  {
+    _id: { type: String, required: true },
+    hits: { type: Number, required: true },
+    resetAt: { type: Date, required: true, expires: 0 },
+  },
+  { versionKey: false },
+);
+export const AbuseCounter = model('AbuseCounter', abuseCounterSchema);
+
+export const BAN_REASONS = ['bot_risk_threshold', 'excessive_auth_failures'] as const;
+/**
+ * An automatic ban of one address (an ipKey, so an IPv6 /64). Bans only ever come
+ * from the escalating ladder in services/abuse.ts; the row disappears with its TTL.
+ */
+const ipBanSchema = new Schema(
+  {
+    _id: { type: String, required: true },
+    reason: { type: String, enum: BAN_REASONS, required: true },
+    until: { type: Date, required: true, expires: 0 },
+    /** Which rung of the ladder this ban is (1 = first offense in a week). */
+    offense: { type: Number, default: 1 },
+  },
+  { versionKey: false },
+);
+export const IpBan = model('IpBan', ipBanSchema);

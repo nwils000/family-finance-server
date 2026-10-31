@@ -145,6 +145,22 @@ describe('repo guards', () => {
     expect(offenders(/\brateLimit\(|\bhelmet\(/, 'server/src', ['server/src/security.ts'])).toEqual([]);
   });
 
+  it('every rate limiter counts in MongoDB through limiter(), each under its own name', () => {
+    // A memory store gives each Vercel instance its own private count.
+    expect(offenders(/\bMemoryStore\b/, 'server/src')).toEqual([]);
+    const security = code.find((f) => f.path === 'server/src/security.ts')!.text;
+    expect(security.match(/\brateLimit\(/g)).toHaveLength(1);
+    expect(security).toMatch(/store: new MongoRateLimitStore\(name\),\n\s*\}\);/);
+    // Two limiters with one name would share a count (both are keyed by the IP).
+    const names = [...security.matchAll(/\blimiter\(\s*'([^']+)'/g)].map((m) => m[1]);
+    expect(names.length).toBeGreaterThan(10);
+    expect(names.filter((n, i) => names.indexOf(n) !== i)).toEqual([]);
+  });
+
+  it('bans and abuse counters are written only in services/abuse.ts', () => {
+    expect(offenders(/\b(IpBan|AbuseCounter)\./, 'server/src', ['server/src/services/abuse.ts']).filter((p) => !p.includes('__tests__'))).toEqual([]);
+  });
+
   it('a grown-up account can never be created from the kid family code', () => {
     // Joining takes a single-use invite (services/accounts.ts joinWithInvite).
     expect(offenders(/joinWithCode|code:\s*familyCode\.optional\(\)/, 'server/src')).toEqual([]);

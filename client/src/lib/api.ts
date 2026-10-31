@@ -1,7 +1,7 @@
 // The only module that talks to the server. Components call the typed
 // functions in `endpoints`, never axios directly.
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { PLAN_LIMIT_CODE, type AccountKind, type HatId } from '@kk/shared';
+import { PLAN_LIMIT_CODE, type AccountKind, type FormGuardBody, type HatId } from '@kk/shared';
 import { isNative, secureStorage } from './secure-storage';
 import type * as T from './types';
 
@@ -91,18 +91,21 @@ const del = <R>(url: string) => http.delete<R>(url).then((r) => r.data);
 type Ok = { ok: true };
 
 export const endpoints = {
-  signup: (b: { name: string; email: string; password: string; familyName: string; acceptLegal: boolean }) => post<T.Session>('/auth/signup', b),
-  join: (b: { name: string; email: string; password: string; invite: string; acceptLegal: boolean }) => post<T.Session>('/auth/join', b),
+  // Public forms pass `guard` from useFormGuard() (lib/form-guard.ts): the anti-bot signals.
+  signup: (b: { name: string; email: string; password: string; familyName: string; acceptLegal: boolean }, guard?: FormGuardBody) =>
+    post<T.Session>('/auth/signup', { ...b, ...guard }),
+  join: (b: { name: string; email: string; password: string; invite: string; acceptLegal: boolean }, guard?: FormGuardBody) =>
+    post<T.Session>('/auth/join', { ...b, ...guard }),
   checkInvite: (invite: string) => post<{ valid: true; familyName: string } | { valid: false }>('/auth/invite/check', { invite }),
-  login: (b: { email: string; password: string }) => post<T.Session>('/auth/login', b),
-  kidLogin: (b: { code: string; kidId: string; pin: string }) => post<T.Session>('/auth/kid-login', b),
+  login: (b: { email: string; password: string }, guard?: FormGuardBody) => post<T.Session>('/auth/login', { ...b, ...guard }),
+  kidLogin: (b: { code: string; kidId: string; pin: string }, guard?: FormGuardBody) => post<T.Session>('/auth/kid-login', { ...b, ...guard }),
   familyPreview: (code: string) => get<{ name: string; kids: T.KidRef[] }>(`/auth/family/${encodeURIComponent(code)}`),
   logout: async () => {
     const refreshToken = await secureStorage.getRefreshToken();
     await post<Ok>('/auth/logout', refreshToken ? { refreshToken } : {});
   },
   me: () => get<{ user: T.User }>('/auth/me'),
-  forgotPassword: (email: string) => post<Ok>('/auth/password/forgot', { email }),
+  forgotPassword: (email: string, guard?: FormGuardBody) => post<Ok>('/auth/password/forgot', { email, ...guard }),
   // POST, token in the body: a token in a path would end up in request logs.
   checkResetToken: (token: string) => post<{ valid: boolean }>('/auth/password/reset/check', { token }),
   verifyEmail: (token: string) => post<Ok>('/auth/email/verify', { token }),

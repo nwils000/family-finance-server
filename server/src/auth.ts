@@ -40,10 +40,10 @@ const isNative = (req: Request) => req.get('X-Client-Platform') === 'native';
  * would otherwise survive it (Mentis isTokenBehindRevocationCutoff). `jti` names
  * this one token, so signing out can end it before it expires (RevokedJti).
  */
-const signAccessToken = (user: UserDoc) =>
+const signAccessToken = (user: UserDoc, key: jwt.Secret = config.jwtSecret) =>
   jwt.sign(
     { userId: String(user._id), familyId: String(user.familyId), role: user.role, t: Date.now() } satisfies AuthedUser & { t: number },
-    config.jwtSecret,
+    key,
     { expiresIn: config.accessTokenTtl, algorithm: 'HS256', jwtid: crypto.randomUUID() } as jwt.SignOptions,
   );
 
@@ -65,6 +65,16 @@ export const publicUser = (u: UserDoc) => ({
 });
 
 /** Start a session: mint both tokens and hand them to the client the right way. */
+/** The session reply, for a real session and for the form guard's decoy alike. */
+const sessionReply = (req: Request, res: Response, user: UserDoc, refreshToken: string, key?: jwt.Secret) => {
+  res.cookie(REFRESH_COOKIE, refreshToken, cookieOptions());
+  return {
+    accessToken: signAccessToken(user, key),
+    user: publicUser(user),
+    ...(isNative(req) ? { refreshToken } : {}),
+  };
+};
+
 export const issueSession = async (req: Request, res: Response, user: UserDoc) => {
   const refreshToken = newToken(48);
   await RefreshToken.create({
@@ -72,13 +82,18 @@ export const issueSession = async (req: Request, res: Response, user: UserDoc) =
     tokenHash: sha256(refreshToken),
     expiresAt: new Date(Date.now() + config.refreshTokenDays * 86_400_000),
   });
-  res.cookie(REFRESH_COOKIE, refreshToken, cookieOptions());
-  return {
-    accessToken: signAccessToken(user),
-    user: publicUser(user),
-    ...(isNative(req) ? { refreshToken } : {}),
-  };
+  return sessionReply(req, res, user, refreshToken);
 };
+
+/** A key made fresh in each process and never kept: what it signs never verifies. */
+const DECOY_KEY = crypto.randomBytes(32);
+
+/**
+ * The reply to a signup the form guard caught (bot-protection.ts), shaped exactly
+ * like issueSession's: a refresh cookie that matches no stored token, and an access
+ * token signed with a throwaway key. It looks like a session and opens nothing.
+ */
+export const decoySession = (req: Request, res: Response, user: UserDoc) => sessionReply(req, res, user, newToken(48), DECOY_KEY);
 
 const readRefreshToken = (req: Request): string | undefined =>
   req.cookies?.[REFRESH_COOKIE] || (typeof req.body?.refreshToken === 'string' ? req.body.refreshToken : undefined);

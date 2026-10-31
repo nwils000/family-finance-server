@@ -100,6 +100,11 @@ export const config = {
   /** Vercel Cron sends it as a bearer token to the scheduled-job door (app.ts). Unset: the door is not mounted. */
   cronSecret: optional('CRON_SECRET'),
   logRequests: optional('LOG_REQUESTS') !== 'false' && appEnv !== 'test',
+  /**
+   * FORM_GUARD_MODE=monitor keeps every form-guard detection and log line but drops
+   * nothing (Mentis): the safe way to watch real traffic before trusting the thresholds.
+   */
+  formGuardMonitor: optional('FORM_GUARD_MODE') === 'monitor',
   /** Built web app to serve from this origin (the production container sets it). Unset in dev: Vite serves it. */
   serveClientDir: optional('SERVE_CLIENT_DIR'),
 };

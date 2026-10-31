@@ -366,3 +366,37 @@ export function Stepper({
     </div>
   );
 }
+
+/* ---------- Honeypot (anti-bot, see lib/form-guard.ts) ---------- */
+
+/**
+ * Hidden inputs only a bot fills. Hidden by the WRAPPER (moved off-screen and clipped),
+ * never display:none on the input, which a headless bot checks for. aria-hidden and
+ * tabIndex -1 keep them away from screen readers and the keyboard; autofill and
+ * password managers are told to skip them. Absolutely positioned, so it takes no
+ * room in the form's layout. Render it inside a guarded form with the props from
+ * useFormGuard().honeypot.
+ */
+export function Honeypot({ fields, values, onChange }: { fields: readonly string[]; values: Record<string, string>; onChange: (field: string, value: string) => void }) {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute -left-[9999px] top-0 h-px w-px overflow-hidden opacity-0 [clip-path:inset(50%)]">
+      {fields.map((field) => (
+        <label key={field}>
+          {field}
+          <input
+            type="text"
+            name={field}
+            value={values[field] ?? ''}
+            onChange={(e) => onChange(field, e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+            data-1p-ignore=""
+            data-lpignore="true"
+            data-bwignore=""
+            data-form-type="other"
+          />
+        </label>
+      ))}
+    </div>
+  );
+}

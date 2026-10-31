@@ -5,6 +5,7 @@
 import express, { Router } from 'express';
 import { Types } from 'mongoose';
 import { endSession, issueSession, requireAuth, requireParent } from './auth.js';
+import { formGuard } from './bot-protection.js';
 import { handle, parse } from './http.js';
 import * as S from './schemas-account.js';
 import {
@@ -44,7 +45,7 @@ const signedIn = requireAuth;
 const parent = [requireAuth, requireParent];
 
 // Password reset: always the same answer, whether or not the email has an account.
-r.post('/auth/password/forgot', resetRequestIpLimiter, resetRequestLimiter, handle((req) => security.requestPasswordReset(parse(S.forgotBody, req.body))));
+r.post('/auth/password/forgot', resetRequestIpLimiter, resetRequestLimiter, formGuard('passwordReset'), handle((req) => security.requestPasswordReset(parse(S.forgotBody, req.body))));
 // POST with the token in the body: a token in a path would land in the request log.
 r.post('/auth/password/reset/check', linkCheckLimiter, handle((req) => security.checkResetToken(parse(S.resetCheckBody, req.body).token)));
 r.post('/auth/password/reset', resetExecuteLimiter, handle(async (req) => {

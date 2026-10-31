@@ -6,10 +6,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { LEGAL_PATHS, PASSWORD_HINT, passwordProblem } from '@kk/shared';
 import { IconCheck, IconDownload, IconKey, IconLogout, IconMail, IconTrash } from '@/art';
-import { Button, Card, Field, Heading, Input, PennySays, Pill, Sheet, Spinner, Text, useConfirm } from '@/components/ui';
+import { Button, Card, Field, Heading, Honeypot, Input, PennySays, Pill, Sheet, Spinner, Text, useConfirm } from '@/components/ui';
 import { endpoints, errorMessage } from '@/lib/api';
 import { celebrate } from '@/lib/celebrate';
 import { saveJsonFile } from '@/lib/download';
+import { useFormGuard } from '@/lib/form-guard';
 import { useHome } from '@/lib/queries';
 import { clearFragment, readFragment } from '@/lib/link';
 import { useAuth } from '@/stores/auth';
@@ -42,13 +43,14 @@ export function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const guard = useFormGuard('passwordReset');
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
     setError('');
     try {
-      await endpoints.forgotPassword(email);
+      await endpoints.forgotPassword(email, guard.body());
       setSent(true);
       celebrate('done');
     } catch (err) {
@@ -70,6 +72,7 @@ export function ForgotPasswordPage() {
           <Card pad="lg">
             <form onSubmit={submit} className="flex flex-col gap-4">
               <Heading size="md">Reset password</Heading>
+              <Honeypot {...guard.honeypot} />
               <Field label="Email">
                 {(id) => (
                   <Input id={id} type="email" leading={<IconMail size={20} className="text-ink-faint" />} value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />

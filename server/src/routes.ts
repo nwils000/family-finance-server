@@ -14,6 +14,7 @@ import {
   signupLimiter,
 } from './security.js';
 import { endSession, issueSession, publicUser, requireAuth, requireParent, rotateSession } from './auth.js';
+import { formGuard } from './bot-protection.js';
 import { config } from './config.js';
 import { handle, parse } from './http.js';
 import * as S from './schemas.js';
@@ -38,12 +39,12 @@ const ok = async (p: Promise<unknown>) => {
 export const routes = Router();
 
 // Public: sign in and out
-routes.post('/auth/signup', signupLimiter, handle(async (req, res) => issueSession(req, res, await accounts.signup(parse(S.signupBody, req.body)))));
+routes.post('/auth/signup', signupLimiter, formGuard('signup'), handle(async (req, res) => issueSession(req, res, await accounts.signup(parse(S.signupBody, req.body)))));
 // A grown-up joins only with an invite link; the family code is for kids.
 routes.post('/auth/invite/check', linkCheckLimiter, handle((req) => accounts.checkInvite(parse(S.inviteCheckBody, req.body).invite)));
-routes.post('/auth/join', signupLimiter, handle(async (req, res) => issueSession(req, res, await accounts.joinFamily(parse(S.joinBody, req.body)))));
-routes.post('/auth/login', loginEmailLimiter, loginLimiter, handle(async (req, res) => issueSession(req, res, await accounts.parentLogin(parse(S.loginBody, req.body)))));
-routes.post('/auth/kid-login', authLimiter, familyPinLimiter, kidPinLimiter, handle(async (req, res) => issueSession(req, res, await accounts.kidLogin(parse(S.kidLoginBody, req.body)))));
+routes.post('/auth/join', signupLimiter, formGuard('join'), handle(async (req, res) => issueSession(req, res, await accounts.joinFamily(parse(S.joinBody, req.body)))));
+routes.post('/auth/login', loginEmailLimiter, loginLimiter, formGuard('login'), handle(async (req, res) => issueSession(req, res, await accounts.parentLogin(parse(S.loginBody, req.body)))));
+routes.post('/auth/kid-login', authLimiter, familyPinLimiter, kidPinLimiter, formGuard('kidLogin'), handle(async (req, res) => issueSession(req, res, await accounts.kidLogin(parse(S.kidLoginBody, req.body)))));
 routes.get('/auth/family/:code', authLimiter, handle((req) => accounts.familyPreview(parse(S.familyCode, req.params.code))));
 // Dev-only quick login for the seeded demo family: local development with
 // ENABLE_DEV_ENDPOINTS=true (npm run dev sets it), and a caller on this machine.

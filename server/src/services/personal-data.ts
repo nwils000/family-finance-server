@@ -40,6 +40,8 @@ export const NOT_PERSONAL = {
   BillingEvent: 'provider event ids for idempotency; no personal data',
   AppleNonce: 'short-lived sign-in nonces with a TTL; not tied to a user',
   RevokedJti: 'ids of signed-out access tokens, TTL at their 15 minute expiry; no user id stored',
+  AbuseCounter: 'rate-limit and bot counters with a TTL of their window; rate-limit keys (which may hold an email or kid id) are stored hashed',
+  IpBan: 'automatic bans of an IP address (IPv6 /64), TTL at the end of the ban; not tied to a user',
 } as const;
 
 const eraseUser = async (userId: Types.ObjectId) => {

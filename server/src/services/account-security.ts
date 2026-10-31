@@ -41,6 +41,9 @@ const sendResetLink = async (userId: unknown, email: string) => {
  * Always answers the same way, and only after one indexed lookup, so neither the
  * reply nor its timing says whether the email has an account (Mentis B1 timing fix).
  */
+/** The one answer to "send me a reset link", whatever happened. The form guard's decoy sends it too. */
+export const RESET_REQUESTED = { ok: true } as const;
+
 export const requestPasswordReset = async ({ email }: z.infer<typeof forgotBody>) => {
   const user = await User.findOne({ email, role: 'parent' }).select('_id email');
   if (user) {
@@ -50,7 +53,7 @@ export const requestPasswordReset = async ({ email }: z.infer<typeof forgotBody>
       );
     });
   }
-  return { ok: true };
+  return RESET_REQUESTED;
 };
 
 const findLiveToken = (token: string) => PasswordResetToken.findOne({ tokenHash: sha256(token), used: false, expiresAt: { $gt: new Date() } });

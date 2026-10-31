@@ -8,7 +8,8 @@ import { errorHandler, handle, notFound } from './http.js';
 import { runGrowth } from './services/growth.js';
 import { routes } from './routes.js';
 import { accountRoutes, rawBodyRoutes } from './routes-account.js';
-import { corsOptions, csrfGuard, noStore, requireCron, requestId, requestLog, requestShapeGuard, securityHeaders, writeLimiter } from './security.js';
+import { botProtection, watchFailedSignIns } from './bot-protection.js';
+import { apiLimiter, corsOptions, csrfGuard, noStore, requireCron, requestId, requestLog, requestShapeGuard, securityHeaders, writeLimiter } from './security.js';
 
 export const createApp = () => {
   const app = express();
@@ -18,13 +19,15 @@ export const createApp = () => {
   // Every response is no-store; an ETag would only let a 304 hint at unchanged private data.
   app.disable('etag');
   app.use(requestId, requestLog);
+  // Before the pages and the API alike: a banned address is refused everywhere.
+  app.use(botProtection);
   // Production serves the web app from this origin, with headers made for pages.
   if (config.serveClientDir) app.use(webApp(config.serveClientDir));
   app.use(securityHeaders, noStore);
   app.use(cors(corsOptions));
   // Before any route, raw-body webhooks included (they are exempt by path).
   app.use(csrfGuard);
-  app.use('/api', writeLimiter);
+  app.use('/api', apiLimiter, writeLimiter);
   // Before express.json(): the Stripe webhook needs the raw bytes for its signature.
   app.use('/api', rawBodyRoutes);
   app.use(express.json({ limit: '50kb' }));
@@ -45,6 +48,6 @@ export const createApp = () => {
   app.use('/api', routes);
 
   app.use((_req, _res, next) => next(notFound()));
-  app.use(errorHandler);
+  app.use(watchFailedSignIns, errorHandler);
   return app;
 };
