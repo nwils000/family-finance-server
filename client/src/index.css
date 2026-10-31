@@ -1,0 +1,95 @@
+@import '@fontsource/fredoka/500.css';
+@import '@fontsource/fredoka/600.css';
+@import '@fontsource/fredoka/700.css';
+@import '@fontsource/nunito/600.css';
+@import '@fontsource/nunito/700.css';
+@import '@fontsource/nunito/800.css';
+@import './art/art.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* THE token block. Every color in the app resolves to one of these (RGB triplets). */
+:root {
+  --bg: 255 248 236;
+  --surface: 255 255 255;
+  --surface-soft: 255 252 245;
+  --surface-sunk: 244 238 226;
+  --line: 233 225 210;
+  --ink: 31 37 71;
+  --ink-soft: 85 92 128;
+  --ink-faint: 150 156 184;
+  --coin: 255 200 61;
+  --coin-deep: 224 150 0;
+  --coin-light: 255 240 194;
+  --good: 46 211 160;
+  --good-deep: 22 160 118;
+  --good-light: 214 248 236;
+  --bad: 255 107 107;
+  --bad-deep: 214 64 64;
+  --bad-light: 255 228 228;
+  --sky: 76 201 240;
+  --grape: 155 93 229;
+  --pink: 255 143 199;
+  /* The family theme picks the brand trio below. */
+  --brand: 91 91 247;
+  --brand-deep: 58 58 196;
+  --brand-light: 230 230 255;
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+[data-theme='grape'] { --brand: 139 84 230; --brand-deep: 99 52 184; --brand-light: 239 228 255; }
+[data-theme='sky'] { --brand: 40 160 230; --brand-deep: 18 112 176; --brand-light: 222 243 255; }
+[data-theme='mint'] { --brand: 22 180 135; --brand-deep: 12 128 96; --brand-light: 214 248 236; }
+[data-theme='coral'] { --brand: 240 90 100; --brand-deep: 190 52 64; --brand-light: 255 228 230; }
+[data-theme='sunny'] { --brand: 245 150 20; --brand-deep: 190 104 0; --brand-light: 255 240 210; }
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    @apply bg-bg text-ink font-body antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+  /* A soft dotted paper texture behind everything. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: radial-gradient(rgb(var(--ink) / 0.06) 1.2px, transparent 1.2px);
+    background-size: 22px 22px;
+  }
+  ::selection { background: rgb(var(--brand) / 0.25); }
+}
+
+@layer utilities {
+  /* Swipe rows and small scroll boxes: still scroll, no scrollbar line drawn over the content. */
+  .scroll-quiet {
+    scrollbar-width: none;
+  }
+  .scroll-quiet::-webkit-scrollbar {
+    display: none;
+  }
+  .pt-safe { padding-top: max(env(safe-area-inset-top), 0px); }
+  .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 12px); }
+  .tabular { font-variant-numeric: tabular-nums; }
+  .text-outline { paint-order: stroke fill; -webkit-text-stroke: 6px rgb(var(--ink)); }
+  .press { transition: transform 160ms var(--ease-spring), box-shadow 160ms; }
+  .press:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 rgb(var(--ink)); }
+}
+
+@keyframes kk-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.kk-shake { animation: kk-shake 320ms; }
+
+@keyframes kk-pop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.kk-pop { animation: kk-pop 380ms var(--ease-spring) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .kk-shake, .kk-pop { animation: none; }
+}

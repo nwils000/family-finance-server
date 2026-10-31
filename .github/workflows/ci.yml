@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main, rebuild]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mongo:
+        image: mongo:7
+        ports: ['27017:27017']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck (server + client)
+        run: npm run typecheck
+      - name: Tests and repo guards
+        run: npm test
+        env:
+          JWT_SECRET: ci-only-secret-that-is-long-enough-to-pass-checks
+      - name: Build the web app
+        run: npm run build
+      - name: Build the marketing site
+        run: npm run build:site
+      # The app's runtime code. The marketing site is left out on purpose: it is a static
+      # export (no Next server runs in production), and moving to Next 15+ means React 19,
+      # which must happen together with the client because the site renders the app's art.
+      - name: No known vulnerabilities in the app's production dependencies
+        run: npm audit --omit=dev --audit-level=moderate -w server -w client -w shared

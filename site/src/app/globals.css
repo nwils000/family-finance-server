@@ -1,0 +1,39 @@
+/*
+ * Site-only styles. The tokens, fonts (self-hosted @fontsource, no CDN), the
+ * dotted paper background and the art animations all come from the app's own
+ * stylesheet, client/src/index.css, imported in layout.tsx before this file.
+ * Plain CSS only here: Tailwind's directives already ran in the app stylesheet.
+ */
+
+html {
+  scroll-behavior: smooth;
+  /* Anchored sections land below the fixed nav. */
+  scroll-padding-top: 88px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+/* The app pins html/body/#root to 100% for its app shell; a long page needs to grow. */
+html, body { height: auto; min-height: 100%; }
+body { overflow-x: hidden; overscroll-behavior-y: auto; }
+
+:focus-visible {
+  outline: 3px solid rgb(var(--brand));
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 2.5px solid rgb(var(--ink));
+  background: rgb(var(--surface));
+  font-weight: 800;
+}
+.skip-link:focus { top: 12px; }

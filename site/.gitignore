@@ -1,0 +1,4 @@
+dist/
+*.tsbuildinfo
+# Copied from client/public by scripts/sync-assets.mjs on every dev/build.
+public/favicon.svg
