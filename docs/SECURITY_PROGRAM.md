@@ -46,11 +46,15 @@ details, photos, voice or location are collected, and the app has no field for t
 
 ## 5. Service providers and their assurances
 
-Only two providers process the data, both as service providers, both in the United States:
+These providers process data as service providers. None receives children's information:
 
 - **Vercel** (hosting, firewall): Vercel's Data Processing Addendum and security commitments.
 - **MongoDB Atlas** (database, on AWS us-east-1): MongoDB's Data Processing Agreement and
   security commitments.
+- **EmailJS** (grown-up contact form in Settings only): receives the grown-up's name, email and
+  message to deliver them to the operator's inbox.
+- **Stripe** (optional tips, on Stripe's own hosted page, web only): the app sends nothing to
+  Stripe and never sees card details.
 
 Before adding any provider that would touch children's information (email, payments,
 analytics), get its written security assurances, add it here and to the Privacy Policy, and
@@ -69,3 +73,4 @@ bump `LEGAL_VERSIONS`.
 | Date | What changed |
 |------|--------------|
 | 2026-10-31 | First program. Free for everyone, no payments, no email; retention limit added. |
+| 2026-10-31 | Grown-up contact form (EmailJS) and optional tip link (Stripe), web only, never on kid screens. |

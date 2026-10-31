@@ -140,6 +140,7 @@ A fix that cannot name its guard is not done.
 | The legal documents' text | `client/src/pages/legal.tsx` | a second copy (the marketing site links to the app's pages) |
 | Who runs Kid Kapital and how to reach them | `@kk/shared` `OPERATOR_NAME` / `PRIVACY_CONTACT` | a name or email typed into a page |
 | Whether anything is paid | `@kk/shared` `PAID_PLANS` | a price, plan card or upgrade button that ignores it |
+| The creator's tip link, contact form, EmailJS settings and spam rules | `@kk/shared` `creator.ts`; UI `client/src/features/creator.tsx` (grown-up Settings only, web only); the send in `lib/api.ts` `sendContactMessage` | a tip or contact link on a kid screen or in a native build; a second EmailJS call |
 | Connecting to MongoDB and building indexes (server and Vercel function) | `server/src/db.ts` `connectDb()` | `mongoose.connect` anywhere else |
 | Hosting on Vercel (build output, routes, cron) | `scripts/vercel-build.mjs` + `server/src/vercel.ts`; the cron door is `security.ts` `requireCron` | a second build config or an unguarded job route |
 | Serving the built web app (production) and its page headers | `server/src/web-app.ts` + `security.ts` `webAppHeaders` | static serving or a page CSP anywhere else |

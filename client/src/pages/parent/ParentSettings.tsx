@@ -2,7 +2,7 @@
 // money rules, sound on this device, and signing out.
 import { useState, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { FEATURES, THEMES, type Feature, type Features, type Theme } from '@kk/shared';
+import { FEATURES, PAID_PLANS, THEMES, type Feature, type Features, type Theme } from '@kk/shared';
 import { Coin, GoalJar, IconCheck, IconLearn, IconLogout, PiggyBank, QuestIcon, RewardIcon, Rocket, Star, TreasureChest, XpStar } from '@/art';
 import {
   AmountPicker,
@@ -25,6 +25,8 @@ import { prefs } from '@/lib/prefs';
 import { qk, useAction, useHome } from '@/lib/queries';
 import type { FamilySettings } from '@/lib/types';
 import { PlanCard } from '@/features/billing';
+import { CreatorCorner } from '@/features/creator';
+import { isNative } from '@/lib/secure-storage';
 import { AccountSecurityCard, YourDataCard } from '@/pages/account';
 import { useSignOut } from '@/stores/auth';
 import { FamilyCodeCard, InviteGrownUpCard, PageIntro } from './parts';
@@ -266,10 +268,12 @@ export default function ParentSettings() {
         </div>
 
         <div className="flex flex-col gap-6">
-          <motion.section variants={popIn}>
-            <SectionTitle>Your plan</SectionTitle>
-            <PlanCard />
-          </motion.section>
+          {PAID_PLANS && (
+            <motion.section variants={popIn}>
+              <SectionTitle>Your plan</SectionTitle>
+              <PlanCard />
+            </motion.section>
+          )}
 
           <motion.section variants={popIn}>
             <SectionTitle>Money rules</SectionTitle>
@@ -300,6 +304,13 @@ export default function ParentSettings() {
             <SectionTitle>Your data</SectionTitle>
             <YourDataCard />
           </motion.section>
+
+          {!isNative() && (
+            <motion.section variants={popIn}>
+              <SectionTitle>From the creator</SectionTitle>
+              <CreatorCorner />
+            </motion.section>
+          )}
 
           <motion.section variants={popIn}>
             <SectionTitle>This device</SectionTitle>

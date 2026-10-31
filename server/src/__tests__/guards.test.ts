@@ -31,6 +31,12 @@ describe('repo guards', () => {
     expect(legal.includes("heading: 'It is free'")).toBe(!PAID_PLANS);
   });
 
+  it('the tip link and contact form appear only in grown-up Settings, and EmailJS is called only from lib/api.ts', () => {
+    expect(offenders(/features\/creator'/, 'client/src', ['client/src/pages/parent/ParentSettings.tsx'])).toEqual([]);
+    expect(offenders(/api\.emailjs\.com|EMAILJS\.origin/, 'client/src', ['client/src/lib/api.ts'])).toEqual([]);
+    expect(offenders(/SUPPORT_URL/, 'client/src', ['client/src/features/creator.tsx'])).toEqual([]);
+  });
+
   it('has no em or en dashes anywhere', () => {
     expect(files.filter((f) => /[–—]/.test(f.text)).map((f) => f.path)).toEqual([]);
   });

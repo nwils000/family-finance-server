@@ -38,6 +38,20 @@ export const Input = forwardRef<HTMLInputElement, ComponentPropsWithoutRef<'inpu
   );
 });
 
+/** A multi-line Input, same look. */
+export const TextArea = forwardRef<HTMLTextAreaElement, ComponentPropsWithoutRef<'textarea'>>(function TextArea({ className, rows = 5, ...rest }, ref) {
+  return (
+    <div className="rounded-2xl border-[2.5px] border-ink bg-surface px-3.5 py-2.5 shadow-chunky-sm focus-within:ring-4 focus-within:ring-brand/30">
+      <textarea
+        ref={ref}
+        rows={rows}
+        className={cn('block w-full min-w-0 resize-y bg-transparent font-body text-base font-bold text-ink outline-none placeholder:text-ink-faint', className)}
+        {...rest}
+      />
+    </div>
+  );
+});
+
 /* ---------- Toggle ---------- */
 
 export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {

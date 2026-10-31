@@ -1,7 +1,7 @@
 // The only module that talks to the server. Components call the typed
 // functions in `endpoints`, never axios directly.
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { PLAN_LIMIT_CODE, type AccountKind, type FormGuardBody, type HatId } from '@kk/shared';
+import { EMAILJS, PLAN_LIMIT_CODE, type AccountKind, type ContactFields, type FormGuardBody, type HatId } from '@kk/shared';
 import { isNative, secureStorage } from './secure-storage';
 import type * as T from './types';
 
@@ -89,6 +89,24 @@ const patch = <R>(url: string, body?: object) => http.patch<R>(url, body).then((
 const del = <R>(url: string) => http.delete<R>(url).then((r) => r.data);
 
 type Ok = { ok: true };
+
+/**
+ * The grown-up contact form (features/creator.tsx): one POST to EmailJS's REST API, the only
+ * call that leaves our own origin. No retry: a failed send shows an error and the email address.
+ */
+export const sendContactMessage = async (fields: ContactFields) => {
+  const res = await fetch(EMAILJS.origin + EMAILJS.sendPath, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      service_id: EMAILJS.serviceId,
+      template_id: EMAILJS.templateId,
+      user_id: EMAILJS.publicKey,
+      template_params: { ...fields, app_name: EMAILJS.appName },
+    }),
+  });
+  if (!res.ok) throw new Error(`EmailJS ${res.status}`);
+};
 
 export const endpoints = {
   // Public forms pass `guard` from useFormGuard() (lib/form-guard.ts): the anti-bot signals.

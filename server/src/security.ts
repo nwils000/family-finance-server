@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import rateLimit, { type Options } from 'express-rate-limit';
+import { EMAILJS } from '@kk/shared';
 import { config } from './config.js';
 import { MongoRateLimitStore } from './services/abuse.js';
 
@@ -46,7 +47,8 @@ export const webAppHeaders = helmet({
       styleSrc: ["'self'", "'unsafe-inline'", 'https://accounts.google.com/gsi/style'],
       imgSrc: ["'self'", 'data:', 'blob:'],
       fontSrc: ["'self'"],
-      connectSrc: ["'self'", 'https://accounts.google.com/gsi/'],
+      // EmailJS: the grown-up contact form (features/creator.tsx) posts to its REST API; no script.
+      connectSrc: ["'self'", 'https://accounts.google.com/gsi/', EMAILJS.origin],
       frameSrc: ['https://accounts.google.com/gsi/', 'https://appleid.apple.com'],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],

@@ -8,7 +8,7 @@
 // Facts this relies on: PAID_PLANS is off (shared/src/plans.ts); the preview sends no
 // email (config.ts PREVIEW_WITHOUT_EMAIL); the free database tier keeps no backups
 // (docs/DEPLOY.md); IP bans expire within 24 hours and offenses after 7 days
-// (services/abuse.ts); idle families are erased after INACTIVE_FAMILY_MONTHS (personal-data.ts); Google and Apple sign-in are not configured, so they are not mentioned.
+// (services/abuse.ts); the contact form uses EmailJS and tips use a Stripe page (features/creator.tsx); idle families are erased after INACTIVE_FAMILY_MONTHS (personal-data.ts); Google and Apple sign-in are not configured, so they are not mentioned.
 //
 // NOT REVIEWED BY A LAWYER. Kid Kapital is used by children under 13, so COPPA applies.
 // Have these reviewed before the app is promoted to real families.
@@ -74,7 +74,8 @@ const PRIVACY: Section[] = [
     heading: 'Who else handles data',
     body: [
       'Two companies run the computers Kid Kapital lives on, and process data only to provide that service to us, under their written data protection and security terms: Vercel (hosting) and MongoDB Atlas (database, run on Amazon Web Services). Data is stored in the United States.',
-      'We do not send email yet, so no email company receives your address. There are no payments, so no payment company is involved.',
+      'If a grown-up writes to us with the contact form in Settings, their name, email address and message are delivered to our inbox by EmailJS (emailjs.com/legal/privacy-policy). Kids never see the form. Apart from that, we do not send email yet.',
+      'If a grown-up chooses to leave a tip, it is paid on Stripe\'s own page (stripe.com/privacy), which handles the payment details; we never see or store card details. There are no other payments.',
       'We disclose information only if the law requires it, or to protect the safety of a person or the service.',
     ],
   },
@@ -136,6 +137,7 @@ const TERMS: Section[] = [
     heading: 'It is free',
     body: [
       'Kid Kapital is free. There are no paid plans, no purchases and no ads. If we ever offer something paid, we will tell you first, and nothing will be charged unless you choose to buy it.',
+      'A grown-up may choose to leave a tip to support the creator. A tip is optional, is paid on Stripe\'s page, unlocks nothing, is not a purchase or a donation and is not tax-deductible. Kids never see the tip link.',
     ],
   },
   {

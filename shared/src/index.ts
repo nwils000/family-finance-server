@@ -162,4 +162,5 @@ export * from './plans';
 export * from './password';
 export * from './learn';
 export * from './legal';
+export * from './creator';
 export * from './form-guard';
