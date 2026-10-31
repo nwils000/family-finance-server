@@ -74,16 +74,17 @@ const PRIVACY: Section[] = [
     heading: 'Who else handles data',
     body: [
       'Two companies run the computers Kid Kapital lives on, and process data only to provide that service to us, under their written data protection and security terms: Vercel (hosting) and MongoDB Atlas (database, run on Amazon Web Services). Data is stored in the United States.',
-      'If a grown-up writes to us with the contact form in Settings, their name, email address and message are delivered to our inbox by EmailJS (emailjs.com/legal/privacy-policy). Kids never see the form. Apart from that, we do not send email yet.',
+      'If a grown-up writes to us with the contact form in Settings, their name, email address and message are passed by EmailJS (emailjs.com/legal/privacy-policy) to our Gmail inbox, run by Google (policies.google.com/privacy). Kids never see the form. Please do not include a child\'s details in a message. Apart from that, we do not send email yet.',
       'If a grown-up chooses to leave a tip, it is paid on Stripe\'s own page (stripe.com/privacy). Stripe receives what the grown-up enters there (such as name, email and card details); we never see or store card details. There are no other payments.',
-      'EmailJS and Stripe only ever receive information a grown-up chooses to send them. The contact form and the tip link are in grown-up Settings only, so neither ever receives a child\'s information.',
+      'EmailJS, Google and Stripe only ever receive what a grown-up chooses to type into the contact form or Stripe\'s page. Both are in grown-up Settings only, and we ask grown-ups not to include a child\'s details, so no child\'s information is sent to them by the app.',
       'We disclose information only if the law requires it, or to protect the safety of a person or the service.',
     ],
   },
   {
     heading: 'Cookies',
     body: [
-      'The app uses one cookie of its own, which keeps you signed in, and nothing else. Our website sets no cookies of its own. When our host checks that a visitor is a person and not a bot, it may set a short-lived security cookie for that check. There are no tracking, advertising or analytics cookies anywhere.',
+      'The app keeps you signed in with one cookie, kk_refresh (up to 30 days). It also stores a few things on your device: kk_sound (sound on or off), kk_family_code (the last family code used), kk_contact_sent (contact-form send times from the last day) and, for a moment after an update, kk:reloaded-for-update. In the phone apps (not released yet), the sign-in token is kept in the device\'s secure storage, or in the app\'s private storage as kk_refresh_fallback if secure storage is unavailable.',
+      'Our website sets no cookies of its own. When our host checks that a visitor is a person and not a bot, it may set a short-lived security cookie for that check. There are no tracking, advertising or analytics cookies or storage anywhere.',
     ],
   },
   {
@@ -91,13 +92,13 @@ const PRIVACY: Section[] = [
     body: [
       "We keep a family's information only while the family uses Kid Kapital, because the app needs it to show each person their quests, coins and lessons. We never keep it indefinitely:",
       `When you delete a kid, your account or the family, that data is deleted right away. If nobody in a family signs in for ${INACTIVE_FAMILY_MONTHS} months, we delete the whole family and everything in it automatically. We do not keep backup copies right now, so deleted data cannot be recovered, by you or by us.`,
-      'To block attacks, we may record an internet address that sends suspicious traffic. These records delete themselves within 7 days. Our host keeps short-lived technical logs of requests, which contain no names, emails or family content.',
+      'To stop spam and password guessing, we briefly process the internet (IP) address of each request. We count tries per address, and per email or family code, over short windows of 15 minutes to 24 hours; those counters are stored only as one-way hashes and delete themselves when the window ends. An address that sends attack traffic is stored as-is: it may be blocked for up to 24 hours, and a record of its past blocks is kept for 7 days, then deleted automatically. Our host also processes addresses to filter bots, and keeps short-lived technical logs of requests, which contain no names, emails or family content.',
     ],
   },
   {
     heading: 'Keeping it safe',
     body: [
-      "Passwords and PINs are hashed, connections are encrypted, sign-in sessions are short-lived and can be ended from Settings, repeated wrong guesses lock sign-in for a while, and every request is checked so one family can never see another family's data.",
+      "Passwords and PINs are hashed, connections are encrypted, sign-in tokens are renewed every 15 minutes and you stay signed in for up to 30 days unless you sign out (you can end every session from Settings), repeated wrong guesses lock sign-in for a while, and every request is checked, which is designed to keep each family's data private to that family.",
       'No system is perfectly secure. If we learn of a breach that affects your information, we will tell affected grown-ups as the law requires.',
     ],
   },
@@ -130,20 +131,20 @@ const TERMS: Section[] = [
   {
     heading: 'Who can use Kid Kapital',
     body: [
-      "You must be 18 or older, and the parent or legal guardian of every kid you add (or have that parent's permission). Kid Kapital is made for families in the United States.",
+      "You must be 18 or older, and the parent or legal guardian of every kid you add. Kid Kapital is made for families in the United States.",
       'Kids use Kid Kapital only inside a family a grown-up set up. You are responsible for your family account, for the kid profiles you create, and for supervising how the kids in your family use the app.',
     ],
   },
   {
     heading: 'It is free',
     body: [
-      'Kid Kapital is free. There are no paid plans, no purchases and no ads. If we ever offer something paid, we will tell you first, and nothing will be charged unless you choose to buy it.',
+      'Kid Kapital is free. There are no paid plans, no purchases and no ads.',
     ],
   },
   {
     heading: 'Tips',
     body: [
-      `On the web, a grown-up may choose to leave a tip (donation) to support Kid Kapital. A tip is a voluntary gift to ${OPERATOR_NAME} personally, for an app that is already free.`,
+      `On the web, a grown-up may choose to leave a tip to support Kid Kapital. A tip is a voluntary gift to ${OPERATOR_NAME} personally, for an app that is already free.`,
       'A tip unlocks nothing, buys nothing, and creates no account, subscription or obligation on either side. It is not a charitable donation and is not tax-deductible.',
       `Tips are processed by Stripe on Stripe's own page, so Kid Kapital never sees card details. Tips are not refundable, except that if you tipped by mistake you can email ${PRIVACY_CONTACT} within 30 days for a refund, and except where consumer law requires otherwise.`,
       'Kids never see the tip link.',

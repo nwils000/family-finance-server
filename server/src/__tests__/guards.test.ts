@@ -37,6 +37,30 @@ describe('repo guards', () => {
     expect(offenders(/SUPPORT_URL/, 'client/src', ['client/src/features/creator.tsx'])).toEqual([]);
   });
 
+  it('every form that sends from the browser renders a honeypot, and the contact form checks before it sends', () => {
+    const guarded = code.filter((f) => f.path.startsWith('client/src/pages') && /useFormGuard\(/.test(f.text));
+    expect(guarded.length).toBeGreaterThanOrEqual(2);
+    expect(guarded.filter((f) => !/<Honeypot\b/.test(f.text)).map((f) => f.path)).toEqual([]);
+    const contact = code.find((f) => f.path === 'client/src/features/creator.tsx')!.text;
+    expect(contact).toMatch(/<Honeypot\b/);
+    // The trap and floor check runs before the send, so a filled trap never reaches the network.
+    expect(contact.indexOf('checkContactSubmission(')).toBeGreaterThan(-1);
+    expect(contact.indexOf('checkContactSubmission(')).toBeLessThan(contact.indexOf('await sendContactMessage('));
+  });
+
+  it('every cookie and device storage key the app uses is named in the Privacy Policy', () => {
+    const text = (path: string) => code.find((f) => f.path === path)!.text;
+    const keys = new Set<string>();
+    // prefs.ts stores every per-device convenience under kk_<name>.
+    for (const m of text('client/src/lib/prefs.ts').matchAll(/(?:read|write)\('([a-z_]+)'/g)) keys.add(`kk_${m[1]}`);
+    // Any other literal key in the client, and the session cookie.
+    for (const f of code.filter((c) => c.path.startsWith('client/src'))) for (const m of f.text.matchAll(/'(kk[_:][a-z_-]+)'/g)) keys.add(m[1]);
+    keys.add(/REFRESH_COOKIE = '([^']+)'/.exec(text('server/src/auth.ts'))![1]);
+    expect(keys.size).toBeGreaterThanOrEqual(6);
+    const policy = text('client/src/pages/legal.tsx');
+    expect([...keys].filter((k) => !policy.includes(k))).toEqual([]);
+  });
+
   it('has no em or en dashes anywhere', () => {
     expect(files.filter((f) => /[–—]/.test(f.text)).map((f) => f.path)).toEqual([]);
   });

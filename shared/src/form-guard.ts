@@ -25,15 +25,18 @@ export const HONEYPOT_FIELDS = ['website', 'homepage'] as const;
 export type HoneypotField = (typeof HONEYPOT_FIELDS)[number];
 
 /**
- * Fastest plausible human fill per form, in milliseconds. Kid login counts from the
- * family code screen through the avatar tap and four PIN digits.
+ * Fastest plausible human fill per form, in milliseconds: 3 seconds on every grown-up form
+ * (the standard across Nathan's apps). A submit is caught only when it is faster than this
+ * AND no real pointer, key or touch happened, so a person using a password manager is never
+ * caught. Kid login counts from the family code screen through the avatar tap and four PIN
+ * digits, and stays low so a quick kid is never slowed down.
  */
 export const FORM_MIN_FILL_MS: Record<FormGuardSurface, number> = {
-  signup: 2000,
-  join: 2000,
-  login: 400,
+  signup: 3000,
+  join: 3000,
+  login: 3000,
   kidLogin: 600,
-  passwordReset: 800,
+  passwordReset: 3000,
 };
 
 /** Anything longer is a stale tab or a replay, not evidence, so it is ignored. */

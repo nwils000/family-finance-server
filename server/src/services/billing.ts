@@ -137,9 +137,13 @@ const stripeCustomerFor = async (actor: Actor, s: Stripe) => {
   return won?.stripeCustomerId ?? (await Entitlement.findOne({ familyId }))!.stripeCustomerId!;
 };
 
-export const createCheckout = async (actor: Actor) => {
-  // Free for everyone (PAID_PLANS): no checkout can start, even if Stripe keys get set.
+/** Free for everyone (PAID_PLANS off): no billing action runs, even if provider keys get set. */
+const assertPaidPlans = () => {
   if (!PAID_PLANS) throw new HttpError(501, 'Kid Kapital is free for everyone right now', 'NOT_CONFIGURED');
+};
+
+export const createCheckout = async (actor: Actor) => {
+  assertPaidPlans();
   const s = stripe();
   if (!s || !config.stripe.pricePlus) throw stripeOff();
   if ((await getFamilyPlan(familyOf(actor))) === 'plus') throw new HttpError(409, 'Your family already has Kapital Plus', 'ALREADY_PLUS');
@@ -160,6 +164,7 @@ export const createCheckout = async (actor: Actor) => {
 };
 
 export const createPortal = async (actor: Actor) => {
+  assertPaidPlans();
   const s = stripe();
   if (!s) throw stripeOff();
   const e = await Entitlement.findOne({ familyId: familyOf(actor) });
@@ -386,6 +391,7 @@ export const revenueCatWebhook = async (authorization: string | undefined, body:
  * says what it bought; the server asks RevenueCat.
  */
 export const syncRevenueCat = async (actor: Actor) => {
+  assertPaidPlans();
   const key = config.revenueCat.secretApiKey;
   if (!key) throw new HttpError(501, 'App store billing is not set up on this server yet', 'NOT_CONFIGURED');
   const familyId = familyOf(actor);

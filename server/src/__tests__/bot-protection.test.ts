@@ -1,6 +1,7 @@
 // Bot protection and rate limits that hold across serverless instances (bot-protection.ts,
 // services/abuse.ts, security.ts limiter()). Each test calls from its own address.
 import express from 'express';
+import { Types } from 'mongoose';
 import request from 'supertest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FORM_SIGNALS_KEY } from '@kk/shared';
@@ -174,5 +175,56 @@ describe('form guard', () => {
     const ip = newIp();
     await post(ip, '/api/auth/signup', { ...signupBody('a@example.com'), website: 'https://spam.example' });
     expect((await AbuseCounter.findById(`risk:${ip}`).lean())?.hits).toBe(5);
+  });
+});
+
+// Each public route's own limit, end to end through the real app (limits are off in other
+// tests). Every refusal is the friendly 429 RATE_LIMITED, not an account lockout.
+describe('route limits answer 429 past their limit', () => {
+  const limited = (res: request.Response) => res.status === 429 && res.body.code === 'RATE_LIMITED';
+
+  it('signup: 5 an hour per address', async () => {
+    protection.limits = true;
+    const ip = newIp();
+    const results = [];
+    for (let i = 0; i < 6; i++) results.push(await post(ip, '/api/auth/signup', signupBody(`limit-${i}-${ip}@x.com`)));
+    expect(results.slice(0, 5).every((r) => r.status === 200)).toBe(true);
+    expect(limited(results[5])).toBe(true);
+    expect(results[5].body.error).toMatch(/try again/);
+  });
+
+  it('grown-up login: 10 wrong tries per address and email', async () => {
+    protection.limits = true;
+    const ip = newIp();
+    const body = { email: `nobody-${ip}@x.com`, password: 'Wrong-pass1!' };
+    for (let i = 0; i < 10; i++) expect((await post(ip, '/api/auth/login', body)).status).toBe(401);
+    expect(limited(await post(ip, '/api/auth/login', body))).toBe(true);
+  });
+
+  it('password reset: 3 an hour per address and email', async () => {
+    protection.limits = true;
+    const ip = newIp();
+    const body = { email: `reset-${ip}@x.com` };
+    for (let i = 0; i < 3; i++) expect((await post(ip, '/api/auth/password/forgot', body)).status).toBe(200);
+    expect(limited(await post(ip, '/api/auth/password/forgot', body))).toBe(true);
+  });
+
+  it('kid PIN: guessing across a family is capped even from many addresses', async () => {
+    protection.limits = true;
+    const code = `L${String(++last).padStart(5, '0')}`;
+    await Family.create({ name: 'Limit', code });
+    // A fresh address each try, and a different (unknown) kid each try, so neither the
+    // per-address limit nor one kid's lockout can be what stops it: only the family cap.
+    const tryPin = () => post(newIp(), '/api/auth/kid-login', { code, kidId: new Types.ObjectId().toString(), pin: '0000' });
+    for (let i = 0; i < 30; i++) expect((await tryPin()).status).not.toBe(429);
+    expect(limited(await tryPin())).toBe(true);
+  });
+
+  it('kid PIN: one address is capped across families too', async () => {
+    protection.limits = true;
+    const ip = newIp();
+    const tryPin = (i: number) => post(ip, '/api/auth/kid-login', { code: `Z${i}${ip.replace(/\D/g, '').slice(-4)}`, kidId: new Types.ObjectId().toString(), pin: '0000' });
+    for (let i = 0; i < 30; i++) expect((await tryPin(i)).status).not.toBe(429);
+    expect(limited(await tryPin(30))).toBe(true);
   });
 });

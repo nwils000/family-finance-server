@@ -37,6 +37,16 @@ details, photos, voice or location are collected, and the app has no field for t
 
 - Request hardening, headers, CORS, CSRF guard, rate limits: `server/src/security.ts`.
 - Bot protection and bans: `server/src/bot-protection.ts`, `server/src/services/abuse.ts`.
+  Every public form sends an off-screen honeypot and fill signals (3 seconds on grown-up forms);
+  a caught submit gets the normal answer and nothing is stored. Route limits (signup 5 an hour
+  per IP; login 10 wrong tries per IP and email, 20 per email; password reset 3 an hour per IP and
+  email; kid PIN 10 per kid, 30 per family, 30 per IP per 15 minutes, on top of the account
+  lockout ladder) count in MongoDB, shared by every instance, and answer 429.
+- IP addresses: route-limit counters are stored as one-way hashes and expire with their window
+  (15 minutes to 24 hours); bot-score and repeat-offense records hold the address itself for at
+  most 7 days; a ban lasts at most 24 hours. All expire through MongoDB TTL indexes.
+- Request bodies are capped at 50 KB and parsed with zod, which drops any field it does not
+  expect. Emails only ever go to an account's own address; nothing lets a caller pick a recipient.
 - Authentication and sessions: `server/src/auth.ts`; passwords and PINs hashed with bcrypt in
   `services/accounts.ts`.
 - Deletion, export and retention: `server/src/services/personal-data.ts` (a guard test fails
@@ -74,3 +84,4 @@ bump `LEGAL_VERSIONS`.
 |------|--------------|
 | 2026-10-31 | First program. Free for everyone, no payments, no email; retention limit added. |
 | 2026-10-31 | Grown-up contact form (EmailJS) and optional tip link (Stripe), web only, never on kid screens. |
+| 2026-10-31 | Bot pass: 3-second fill floor on grown-up forms, 429 tests for every limited public route, honeypot guard per form, IP retention written down. |
