@@ -388,3 +388,8 @@ kid, user or family data must be added to `personal-data.ts` or the build fails.
 
 Use the ego-browser skill for click-throughs and screenshots against the dev server.
 Check a phone width (390px) and a desktop width for every screen you touch.
+
+The marketing site has a layout guard: `npm run check:layout -w site` (after `build:site`; CI
+runs it) loads every page at 300 to 1440px and fails on sideways scroll, or on a section left
+invisible on a phone before scrolling. Site buttons (`site/src/components/button.tsx`) wrap a
+long label instead of growing past their container; never add `whitespace-nowrap` to one.

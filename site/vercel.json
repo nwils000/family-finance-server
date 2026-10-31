@@ -2,6 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "cd .. && npm install",
   "buildCommand": "npm run build",
+  "ignoreCommand": "[ -n \"$VERCEL_GIT_COMMIT_REF\" ] && { [ \"$VERCEL_GIT_COMMIT_REF\" != rebuild ] || git diff --quiet ${VERCEL_GIT_PREVIOUS_SHA:-HEAD^} HEAD -- . ../shared ../package-lock.json ; }",
   "outputDirectory": "dist/site",
   "framework": null,
   "cleanUrls": true,

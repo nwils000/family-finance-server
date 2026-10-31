@@ -24,7 +24,7 @@ export function Hero({ freeKids }: { freeKids: number }) {
         <Cloud size={64} />
       </Floating>
 
-      <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:gap-6">
+      <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-6">
         <div className="text-center lg:text-left">
           <Enter delay={0}>
             <span className="mb-5 inline-flex items-center gap-2 rounded-full border-2 border-ink bg-coin-light px-3 py-1.5 font-display text-sm font-semibold text-ink shadow-chunky-sm">
@@ -66,26 +66,28 @@ export function Hero({ freeKids }: { freeKids: number }) {
           </Enter>
         </div>
 
-        {/* The picture: the kid's home screen in front, the grown-up inbox behind. */}
-        <Enter
-          delay={0.1}
-          from={{ opacity: 0, scale: 0.94, rotate: -2 }}
-          className="relative mx-auto flex h-[600px] w-full max-w-[520px] justify-center"
-        >
-          <ParentPhone className="absolute right-0 top-14 hidden rotate-[7deg] scale-90 sm:block" />
-          <KidPhone className="relative z-10 -rotate-2 sm:mr-32" />
-          <Floating className="absolute -left-3 bottom-0 z-20 sm:left-2" delay={0.3}>
-            <PiggyBank size={92} />
-          </Floating>
-          <Floating className="absolute -right-1 bottom-24 z-20 sm:right-4" delay={1.1} rotate={-8}>
-            <Rocket size={96} />
-          </Floating>
-          <Floating className="absolute -top-4 left-1 z-20 sm:left-8" delay={0.7} distance={10}>
-            <Coin size={52} />
-          </Floating>
-          <Floating className="absolute right-10 top-0 z-20" delay={1.6} distance={8}>
-            <Sparkle size={40} />
-          </Floating>
+        {/* The picture: the kid's home screen in front, the grown-up inbox beside it. Both at
+            full size, fanned so they overlap by a sliver of frame only: an inbox tucked behind
+            the kid phone hid every avatar and name and read as cut off. Between lg and xl the
+            text column is narrower than the stage, so the stage scales down (on an inner box:
+            Enter animates its own transform, which would override a scale class). */}
+        <Enter delay={0.1} from={{ opacity: 0, scale: 0.94, rotate: -2 }} className="flex justify-center">
+          <div className="relative flex h-[600px] w-full max-w-[580px] flex-none justify-center sm:w-[580px] lg:scale-[0.8] xl:scale-100">
+            <ParentPhone className="absolute right-1 top-16 hidden rotate-[6deg] sm:block" />
+            <KidPhone className="relative z-10 -rotate-2 sm:absolute sm:left-1 sm:top-0" />
+            <Floating className="absolute -left-3 bottom-0 z-20 sm:left-2" delay={0.3}>
+              <PiggyBank size={92} />
+            </Floating>
+            <Floating className="absolute -right-1 bottom-24 z-20 sm:right-4" delay={1.1} rotate={-8}>
+              <Rocket size={96} />
+            </Floating>
+            <Floating className="absolute -top-4 left-1 z-20 sm:left-8" delay={0.7} distance={10}>
+              <Coin size={52} />
+            </Floating>
+            <Floating className="absolute right-10 top-0 z-20" delay={1.6} distance={8}>
+              <Sparkle size={40} />
+            </Floating>
+          </div>
         </Enter>
       </div>
 

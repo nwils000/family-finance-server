@@ -3,5 +3,6 @@
   "framework": null,
   "installCommand": "npm ci",
   "buildCommand": "node scripts/vercel-build.mjs",
+  "ignoreCommand": "[ -n \"$VERCEL_GIT_COMMIT_REF\" ] && [ \"$VERCEL_GIT_COMMIT_REF\" != rebuild ]",
   "outputDirectory": "client/dist"
 }

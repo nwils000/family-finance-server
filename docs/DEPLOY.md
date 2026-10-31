@@ -24,8 +24,13 @@ so the refresh cookie is first-party and no cross-site CORS is needed. Native ap
   running the Express app (`server/src/vercel.ts`), so pages keep `webAppHeaders` and the
   refresh cookie stays first-party. The build loads the bundled function from an empty
   folder, so a package left out of the bundle fails the build, not the live site.
-- **Deploy:** `vercel deploy --prod` from the repo root (app); for the site, the same with
-  `VERCEL_PROJECT_ID` set to the site project. Neither auto-deploys from git yet.
+- **Deploy:** both projects are connected to GitHub with `rebuild` as the production branch, so a
+  push to `rebuild` deploys. Each `vercel.json` has an `ignoreCommand` so nothing else spends a
+  build: the app skips every other branch; the site also skips a push that did not touch `site/`,
+  `shared/` or `package-lock.json` since its last deploy (`VERCEL_GIT_PREVIOUS_SHA`). When `main`
+  becomes the Kid Kapital branch, change the production branch in both projects (Settings,
+  Environments, Production) and the branch name in both `ignoreCommand`s. A manual
+  `vercel deploy --prod` from the repo root still works (for the site, set `VERCEL_PROJECT_ID`).
 - **Environment (app, production):** `NODE_ENV=staging`, `PREVIEW_WITHOUT_EMAIL=true` (no mail
   domain yet: grown-ups start verified, no email is sent, so password reset and invite emails
   do not arrive), `JWT_SECRET`, `CRON_SECRET`, `MONGO_URL`, `CLIENT_ORIGINS` and `APP_URL`
@@ -36,7 +41,9 @@ so the refresh cookie is first-party and no cross-site CORS is needed. Native ap
   a 300 req/min per IP limit on `/api/`, and a bypass for `/api/cron/growth` so the cron is not
   challenged (the route still requires `CRON_SECRET`). Behind that, the app's own limits
   (Mongo-backed, shared by every instance), scanner bans and form guard.
-- **Staying free:** Hobby has no card, so going over a limit pauses instead of billing. Atlas
+- **Staying free:** Hobby has no card, so going over a limit pauses instead of billing. The
+  tightest Hobby limit is Fluid Active CPU (4 h a month, shared by every project on the account);
+  on 2026-10-31 Kid Kapital had used 12 s of it, `company` 1 h 53 m. Atlas
   M0 is free but has NO backups: before real families, move to a paid tier with 30-day
   point-in-time restore (the Privacy Policy promises that window).
 - **Going to production:** buy a domain, set `SMTP_URL`/`MAIL_FROM`, switch `NODE_ENV` to
@@ -50,9 +57,8 @@ so the refresh cookie is first-party and no cross-site CORS is needed. Native ap
 - **Healthcheck:** `/api/health/ready` (pings MongoDB). `/api/health` is liveness only.
 - **Restart policy:** on failure. The server exits on an unexpected error and drains
   on SIGTERM (15s), so restarts and deploys never cut a request in half.
-- **Replicas: 1** for now. Rate limits are kept in process memory, so more replicas
-  would each allow the full budget. Move limits to a shared store before scaling out.
-  The weekly growth job is idempotent, so a second replica would not pay twice.
+- **Replicas:** any number. Rate limits and bans are counted in MongoDB (`services/abuse.ts`),
+  so every replica shares one budget, and the weekly growth job is idempotent.
 
 ### Environment
 

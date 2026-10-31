@@ -30,6 +30,8 @@ jobs:
         run: npm run build
       - name: Build the marketing site
         run: npm run build:site
+      - name: Marketing site layout (no sideways scroll, nothing hidden on phones)
+        run: npx playwright-core install --with-deps chromium && npm run check:layout -w site
       # The app's runtime code. The marketing site is left out on purpose: it is a static
       # export (no Next server runs in production), and moving to Next 15+ means React 19,
       # which must happen together with the client because the site renders the app's art.

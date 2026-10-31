@@ -21,7 +21,7 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'How do kids sign in without an email?',
-    a: 'Kids never need an email address. They enter your family code, tap their own avatar and type a 4-digit PIN. A few wrong guesses locks sign-in for a while, a little longer each time, until a grown-up changes the PIN.',
+    a: 'Kids never need an email address. They enter your family code, tap their own avatar and type a 4-digit PIN. A few wrong guesses lock sign-in for a while, a little longer each time, until a grown-up changes the PIN.',
   },
   {
     q: 'Will my kids see ads or be asked to buy anything?',
@@ -41,7 +41,7 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Can two grown-ups share a family?',
-    a: 'Yes. Invite a co-parent with your family code and you both see the same quests, shop and approvals.',
+    a: 'Yes. Make an invite link in Settings and send it to the other grown-up. Each link works once, and then you both see the same quests, shop and approvals. The family code is only for kids.',
   },
   {
     q: 'Is there an iPhone or Android app?',

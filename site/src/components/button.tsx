@@ -17,9 +17,9 @@ const BUTTON_VARIANTS = {
 } as const;
 
 const BUTTON_SIZES = {
-  sm: 'h-10 px-4 text-sm gap-1.5 rounded-xl',
-  md: 'h-12 px-5 text-base gap-2 rounded-2xl',
-  lg: 'h-14 px-7 text-lg gap-2.5 rounded-2xl',
+  sm: 'min-h-10 px-4 py-1.5 text-sm gap-1.5 rounded-xl',
+  md: 'min-h-12 px-5 py-2 text-base gap-2 rounded-2xl',
+  lg: 'min-h-14 px-7 py-2.5 text-lg gap-2.5 rounded-2xl',
 } as const;
 
 export function ButtonLink({
@@ -40,10 +40,13 @@ export function ButtonLink({
   return (
     <a
       className={cx(
-        'press inline-flex select-none items-center justify-center whitespace-nowrap font-display font-semibold tracking-wide transition-[transform,box-shadow,background-color] hover:-translate-y-0.5',
+        'press inline-flex select-none items-center justify-center text-center font-display font-semibold tracking-wide transition-[transform,box-shadow,background-color] hover:-translate-y-0.5',
         !flat && 'border-[2.5px] border-ink shadow-chunky',
         BUTTON_VARIANTS[variant],
         BUTTON_SIZES[size],
+        // Never wider than its container: a long label wraps (balanced) instead of
+        // pushing a card or column past a 320px phone. Short labels stay on one line.
+        'max-w-full text-balance',
         block && 'w-full',
         className,
       )}

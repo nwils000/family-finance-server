@@ -31,7 +31,10 @@ export function useReveal() {
           viewport: { once: true, margin: '-60px' },
           transition: { type: 'spring' as const, stiffness: 260, damping: 24, delay },
         }
-      : { initial: false as const, whileInView: { opacity: 1, y: 0 }, viewport: { once: true }, transition: { duration: 0 } };
+      : // Shown at once after mount, never waiting on scroll: the server HTML starts at
+        // opacity 0 (the desktop entrance), and a fast fling or a jump to /#plans could
+        // skip the in-view check and leave a whole section blank on a phone.
+        { initial: false as const, animate: { opacity: 1, y: 0 }, transition: { duration: 0 } };
 }
 
 export function Reveal({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {

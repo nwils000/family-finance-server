@@ -10,6 +10,7 @@
     "build": "next build",
     "postbuild": "node -e \"require('fs').rmSync('.next', { recursive: true, force: true })\" && node scripts/check-bundle.mjs",
     "start": "node scripts/serve.mjs",
+    "check:layout": "node scripts/check-layout.mjs",
     "typecheck": "tsc --noEmit",
     "og": "node scripts/generate-og-image.mjs"
   },

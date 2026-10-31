@@ -10,7 +10,7 @@ const GROWN_UPS: Step[] = [
   {
     art: <SceneFamily size={104} />,
     title: 'Start your family',
-    body: 'Sign up, add each kid with their own avatar and PIN, and invite a co-parent with your family code.',
+    body: 'Sign up, add each kid with their own avatar and PIN, and invite a co-parent with a private link.',
   },
   {
     art: (

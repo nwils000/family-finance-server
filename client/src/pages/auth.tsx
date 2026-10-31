@@ -128,8 +128,11 @@ export function GrownUpPage({ mode }: { mode: Mode }) {
           <Spinner className="mx-auto" />
         ) : (
           <>
-            <PennySays mood="sad">
-              That invite link has expired or was already used. Ask the grown-up who sent it to make a fresh one in Settings.
+            {/* No invite at all (a footer link, a typed URL) is not a broken one: say how joining works. */}
+            <PennySays mood={invite ? 'sad' : 'happy'}>
+              {invite
+                ? 'That invite link has expired or was already used. Ask the grown-up who sent it to make a fresh one in Settings.'
+                : 'To join a family, open the invite link another grown-up made for you in Settings. Kids sign in with the family code instead.'}
             </PennySays>
             <Button size="lg" block onClick={() => navigate('/login', { replace: true })}>
               I already have an account
