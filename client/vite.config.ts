@@ -8,6 +8,10 @@ export default defineConfig({
   server: { port: 5173, proxy: { '/api': 'http://localhost:8787' } },
   preview: { port: 4317, proxy: { '/api': 'http://localhost:8787' } },
   build: {
+    // Fonts are never inlined as data: URIs. The page CSP (server security.ts webAppHeaders)
+    // allows fonts only from 'self', and the small font subsets Vite inlined were blocked
+    // in production. As files under /assets they also cache for good.
+    assetsInlineLimit: (file) => (/\.(woff2?|ttf|otf)$/.test(file) ? false : undefined),
     rollupOptions: {
       output: {
         // Libraries and the big art library get their own long-cached chunks, so an

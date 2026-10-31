@@ -13,9 +13,13 @@ const palette = () => ['brand', 'coin', 'good', 'sky', 'pink', 'grape'].map(toke
 
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// Drawn on the page, not in a worker: the default confetti() builds its worker from a
+// blob: URL, which the page CSP (server security.ts webAppHeaders) refuses on purpose.
+let cannon: confetti.CreateTypes | undefined;
 const burst = (opts: confetti.Options) => {
   if (reduced()) return;
-  void confetti({ colors: palette(), disableForReducedMotion: true, ...opts });
+  cannon ??= confetti.create(undefined, { useWorker: false, resize: true, disableForReducedMotion: true });
+  void cannon({ colors: palette(), disableForReducedMotion: true, ...opts });
 };
 
 const haptic = {

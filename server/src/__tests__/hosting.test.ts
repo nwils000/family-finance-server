@@ -29,3 +29,26 @@ describe('hosting', () => {
     expect((await request(createApp()).get('/api/cron/growth').set('Authorization', 'Bearer guess')).status).toBe(401);
   });
 }, 60_000);
+
+describe('serving the web app shell', () => {
+  it('never lets a browser revalidate an old shell (no Last-Modified or ETag, no-store)', async () => {
+    const { mkdtempSync, mkdirSync, writeFileSync } = await import('fs');
+    const { join } = await import('path');
+    const { tmpdir } = await import('os');
+    const express = (await import('express')).default;
+    const { webApp } = await import('../web-app.js');
+    const dir = mkdtempSync(join(tmpdir(), 'kk-shell-'));
+    mkdirSync(join(dir, 'assets'));
+    writeFileSync(join(dir, 'index.html'), '<!doctype html><link href="/assets/a.css">');
+    const app = express().use(webApp(dir));
+    for (const path of ['/', '/parent/learn', '/index.html']) {
+      const res = await request(app).get(path);
+      expect(res.status).toBe(200);
+      expect(res.headers['last-modified']).toBeUndefined();
+      expect(res.headers.etag).toBeUndefined();
+      expect(res.headers['cache-control']).toBe('no-store');
+    }
+    // An old build's file is a 404, never the shell (the client reloads into the new build).
+    expect((await request(app).get('/assets/old-chunk-abc123.js')).status).toBe(404);
+  });
+});
