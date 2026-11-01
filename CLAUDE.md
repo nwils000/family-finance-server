@@ -103,7 +103,7 @@ A fix that cannot name its guard is not done.
 | Family scoping | `familyOf(req)` in every query | a query without `familyId` |
 | Parent-only actions | `requireParent` middleware | a role check inside a handler |
 | Is a quest due on a day | `@kk/shared` `isDueOn()` | date math in a component |
-| Formatting money | `@kk/shared` `formatCents()` via `<Money>` | `toFixed(2)` / `/ 100` in UI |
+| Showing an amount (as COINS, never dollars) | `@kk/shared` `formatCoins()` / `coinsText()` via `<Money>` | a `$`, `toFixed(2)` or `/ 100` in UI |
 | Allowed avatars, quest icons, reward icons | `@kk/shared` lists | inline string arrays |
 | Weekly growth | `server/src/services/growth.ts` `runGrowth()` | growth math anywhere else |
 | Scheduled work (what runs, and when) | `server/src/services/jobs.ts` `runScheduledJobs()` | a `setInterval` or a cron route for one job |

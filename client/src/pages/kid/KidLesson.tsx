@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { formatCents, LESSON_XP, type TryItTarget } from '@kk/shared';
+import { coinsText, LESSON_XP, type TryItTarget } from '@kk/shared';
 import { IconBack, IconCheck, IconClose, LessonArt, Penny, XpStar } from '@/art';
 import { Button, Card, EmptyState, Heading, Money, PennySays, ProgressBar, Text } from '@/components/ui';
 import { afterXp } from '@/features/moments';
@@ -228,7 +228,7 @@ export default function KidLesson() {
             {lesson.done
               ? 'Finish review'
               : lesson.rewardCents > 0
-                ? `Finish for +${LESSON_XP} XP and ${formatCents(lesson.rewardCents)}`
+                ? `Finish for +${LESSON_XP} XP and ${coinsText(lesson.rewardCents)}`
                 : `Finish for +${LESSON_XP} XP`}
           </Button>
         )}

@@ -6,7 +6,7 @@ import { CoinJar } from '@/art';
 import { Card, Heading, Money, Spinner, Text } from '@/components/ui';
 import { bouncy } from '@/lib/motion';
 
-/** How full the jar art looks: $50 reads as a full jar. Purely visual. */
+/** How full the jar art looks: 5,000 coins reads as a full jar. Purely visual. */
 const JAR_FULL_CENTS = 5000;
 /** Any coins at all show a visible layer; the jar then fills on a square-root curve toward full. */
 const jarFill = (cents: number) => (cents <= 0 ? 0 : Math.min(1, 0.2 + 0.8 * Math.sqrt(cents / JAR_FULL_CENTS)));

@@ -249,9 +249,11 @@ describe('repo guards', () => {
     expect(offenders(/window\.(confirm|alert|prompt)\(/, 'client/src')).toEqual([]);
   });
 
-  it('client: money is shown through <Money> / formatCents, never by hand', () => {
+  it('client: amounts are shown as coins through <Money> / formatCoins, never by hand or in dollars', () => {
     // The art library uses toFixed for SVG coordinates, which is not money.
     expect(offenders(/\/\s*100\)?\.toFixed|toFixed\(2\)/, 'client/src').filter((p) => !p.startsWith('client/src/art/'))).toEqual([]);
+    // No dollar amounts typed into the app or the site: coins are pretend (Terms).
+    expect([...offenders(/\$\d/, 'client/src'), ...offenders(/\$\d/, 'site/src')].filter((p) => !p.startsWith('client/src/art/'))).toEqual([]);
   });
 
   it('client: no raw hex colors in pages or features (use tokens)', () => {

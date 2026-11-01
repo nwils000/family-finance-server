@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import { cx } from './button';
-import { formatCents, type Cents } from '@kk/shared';
+import { coinsText, formatCoins, type Cents } from '@kk/shared';
 import { Coin, IconCheck } from '@art';
 
 /**
@@ -78,7 +78,7 @@ export function Money({ cents, coin = true, className }: { cents: Cents; coin?: 
   return (
     <span className={cx('tabular inline-flex items-center gap-1 font-display font-bold', className)}>
       {coin && <Coin size="1.1em" />}
-      {formatCents(cents)}
+      {coin ? formatCoins(cents) : coinsText(cents)}
     </span>
   );
 }

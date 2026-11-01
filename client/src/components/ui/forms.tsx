@@ -1,6 +1,6 @@
 import { forwardRef, useId, useState, type ComponentPropsWithoutRef, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { formatCents, PIN_LENGTH, type Cents } from '@kk/shared';
+import { coinsText, formatCoins, PIN_LENGTH, type Cents } from '@kk/shared';
 import { IconBack, IconCheck, IconMinus, IconPlus } from '@/art';
 import { cn } from '@/lib/cn';
 import { play } from '@/lib/sound';
@@ -276,7 +276,7 @@ export function AmountPicker({
           <IconMinus />
         </button>
         <motion.span key={value} initial={{ scale: 1.15 }} animate={{ scale: 1 }} transition={spring} className="min-w-[7ch] text-center font-display text-4xl font-bold tabular">
-          {formatCents(value)}
+          {coinsText(value)}
         </motion.span>
         <button type="button" aria-label="More" onClick={() => bump(steps[0])} className="press flex h-12 w-12 items-center justify-center rounded-2xl border-[2.5px] border-ink bg-surface shadow-chunky">
           <IconPlus />
@@ -285,7 +285,7 @@ export function AmountPicker({
       <div className="flex flex-wrap justify-center gap-2">
         {steps.slice(1).map((s) => (
           <button key={s} type="button" onClick={() => bump(s)} className="press rounded-full border-2 border-ink bg-coin-light px-3 py-1 font-display text-sm font-semibold shadow-chunky-sm">
-            +{formatCents(s)}
+            +{formatCoins(s)}
           </button>
         ))}
         {allChip && max !== undefined && max > 0 && (

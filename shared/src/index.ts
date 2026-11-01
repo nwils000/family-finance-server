@@ -1,13 +1,20 @@
 // Rules shared by the client and the server. Each one lives here and only here.
 
-/** Every amount of money in the system is an integer number of cents. */
+/**
+ * Every amount in the system is an integer (still named cents in the data). It is shown as that
+ * many COINS, never as dollars: coins are pretend, and a family that ties them to real allowance
+ * pays outside the app (Terms). One coin is one stored unit.
+ */
 export type Cents = number;
 
-export const formatCents = (cents: Cents): string => {
-  const sign = cents < 0 ? '-' : '';
-  const abs = Math.abs(Math.round(cents));
-  return `${sign}$${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, '0')}`;
+/** An amount as a plain number of coins: "1,250", "-40". `<Money>` draws the coin beside it. */
+export const formatCoins = (cents: Cents): string => {
+  const n = Math.round(cents);
+  return `${n < 0 ? '-' : ''}${Math.abs(n).toLocaleString('en-US')}`;
 };
+
+/** An amount in a sentence: "1 coin", "125 coins". */
+export const coinsText = (cents: Cents): string => `${formatCoins(cents)} ${Math.abs(Math.round(cents)) === 1 ? 'coin' : 'coins'}`;
 
 export const AVATARS = [
   'fox', 'panda', 'frog', 'cat', 'bunny', 'bear', 'owl', 'unicorn', 'dino', 'octopus',

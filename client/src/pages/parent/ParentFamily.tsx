@@ -141,7 +141,7 @@ function KidForm({ kid, busy, onSubmit }: { kid?: Kid; busy: boolean; onSubmit: 
           <>
             <Stepper label="Age" value={age} onChange={setAge} min={KID_AGE.min} max={KID_AGE.max} format={(v) => `${v}`} />
             <Text size="xs">
-              {AGE_BAND_NAMES[ageBand(age)]} lessons. One common starting point for an allowance is about $1 a week per year of age; pick what fits your family.
+              {AGE_BAND_NAMES[ageBand(age)]} lessons. If you also give a real allowance, a common rule of thumb is about one dollar a week per year of age, paid by you outside the app; pick what fits your family.
             </Text>
           </>
         )}

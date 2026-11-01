@@ -1,7 +1,7 @@
 // The family shop: spend coins on rewards a grown-up set up, then track orders.
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { formatCents } from '@kk/shared';
+import { coinsText } from '@kk/shared';
 import { IconClock, IconShop, RewardIcon, SceneEmptyShop } from '@/art';
 import { Button, Card, EmptyState, Money, PennySays, Pill, ProgressBar, SectionTitle, Text, useConfirm } from '@/components/ui';
 import { RewardCard } from '@/features/cards';
@@ -42,7 +42,7 @@ export default function KidShop() {
   const onBuy = async (r: Reward, el: HTMLElement) => {
     const ok = await confirm({
       title: `Buy ${r.title}?`,
-      message: `It costs ${formatCents(r.priceCents)}. A grown-up will hand it over soon.`,
+      message: `It costs ${coinsText(r.priceCents)}. A grown-up will hand it over soon.`,
       confirmText: 'Buy it!',
       mood: 'wow',
     });
@@ -78,7 +78,7 @@ export default function KidShop() {
                       <div className="flex w-full flex-col gap-1">
                         <ProgressBar value={wallet / r.priceCents} tone="coin" height="h-3" />
                         <Text size="xs" tone="faint">
-                          {formatCents(short)} more to go
+                          {coinsText(short)} more to go
                         </Text>
                       </div>
                     )

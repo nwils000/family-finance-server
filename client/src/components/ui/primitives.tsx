@@ -1,7 +1,7 @@
 import React, { forwardRef, type ComponentPropsWithoutRef, type ElementType, type ReactNode } from 'react';
 import { motion, useMotionValue, useSpring, useTransform, animate } from 'framer-motion';
 import { useEffect } from 'react';
-import { formatCents, MAX_STARS, type Cents } from '@kk/shared';
+import { coinsText, formatCoins, MAX_STARS, type Cents } from '@kk/shared';
 import { Coin, Star } from '@/art';
 import { cn } from '@/lib/cn';
 import { play } from '@/lib/sound';
@@ -221,7 +221,8 @@ export function Money({
 }) {
   const value = useMotionValue(cents);
   const smooth = useSpring(value, { stiffness: 140, damping: 22 });
-  const text = useTransform(smooth, (v) => (signed && v > 0 ? '+' : '') + formatCents(Math.round(v)));
+  // With the coin drawn, a bare number; without it, the word, so an amount never reads as dollars.
+  const text = useTransform(smooth, (v) => (signed && v > 0 ? '+' : '') + (coin ? formatCoins : coinsText)(Math.round(v)));
   useEffect(() => {
     const c = animate(value, cents, { duration: 0.6 });
     return c.stop;

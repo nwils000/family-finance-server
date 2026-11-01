@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
-import { autoApproves, CHEST_XP, formatCents, toDateKey } from '@kk/shared';
+import { autoApproves, CHEST_XP, coinsText, toDateKey } from '@kk/shared';
 import { ChestClosed, ChestLocked, ChestOpen, IconCalendar, Penny, SceneAllDone, Sparkle, XpStar, type PennyMood } from '@/art';
 import { Button, Card, EmptyState, Heading, PennySays, Pill, ProgressBar, SectionTitle, Segmented, StreakFlame, Text } from '@/components/ui';
 import { QuestCard } from '@/features/cards';
@@ -81,7 +81,7 @@ export default function KidHome() {
       if ('paidCents' in res) {
         celebrate('coins', el);
         afterXp(res);
-        toast.success(`+${formatCents(res.paidCents)}! Trusted quest, coins added right away.`);
+        toast.success(`+${coinsText(res.paidCents)}! Trusted quest, coins added right away.`);
       } else {
         celebrate('done', el);
       }
