@@ -6,7 +6,7 @@ import request from 'supertest';
 import { CONTACT_RULES, FORM_SIGNALS_KEY, contactPacing, contactProblem } from '@kk/shared';
 import { createApp } from '../app.js';
 import { protection } from '../security.js';
-import { operatorOutbox } from '../services/mailer.js';
+import { DAILY_MAIL_CAPS, operatorOutbox, withinDailyCap } from '../services/mailer.js';
 import { useTestDb } from './testDb.js';
 
 useTestDb('contact');
@@ -69,6 +69,13 @@ describe('contact form (server relay)', () => {
     const fourth = await send(auth, { ...fields, ...human }, ip);
     expect(fourth.status).toBe(429);
     expect(operatorOutbox).toHaveLength(3);
+  });
+});
+
+describe('daily mail caps (the Resend quota is shared by every app)', () => {
+  it('past the app-wide cap a send is refused kindly before it goes out', async () => {
+    for (let i = 0; i < DAILY_MAIL_CAPS.contact; i++) await withinDailyCap('contact');
+    await expect(withinDailyCap('contact')).rejects.toMatchObject({ status: 503, code: 'MAIL_CAP' });
   });
 });
 

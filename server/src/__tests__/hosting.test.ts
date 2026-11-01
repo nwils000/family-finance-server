@@ -14,8 +14,8 @@ const boot = (env: Record<string, string>) =>
 
 describe('hosting', () => {
   it('a hosted server without email refuses to boot, unless it is a staging preview that says so', () => {
-    expect(boot({ NODE_ENV: 'production' }).stderr).toMatch(/SMTP_URL is required/);
-    expect(boot({ NODE_ENV: 'staging' }).stderr).toMatch(/SMTP_URL is required/);
+    expect(boot({ NODE_ENV: 'production' }).stderr).toMatch(/SMTP_URL or RESEND_API_KEY is required/);
+    expect(boot({ NODE_ENV: 'staging' }).stderr).toMatch(/SMTP_URL or RESEND_API_KEY is required/);
     expect(boot({ NODE_ENV: 'staging', PREVIEW_WITHOUT_EMAIL: 'true' }).status).toBe(0);
   });
 

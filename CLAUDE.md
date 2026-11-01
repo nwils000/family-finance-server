@@ -135,7 +135,7 @@ A fix that cannot name its guard is not done.
 | Agreeing to the Terms and Privacy Policy | `@kk/shared` `LEGAL_VERSIONS`; recorded in `accounts.ts` `createParent` and `acceptCurrentLegal`; enforced by `auth.ts` (`requireAuth` answers 428 `LEGAL_UPDATE` to a grown-up on old versions; `issueSession` refuses a kid until a grown-up in the family agreed to the current Privacy Policy); the app's one re-accept sheet is `features/legal-update.tsx` | a grown-up account created anywhere else; a version bump without the sheet |
 | The legal documents' text | `client/src/pages/legal.tsx` | a second copy (the marketing site links to the app's pages) |
 | Who runs Kid Kapital and how to reach them | `@kk/shared` `OPERATOR_NAME` / `PRIVACY_CONTACT` | a name or email typed into a page |
-| The creator credit, support-page link, contact form and its rules | `@kk/shared` `creator.ts`; UI `client/src/features/creator.tsx` (grown-up Settings only); `POST /api/contact` (`services/contact.ts`, form guard surface `contact`, `contactLimiter`) relayed by `mailer.ts` `sendToOperator` with server-only `EMAILJS_*` keys | any payment, tip or donation link or wording (Vercel Hobby forbids commercial use); creator links on a kid screen; any mail call or key in the browser |
+| The creator credit, support-page link, contact form and its rules | `@kk/shared` `creator.ts`; UI `client/src/features/creator.tsx` (grown-up Settings only); `POST /api/contact` (`services/contact.ts`, form guard surface `contact`, `contactLimiter`) relayed by `mailer.ts` `sendToOperator` through Resend (server-only `RESEND_API_KEY`) | any payment, tip or donation link or wording (Vercel Hobby forbids commercial use); creator links on a kid screen; any mail call or key in the browser |
 | Connecting to MongoDB and building indexes (server and Vercel function) | `server/src/db.ts` `connectDb()` | `mongoose.connect` anywhere else |
 | Hosting on Vercel (build output, routes, cron) | `scripts/vercel-build.mjs` + `server/src/vercel.ts`; the cron door is `security.ts` `requireCron` | a second build config or an unguarded job route |
 | Serving the built web app (production) and its page headers | `server/src/web-app.ts` + `security.ts` `webAppHeaders` | static serving or a page CSP anywhere else |
@@ -373,7 +373,7 @@ until it is used the kid is locked (`auth.ts issueSession`, 403 `CONSENT_PENDING
 sees "Send the email again" on the kid's card. Consent is stored on the kid (`kidConsent`). The
 daily job sends a follow-up with a withdraw link (deletes the kid) and deletes kids unconfirmed
 after 7 days. At most 3 consent emails per family per day. Mail goes through `mailer.ts`
-`sendMail` (EmailJS's direct-to-user template server-side when there is no SMTP), never to an
+`sendMail` (Resend server-side when there is no SMTP, capped per day: `DAILY_MAIL_CAPS`), never to an
 address a caller sends; every user-entered string in an HTML email goes through `escapeHtml`.
 `config.consentRequired` is on for every hosted deploy and off in local development.
 

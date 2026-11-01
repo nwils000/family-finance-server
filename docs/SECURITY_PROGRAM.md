@@ -56,18 +56,19 @@ details, photos, voice or location are collected, and the app has no field for t
 
 ## 5. Service providers and their assurances
 
-These providers process data as service providers. Vercel and MongoDB store children's information only to host it, under their data processing terms; EmailJS sees only a kid's nickname, inside the consent emails it delivers to that kid's grown-up:
+These providers process data as service providers. Vercel and MongoDB store children's information only to host it, under their data processing terms; Resend sees only a kid's nickname, inside the consent emails it delivers to that kid's grown-up:
 
 - **Vercel** (hosting, firewall): Vercel's Data Processing Addendum and security commitments.
 - **MongoDB Atlas** (database, on AWS us-east-1): MongoDB's Data Processing Agreement and
   security commitments.
-- **EmailJS** (server-side only, private key, strict mode): delivers the parental-consent notice
-  and its confirmation, and password reset links, to the grown-up's own account email (the
-  consent emails name the kid by nickname; every user-entered string is HTML-escaped), and the
-  grown-up contact form (Settings only): our server relays the grown-up's name,
-  email and message to it with server-only keys (strict mode), and it delivers them to the
-  operator's Gmail inbox. The browser never calls it. The form is limited to 3 per 10 minutes and
-  10 a day per address, behind the form guard.
+- **Resend** (resend.com, server-side only, send-only key, from the verified domain
+  nathanwilson.dev): delivers the parental-consent notice and its confirmation, and password reset
+  links, to the grown-up's own account email (the consent emails name the kid by nickname; every
+  user-entered string is HTML-escaped), and the grown-up contact form (Settings only) to the
+  operator's Gmail inbox with replies to the grown-up. The browser never calls it. The quota is
+  shared by every one of the operator's apps, so this app caps itself at 30 account emails and 10
+  contact messages a day (mailer.ts DAILY_MAIL_CAPS), plus 3 consent emails per family per day and
+  3 contact messages per 10 minutes per address.
 - No payment provider: Kid Kapital takes no payments (Vercel Hobby fair use). Support for the
   creator lives only on his own site.
 
@@ -89,6 +90,7 @@ bump `LEGAL_VERSIONS`.
 |------|--------------|
 | 2026-10-31 | First program. Free for everyone, no payments, no email; retention limit added. |
 | 2026-10-31 | Grown-up contact form (EmailJS), web only, never on kid screens. A planned tip link was dropped: no payments on Vercel. |
+| 2026-10-31 | Email moved from EmailJS to Resend (verified domain, server-only key, app-wide daily caps). |
 | 2026-10-31 | Verifiable parental consent (email plus): kids locked until a grown-up confirms the emailed notice, follow-up with a withdraw link, unconfirmed kids deleted after 7 days, 3 consent emails per family per day. |
 | 2026-10-31 | Contact form moved behind our server (relay with server-only keys), activity history older than 24 months deleted with badges rolled up, private preview for new families. |
 | 2026-10-31 | Bot pass: 3-second fill floor on grown-up forms, 429 tests for every limited public route, honeypot guard per form, IP retention written down. |

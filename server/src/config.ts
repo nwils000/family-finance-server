@@ -41,7 +41,7 @@ if (isHosted && clientOrigins.includes('*')) throw new Error(`CLIENT_ORIGINS may
 // deploy works before a mail domain exists. Production can never turn it on.
 if (process.env.PREVIEW_WITHOUT_EMAIL === 'true' && appEnv !== 'staging') throw new Error(`PREVIEW_WITHOUT_EMAIL is only allowed in staging, not ${appEnv}`);
 const previewWithoutEmail = appEnv === 'staging' && process.env.PREVIEW_WITHOUT_EMAIL === 'true';
-if (isHosted && !previewWithoutEmail && !optional('SMTP_URL')) throw new Error(`SMTP_URL is required in ${appEnv}: sign-up, password reset and invites send email.`);
+if (isHosted && !previewWithoutEmail && !optional('SMTP_URL') && !optional('RESEND_API_KEY')) throw new Error(`SMTP_URL or RESEND_API_KEY is required in ${appEnv}: sign-up, password reset and consent send email.`);
 
 export const config = {
   mongoUrl: process.env.MONGO_URL ?? 'mongodb://127.0.0.1:27017/kid-kapital',
@@ -94,16 +94,15 @@ export const config = {
   /** Vercel Cron sends it as a bearer token to the scheduled-job door (app.ts). Unset: the door is not mounted. */
   cronSecret: optional('CRON_SECRET'),
   /**
-   * The grown-up contact form's relay to the operator's inbox (mailer.ts sendToOperator). Server
-   * env only: the private key must never reach a browser. Unset: hosted answers 503, dev logs.
+   * Resend, the mail transport when there is no SMTP (mailer.ts). Server env only. MAIL_FROM is
+   * the verified sender ("Name <hello@nathanwilson.dev>"); account emails go out from
+   * "Kid Kapital <that address>". OPERATOR_INBOX receives the contact form.
    */
-  emailjs: {
-    serviceId: optional('EMAILJS_SERVICE_ID'),
-    templateId: optional('EMAILJS_TEMPLATE_ID'),
-    publicKey: optional('EMAILJS_PUBLIC_KEY'),
-    privateKey: optional('EMAILJS_PRIVATE_KEY'),
-    /** The direct-to-user template (To = the grown-up's own account email): consent and account emails. */
-    userTemplateId: optional('EMAILJS_USER_TEMPLATE_ID'),
+  resend: {
+    apiKey: optional('RESEND_API_KEY'),
+    accountFrom: `Kid Kapital <${/<([^>]+)>/.exec(optional('MAIL_FROM') ?? '')?.[1] ?? optional('MAIL_FROM') ?? 'hello@nathanwilson.dev'}>`,
+    replyTo: optional('MAIL_REPLY_TO'),
+    operatorInbox: optional('OPERATOR_INBOX'),
   },
   /**
    * Verifiable parental consent (COPPA "email plus", services/consent.ts): a new kid stays locked

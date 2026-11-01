@@ -40,7 +40,7 @@ const noticeMail = (to: string, family: string, kid: string, link: string) => {
   const lines = [
     `You (or someone using this email) asked to add a child, "${kid}", to the Kid Kapital family "${family}". We need your consent before your child can use Kid Kapital. We collected your email only to ask for it.`,
     'If you agree, we will collect: the nickname, drawn avatar, optional age and PIN you entered; and, as your child plays, quests finished, coins, rewards, the name of their savings goal, lesson and quiz answers, plus a sign-in cookie and internet address used only to keep them signed in and the service secure.',
-    'We use this only to run Kid Kapital for your family. Vercel and MongoDB host it for us, and EmailJS delivers our emails (like this one); we share it with no one else, never sell it and show no ads. You can agree to collection without agreeing to any other disclosure.',
+    'We use this only to run Kid Kapital for your family. Vercel and MongoDB host it for us, and Resend delivers our emails (like this one); we share it with no one else, never sell it and show no ads. You can agree to collection without agreeing to any other disclosure.',
     `If you don't agree within ${CONSENT_WINDOW_DAYS} days, we delete your child's profile. You can review, download or delete your child's information at any time from Settings, or by writing to us.`,
   ];
   return {

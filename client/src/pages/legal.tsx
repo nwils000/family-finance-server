@@ -8,7 +8,7 @@
 // Facts this relies on: there is no billing code at all (removed 2026-10-31); the preview sends no
 // email (config.ts PREVIEW_WITHOUT_EMAIL); the free database tier keeps no backups
 // (docs/DEPLOY.md); IP bans expire within 24 hours and offenses after 7 days
-// (services/abuse.ts); the contact form is relayed by our server through EmailJS (mailer.ts sendToOperator) and nothing takes payments; idle families are erased after INACTIVE_FAMILY_MONTHS (personal-data.ts); Google and Apple sign-in are not configured, so they are not mentioned.
+// (services/abuse.ts); every email goes out through Resend from our server (mailer.ts) and nothing takes payments; idle families are erased after INACTIVE_FAMILY_MONTHS (personal-data.ts); Google and Apple sign-in are not configured, so they are not mentioned.
 //
 // NOT REVIEWED BY A LAWYER. Kid Kapital is used by children under 13, so COPPA applies.
 // Have these reviewed before the app is promoted to real families.
@@ -78,9 +78,9 @@ const PRIVACY: Section[] = [
     heading: 'Who else handles data',
     body: [
       'Two companies run the computers Kid Kapital lives on, and process data only to provide that service to us, under their written data protection and security terms: Vercel (hosting) and MongoDB Atlas (database, run on Amazon Web Services). Data is stored in the United States.',
-      'If a grown-up writes to us with the contact form in Settings, their name, email address and message go from our server through EmailJS (emailjs.com/legal/privacy-policy) to our Gmail inbox, run by Google (policies.google.com/privacy). Kids never see the form. Please do not include a child\'s details in a message.',
-      'The emails Kid Kapital sends to grown-ups (the consent notice and its confirmation, and password reset links) also go out through EmailJS, only ever to the grown-up\'s own account email.',
-      'Through the contact form, EmailJS and Google receive only what a grown-up chooses to type, and we ask grown-ups not to include a child\'s details. The consent emails name the kid by the nickname the grown-up entered, so EmailJS handles that nickname only to deliver the email to that grown-up. Kid Kapital takes no payments, so no payment company receives anything.',
+      'Our server sends every email through Resend (resend.com/legal/privacy-policy). The emails to grown-ups (the consent notice and its confirmation, and password reset links) only ever go to the grown-up\'s own account email.',
+      'If a grown-up writes to us with the contact form in Settings, their name, email address and message go from our server through Resend to our Gmail inbox, run by Google (policies.google.com/privacy). Kids never see the form. Please do not include a child\'s details in a message.',
+      'Through the contact form, Resend and Google receive only what a grown-up chooses to type. The consent emails name the kid by the nickname the grown-up entered, so Resend handles that nickname only to deliver the email to that grown-up. No other child\'s information is in any email. Kid Kapital takes no payments, so no payment company receives anything.',
       'We disclose information only if the law requires it, or to protect the safety of a person or the service.',
     ],
   },
