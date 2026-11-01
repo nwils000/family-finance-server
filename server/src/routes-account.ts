@@ -24,6 +24,7 @@ import {
 } from './security.js';
 import * as accounts from './services/accounts.js';
 import * as security from './services/account-security.js';
+import * as consentService from './services/consent.js';
 import * as contact from './services/contact.js';
 import { familyOf } from './services/access.js';
 import * as data from './services/personal-data.js';
@@ -45,6 +46,9 @@ r.post('/auth/password/reset', resetExecuteLimiter, handle(async (req) => {
 }));
 
 // Email verification. The link works signed out (it may open on another device).
+// Parental consent links from the notice and the follow-up email (services/consent.ts).
+r.post('/auth/consent/confirm', linkCheckLimiter, handle((req) => consentService.confirmConsent(parse(S.consentLinkBody, req.body).token)));
+r.post('/auth/consent/withdraw', linkCheckLimiter, handle((req) => consentService.revokeConsent(parse(S.consentLinkBody, req.body).token)));
 r.post('/auth/email/verify', linkCheckLimiter, handle((req) => verification.verifyEmail(parse(S.verifyEmailBody, req.body).token)));
 r.post('/auth/email/resend', ...parent, resendVerificationLimiter, handle((req) => verification.resendVerification(req.auth)));
 

@@ -19,6 +19,7 @@ import { config } from './config.js';
 import { handle, parse } from './http.js';
 import * as S from './schemas.js';
 import * as accounts from './services/accounts.js';
+import * as consent from './services/consent.js';
 import * as family from './services/family.js';
 import * as game from './services/game.js';
 import * as learn from './services/learn.js';
@@ -68,6 +69,7 @@ routes.patch('/family/settings', parent, handle((req) => family.updateSettings(r
 routes.post('/family/kids', parent, handle((req) => family.addKid(req.auth, parse(S.kidBody, req.body))));
 routes.patch('/family/kids/:id', parent, handle((req) => family.updateKid(req.auth, id(req), parse(S.kidUpdateBody, req.body))));
 routes.delete('/family/kids/:id', parent, handle((req) => ok(family.removeKid(req.auth, id(req)))));
+routes.post('/family/kids/:id/consent/resend', parent, familyAccessLimiter, handle((req) => consent.sendConsentNotice(req.auth, id(req))));
 routes.post('/family/kids/:id/gift', parent, handle((req) => ok(family.giftKid(req.auth, id(req), parse(S.giftBody, req.body)))));
 
 routes.get('/quests', handle((req) => quests.questsForDay(req.auth, parse(S.dayQuery, req.query).date)));

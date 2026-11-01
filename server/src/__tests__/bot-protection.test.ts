@@ -166,8 +166,8 @@ describe('form guard', () => {
     expect(await PasswordResetToken.countDocuments()).toBe(0);
     // The same request without the honeypot really does make a link.
     expect((await post(ip, '/api/auth/password/forgot', { email: 'lee@example.com' })).body).toEqual({ ok: true });
-    await new Promise((r) => setTimeout(r, 300));
-    expect(await PasswordResetToken.countDocuments()).toBe(1);
+    // The link is made after the response; wait for it rather than a fixed delay (slow under a full run).
+    await vi.waitFor(async () => expect(await PasswordResetToken.countDocuments()).toBe(1), { timeout: 3000, interval: 50 });
   });
 
   it('caught submissions score against the address when bans are live', async () => {

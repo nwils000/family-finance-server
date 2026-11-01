@@ -26,7 +26,9 @@ await User.create({
   legalAccepted: { ...LEGAL_VERSIONS, at: new Date() },
 });
 const mk = async (name: string, avatar: string, pin: string) => {
-  const kid = await User.create({ familyId, role: 'kid', name, avatar, pinHash: await hashPin(pin) });
+  // Demo kids are made by the operator, so they carry consent and are never locked.
+  const kidConsent = { at: new Date(), method: 'operator', noticeVersion: LEGAL_VERSIONS.privacy };
+  const kid = await User.create({ familyId, role: 'kid', name, avatar, pinHash: await hashPin(pin), kidConsent });
   await ensureAccounts(familyId, kid._id);
   return kid;
 };

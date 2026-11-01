@@ -61,7 +61,8 @@ const PRIVACY: Section[] = [
   {
     heading: "Parents' consent and rights",
     body: [
-      "When a grown-up creates a family, they confirm they are 18 or older and the kids' parent or legal guardian, and they agree to this policy for those kids. Each grown-up account records which version they agreed to.",
+      "When a grown-up creates a family, they confirm they are 18 or older and the kids' parent or legal guardian, and they agree to this policy. Each grown-up account records which version they agreed to.",
+      "Before a kid can use Kid Kapital, we ask for the parent's consent by email (the \"email plus\" method). When a grown-up adds a kid, we email the grown-up's own account address a notice that explains what we collect and why, with a link to agree. Until the link is used, the kid cannot sign in and we collect nothing from them; if nobody agrees within 7 days, we delete the kid's profile. A day or two after consent, we email a confirmation with a link to withdraw it, which deletes the kid's profile and everything in it.",
       "A parent can, at any time: review everything stored about their kid (Settings, Your data), download it, change it, remove the kid (which deletes that kid's profile and history right away), or stop all further collection by removing the kid. A parent can also write to us to do any of this; we will answer within 30 days.",
       "A parent can let their kid use the app without agreeing that we share the kid's information with anyone, because we do not share it (see Who else handles data).",
     ],
@@ -77,8 +78,9 @@ const PRIVACY: Section[] = [
     heading: 'Who else handles data',
     body: [
       'Two companies run the computers Kid Kapital lives on, and process data only to provide that service to us, under their written data protection and security terms: Vercel (hosting) and MongoDB Atlas (database, run on Amazon Web Services). Data is stored in the United States.',
-      'If a grown-up writes to us with the contact form in Settings, their name, email address and message go from our server through EmailJS (emailjs.com/legal/privacy-policy) to our Gmail inbox, run by Google (policies.google.com/privacy). Kids never see the form. Please do not include a child\'s details in a message. Apart from that, we do not send email yet.',
-      'EmailJS and Google only ever receive what a grown-up chooses to type into the contact form. It is in grown-up Settings only, and we ask grown-ups not to include a child\'s details, so no child\'s information is sent to them by the app. Kid Kapital takes no payments, so no payment company receives anything.',
+      'If a grown-up writes to us with the contact form in Settings, their name, email address and message go from our server through EmailJS (emailjs.com/legal/privacy-policy) to our Gmail inbox, run by Google (policies.google.com/privacy). Kids never see the form. Please do not include a child\'s details in a message.',
+      'The emails Kid Kapital sends to grown-ups (the consent notice and its confirmation, and password reset links) also go out through EmailJS, only ever to the grown-up\'s own account email.',
+      'Through the contact form, EmailJS and Google receive only what a grown-up chooses to type, and we ask grown-ups not to include a child\'s details. The consent emails name the kid by the nickname the grown-up entered, so EmailJS handles that nickname only to deliver the email to that grown-up. Kid Kapital takes no payments, so no payment company receives anything.',
       'We disclose information only if the law requires it, or to protect the safety of a person or the service.',
     ],
   },

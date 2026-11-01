@@ -8,10 +8,17 @@ import { config } from '../config.js';
 import { HttpError } from '../http.js';
 
 export interface Mail {
+  /** Always an account's own email, read from the database, never an address a caller typed. */
   to: string;
   subject: string;
   text: string;
+  /** Optional HTML body; every user-entered string in it must go through escapeHtml. */
+  html?: string;
 }
+
+/** For any user-entered text (a family name, a kid's nickname) placed in an HTML email. */
+export const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+const textToHtml = (text: string) => escapeHtml(text).replace(/\n/g, '<br>');
 
 /** Tests read sent mail from here instead of a mailbox. Only filled when NODE_ENV is test. */
 export const testOutbox: Mail[] = [];
@@ -26,6 +33,16 @@ export const sendMail = async (mail: Mail) => {
   }
   if (config.mail.smtpUrl) {
     await smtp().sendMail({ from: config.mail.from, ...mail });
+    return;
+  }
+  // No SMTP: EmailJS's direct-to-user template, server-side with the private key (free tier).
+  if (config.emailjs.userTemplateId && config.emailjs.privateKey) {
+    await emailjsSend(config.emailjs.userTemplateId, {
+      to_email: mail.to,
+      subject: mail.subject,
+      from_name: 'Kid Kapital',
+      body_html: mail.html ?? textToHtml(mail.text),
+    });
     return;
   }
   if (config.isHosted) {
@@ -58,19 +75,21 @@ export const sendToOperator = async (message: ContactFields) => {
     console.log(`\n[dev contact] from ${message.user_name} <${message.user_email}>\n\n${message.message}\n`);
     return;
   }
+  await emailjsSend(templateId, { ...message, app_name: 'Kid Kapital' }).catch(() => {
+    throw new HttpError(502, 'That did not send. Please email us directly.', 'SEND_FAILED');
+  });
+};
+
+/** One server-side EmailJS send (strict mode: the private key goes with it). Never logs the content. */
+const emailjsSend = async (templateId: string, params: Record<string, string>) => {
+  const { serviceId, publicKey, privateKey } = config.emailjs;
   const res = await fetch(EMAILJS_SEND, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      service_id: serviceId,
-      template_id: templateId,
-      user_id: publicKey,
-      accessToken: privateKey,
-      template_params: { ...message, app_name: 'Kid Kapital' },
-    }),
+    body: JSON.stringify({ service_id: serviceId, template_id: templateId, user_id: publicKey, accessToken: privateKey, template_params: params }),
   });
   if (!res.ok) {
-    console.error(JSON.stringify({ level: 'error', msg: 'contact relay failed', status: res.status }));
-    throw new HttpError(502, 'That did not send. Please email us directly.', 'SEND_FAILED');
+    console.error(JSON.stringify({ level: 'error', msg: 'email send failed', status: res.status }));
+    throw new HttpError(502, "We couldn't send the email. Please try again later.", 'SEND_FAILED');
   }
 };

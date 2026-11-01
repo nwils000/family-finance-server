@@ -100,6 +100,11 @@ export const issueSession = async (req: Request, res: Response, user: UserDoc) =
   if (user.role === 'kid' && !(await User.exists({ familyId: user.familyId, role: 'parent', 'legalAccepted.privacy': LEGAL_VERSIONS.privacy }))) {
     throw new HttpError(428, 'A grown-up in your family needs to agree to our updated Privacy Policy first.', LEGAL_UPDATE_CODE);
   }
+  // COPPA: a kid whose grown-up has not confirmed the consent email cannot sign in, so nothing is
+  // collected from them (services/consent.ts).
+  if (user.role === 'kid' && config.consentRequired && !user.kidConsent?.at) {
+    throw new HttpError(403, 'A grown-up needs to confirm the email we sent before you can sign in.', 'CONSENT_PENDING');
+  }
   void noteFamilyActive(user.familyId);
   const refreshToken = newToken(48);
   await RefreshToken.create({

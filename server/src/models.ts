@@ -58,6 +58,24 @@ const userSchema = new Schema(
     balanceCents: { type: Number, default: 0 },
     // Gamification (kids only).
     xp: { type: Number, default: 0, min: 0 },
+    // Kids: verifiable parental consent (COPPA "email plus", services/consent.ts). Null until a
+    // grown-up confirms the emailed notice; until then the kid cannot sign in.
+    kidConsent: {
+      type: new Schema(
+        {
+          at: { type: Date, required: true },
+          method: { type: String, enum: ['email_plus', 'operator'], required: true },
+          /** The Privacy Policy version the notice described (LEGAL_VERSIONS.privacy). */
+          noticeVersion: { type: String, required: true },
+          /** The grown-up who confirmed; the follow-up email with the revoke link goes to them. */
+          parentId: { type: Schema.Types.ObjectId, default: null },
+          /** When the follow-up email went out (24 to 72 hours later). */
+          confirmSentAt: { type: Date, default: null },
+        },
+        { _id: false },
+      ),
+      default: null,
+    },
     // Kids: what badges and the quest count read from history that the retention limit has
     // deleted (personal-data.ts eraseOldActivity rolls it up first; stats.ts adds it back).
     pastActivity: {

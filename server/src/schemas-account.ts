@@ -11,6 +11,7 @@ export const forgotBody = z.object({ email });
 export const resetCheckBody = z.object({ token: z.string().max(200) });
 export const resetBody = z.object({ token: resetToken, password: newPassword });
 export const verifyEmailBody = z.object({ token: linkToken('That verification link is not valid') });
+export const consentLinkBody = z.object({ token: linkToken('That link is not valid') });
 export const changePasswordBody = z.object({ currentPassword: z.string().max(PASSWORD_MAX).optional(), newPassword });
 
 /** Social sign-in. `invite` joins an existing family instead of starting one; `familyName` names a new one. */

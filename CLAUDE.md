@@ -365,6 +365,18 @@ kids use family code `DEMO42`, Maya PIN `1234`, Leo PIN `5678`.
 
 Native: `npm run cap:ios -w client` / `npm run cap:android -w client`.
 
+## PARENTAL CONSENT (COPPA "email plus")
+
+`server/src/services/consent.ts` owns it. Adding a kid (`family.ts addKid`) emails the grown-up's
+own account address the direct notice with a single-use consent link (`ConsentToken`, hashed);
+until it is used the kid is locked (`auth.ts issueSession`, 403 `CONSENT_PENDING`) and the parent
+sees "Send the email again" on the kid's card. Consent is stored on the kid (`kidConsent`). The
+daily job sends a follow-up with a withdraw link (deletes the kid) and deletes kids unconfirmed
+after 7 days. At most 3 consent emails per family per day. Mail goes through `mailer.ts`
+`sendMail` (EmailJS's direct-to-user template server-side when there is no SMTP), never to an
+address a caller sends; every user-entered string in an HTML email goes through `escapeHtml`.
+`config.consentRequired` is on for every hosted deploy and off in local development.
+
 ## PRIVATE PREVIEW (COPPA stopgap)
 
 There is no verifiable parental consent step yet, so new families are not open:

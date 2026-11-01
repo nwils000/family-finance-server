@@ -7,7 +7,7 @@ import { Spinner } from '@/components/ui';
 import { ConfirmProvider } from '@/components/ui';
 import { MomentOverlay } from '@/features/moments';
 import { AppShell } from '@/features/shell';
-import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from '@/pages/account';
+import { ConsentLinkPage, ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from '@/pages/account';
 import { GrownUpPage, KidLoginPage, WelcomePage } from '@/pages/auth';
 import { useAuth } from '@/stores/auth';
 
@@ -55,6 +55,8 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/consent" element={<ConsentLinkPage mode="confirm" />} />
+            <Route path="/consent/withdraw" element={<ConsentLinkPage mode="withdraw" />} />
             <Route path={LEGAL_PATHS.privacy} element={<LegalPage doc="privacy" />} />
             <Route path={LEGAL_PATHS.terms} element={<LegalPage doc="terms" />} />
             <Route path="/kid" element={<AppShell role="kid" />}>

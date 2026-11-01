@@ -464,3 +464,66 @@ export function YourDataCard() {
     </Card>
   );
 }
+
+/**
+ * The links in the parental-consent emails (server services/consent.ts). Each one acts only on a
+ * button press, never on page load: email scanners open links, and consent (or deleting a kid)
+ * must come from a person.
+ */
+export function ConsentLinkPage({ mode }: { mode: 'confirm' | 'withdraw' }) {
+  const navigate = useNavigate();
+  const user = useAuth((s) => s.user);
+  const [token] = useState(() => readFragment('token'));
+  const [state, setState] = useState<'ready' | 'busy' | 'done' | 'failed'>(token ? 'ready' : 'failed');
+  const [message, setMessage] = useState('');
+  useEffect(() => clearFragment(), []);
+
+  const act = async () => {
+    setState('busy');
+    try {
+      if (mode === 'confirm') {
+        const { kidName } = await endpoints.confirmConsent(token);
+        setMessage(`Thank you! ${kidName} can sign in to Kid Kapital now.`);
+        celebrate('done');
+      } else {
+        const { kidName } = await endpoints.withdrawConsent(token);
+        setMessage(`Done. ${kidName ?? 'That kid'}'s profile and everything in it are deleted.`);
+      }
+      setState('done');
+    } catch (err) {
+      setMessage(errorMessage(err));
+      setState('failed');
+    }
+  };
+
+  const next = () => navigate(user ? (user.role === 'kid' ? '/kid' : '/parent/family') : '/login', { replace: true });
+  return (
+    <AuthFrame>
+      {(state === 'ready' || state === 'busy') &&
+        (mode === 'confirm' ? (
+          <>
+            <PennySays mood="happy">
+              Do you agree to let your child use Kid Kapital, as described in the email and our <Link to={LEGAL_PATHS.privacy} className="font-bold text-brand underline">Privacy Policy</Link>?
+            </PennySays>
+            <Button size="lg" block disabled={state === 'busy'} onClick={() => void act()}>
+              {state === 'busy' ? 'Saving...' : 'I agree'}
+            </Button>
+          </>
+        ) : (
+          <>
+            <PennySays mood="think">Withdraw consent? This deletes your child's Kid Kapital profile and everything in it, and can't be undone.</PennySays>
+            <Button variant="danger" size="lg" block disabled={state === 'busy'} onClick={() => void act()}>
+              {state === 'busy' ? 'Deleting...' : 'Withdraw consent and delete'}
+            </Button>
+          </>
+        ))}
+      {state === 'done' && <PennySays mood={mode === 'confirm' ? 'cheer' : 'happy'}>{message}</PennySays>}
+      {state === 'failed' && <PennySays mood="sad">{message || 'That link has expired or was already used.'}</PennySays>}
+      {(state === 'done' || state === 'failed') && (
+        <Button size="lg" block onClick={next}>
+          {user ? 'Back to the app' : 'Sign in'}
+        </Button>
+      )}
+    </AuthFrame>
+  );
+}

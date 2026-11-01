@@ -4,7 +4,7 @@
 // guards.test.ts checks that every model holding kidId / familyId / userId is listed here.
 import type { Types } from 'mongoose';
 import { ACTIVITY_HISTORY_MONTHS, INACTIVE_FAMILY_MONTHS } from '@kk/shared';
-import { CoParentInvite, EmailVerificationToken, PasswordResetToken, SessionCutoff, SocialIdentity, SpentRefreshToken } from '../models-account.js';
+import { CoParentInvite, ConsentToken, EmailVerificationToken, PasswordResetToken, SessionCutoff, SocialIdentity, SpentRefreshToken } from '../models-account.js';
 import {
   Account,
   ChestOpen,
@@ -26,7 +26,7 @@ import { revokeAllSessions } from '../auth.js';
 import { removeKidFromTeamGoals } from './teamGoals.js';
 
 /** Everything that belongs to one kid, deleted by kidId. */
-export const KID_DATA = [Account, Txn, Quest, QuestRun, Purchase, ChestOpen, LessonProgress, LessonAssignment, MilestoneClaim] as const;
+export const KID_DATA = [Account, Txn, Quest, QuestRun, Purchase, ChestOpen, LessonProgress, LessonAssignment, MilestoneClaim, ConsentToken] as const;
 /** Everything that belongs to one user (any role), deleted by userId. */
 export const USER_DATA = [RefreshToken, SpentRefreshToken, SessionCutoff, PasswordResetToken, EmailVerificationToken, SocialIdentity] as const;
 /** Family-wide data with no single owner, deleted with the family. */

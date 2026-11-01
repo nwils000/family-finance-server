@@ -2,8 +2,10 @@
 // gifting and removing kids, the grown-ups list, and the family code.
 import { useState, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import { AGE_BAND_NAMES, ageBand, AVATARS, EFFORT_BOOST, KID_AGE, PIN_LENGTH, type AvatarId } from '@kk/shared';
 import {
+  IconMail,
   Avatar,
   BADGES,
   IconCheck,
@@ -303,6 +305,21 @@ function Pot({ art, label, cents }: { art: ReactNode; label: string; cents: numb
   );
 }
 
+/** COPPA consent: the kid stays locked until the grown-up confirms the email (server services/consent.ts). */
+function ConsentPending({ kid }: { kid: Kid }) {
+  const resend = useAction(() => endpoints.resendConsent(kid.id), { success: 'Sent! Check your email.', invalidate: [] });
+  return (
+    <Card tone="coin" className="flex flex-col gap-3">
+      <Text tone="ink" size="sm">
+        We emailed you to confirm that {kid.name} may use Kid Kapital. {kid.name} can sign in once you tap the link. Without it, we delete this profile after 7 days.
+      </Text>
+      <Button variant="secondary" size="sm" icon={<IconMail size={18} />} disabled={resend.busy} onClick={() => void resend.run().catch(() => undefined)}>
+        Send the email again
+      </Button>
+    </Card>
+  );
+}
+
 function KidCard({
   kid,
   showPiggy,
@@ -352,6 +369,8 @@ function KidCard({
             <IconEdit />
           </Button>
         </div>
+
+        {kid.consentPending && <ConsentPending kid={kid} />}
 
         <LevelProgress xp={kid.xp} compact />
 
@@ -409,9 +428,11 @@ export default function ParentFamily() {
   const kid = sheet.target;
 
   const onAdd = async (d: KidDraft) => {
-    await addKid.run(d);
+    const { consentEmail } = await addKid.run(d);
     sheet.close();
     celebrate('levelUp');
+    if (consentEmail?.sent) toast.success(`Check your email to confirm before ${d.name} can sign in.`);
+    else if (consentEmail) toast.error(consentEmail.error);
   };
 
   const onEdit = async (d: KidDraft) => {

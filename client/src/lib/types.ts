@@ -81,6 +81,8 @@ export interface Kid {
   assistPoints: number;
   /** Trusted kid: every quest pays on "I did it!" without a grown-up check. */
   trusted: boolean;
+  /** Waiting for a grown-up to confirm the consent email; the kid cannot sign in yet. */
+  consentPending: boolean;
   /** Null until a grown-up sets it; lessons then default to the middle band. */
   age: number | null;
   lessonsDone: number;

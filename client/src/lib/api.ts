@@ -110,6 +110,9 @@ export const endpoints = {
   // POST, token in the body: a token in a path would end up in request logs.
   checkResetToken: (token: string) => post<{ valid: boolean }>('/auth/password/reset/check', { token }),
   verifyEmail: (token: string) => post<Ok>('/auth/email/verify', { token }),
+  // Parental consent (server services/consent.ts): the notice link, and the follow-up's withdraw link.
+  confirmConsent: (token: string) => post<{ kidName: string }>('/auth/consent/confirm', { token }),
+  withdrawConsent: (token: string) => post<{ kidName: string | null }>('/auth/consent/withdraw', { token }),
   resendVerification: () => post<Ok & { alreadyVerified: boolean }>('/auth/email/resend'),
   resetPassword: (token: string, password: string) => post<Ok>('/auth/password/reset', { token, password }),
   changePassword: (b: { currentPassword?: string; newPassword: string }) => post<T.Session>('/auth/password/change', b),
@@ -130,7 +133,9 @@ export const endpoints = {
   home: () => get<T.Home>('/family'),
   updateSettings: (b: Partial<Omit<T.FamilySettings, 'id' | 'code' | 'features'>> & { features?: Partial<T.FamilySettings['features']> }) =>
     patch<{ family: T.FamilySettings }>('/family/settings', b),
-  addKid: (b: { name: string; avatar: string; pin: string; age?: number | null }) => post<{ kid: T.Kid }>('/family/kids', b),
+  addKid: (b: { name: string; avatar: string; pin: string; age?: number | null }) =>
+    post<{ kid: T.Kid; consentEmail: { sent: true } | { sent: false; error: string } | null }>('/family/kids', b),
+  resendConsent: (kidId: string) => post<{ sent: true }>(`/family/kids/${kidId}/consent/resend`),
   updateKid: (
     id: string,
     b: { name?: string; avatar?: string; pin?: string; starValueCents?: number | null; effortBoost?: number; trusted?: boolean; age?: number | null },

@@ -27,7 +27,7 @@ details, photos, voice or location are collected, and the app has no field for t
 | Guessing a kid's PIN or a grown-up password | Medium | Atomic lockouts (`verifySecret`), escalating kid lockouts, per-IP, per-email, per-kid and per-family-code rate limits shared across instances, failed sign-ins feed an IP ban ladder | None known |
 | Stolen session | Low | 15-minute access tokens with revocable `jti`; refresh tokens hashed, single-use, rotated, reuse detection revokes all sessions; httpOnly cookie on web | None known |
 | Bots, scanners, credential stuffing | Medium | Vercel Bot Protection and AI bot blocking (both projects), 300 req/min per IP on `/api/`, app limiter, honeypot paths, scanner agent bans, form guard on public forms | No CAPTCHA (by choice: no third-party scripts in a kids' app) |
-| Parent identity not verified (COPPA consent) | Medium | Grown-up confirms 18+ and parent or guardian; email verification is built (`assertEmailVerified`) | **Off in the preview**: no mail provider yet (`PREVIEW_WITHOUT_EMAIL`). Turn on before promoting to the public |
+| Parent consent not verified (COPPA) | Medium | Email-plus consent (`services/consent.ts`): every new kid is locked until the grown-up confirms the notice sent to their own account email; follow-up with a withdraw link; unconfirmed kids deleted after 7 days. New families stay closed (`NEW_FAMILIES_OPEN`) | Email plus relies on the grown-up's inbox; a lawyer should confirm it fits before opening to the public. Operator postal address and phone not yet set |
 | Data loss | Medium | Deletion is deliberate and immediate; disclosed in the Privacy Policy | Free database tier has **no backups**; disclosed |
 | Keeping data longer than needed | Low | Published retention limit: idle families erased after 12 months (`eraseInactiveFamilies`) | None known |
 | Secrets leaking | Low | Secrets only in Vercel environment variables, never in git (repo is public; history checked 2026-10-31, no live secrets) | None known |
@@ -56,12 +56,15 @@ details, photos, voice or location are collected, and the app has no field for t
 
 ## 5. Service providers and their assurances
 
-These providers process data as service providers. Vercel and MongoDB store children's information only to host it, under their data processing terms; EmailJS receives none:
+These providers process data as service providers. Vercel and MongoDB store children's information only to host it, under their data processing terms; EmailJS sees only a kid's nickname, inside the consent emails it delivers to that kid's grown-up:
 
 - **Vercel** (hosting, firewall): Vercel's Data Processing Addendum and security commitments.
 - **MongoDB Atlas** (database, on AWS us-east-1): MongoDB's Data Processing Agreement and
   security commitments.
-- **EmailJS** (grown-up contact form in Settings only): our server relays the grown-up's name,
+- **EmailJS** (server-side only, private key, strict mode): delivers the parental-consent notice
+  and its confirmation, and password reset links, to the grown-up's own account email (the
+  consent emails name the kid by nickname; every user-entered string is HTML-escaped), and the
+  grown-up contact form (Settings only): our server relays the grown-up's name,
   email and message to it with server-only keys (strict mode), and it delivers them to the
   operator's Gmail inbox. The browser never calls it. The form is limited to 3 per 10 minutes and
   10 a day per address, behind the form guard.
@@ -86,5 +89,6 @@ bump `LEGAL_VERSIONS`.
 |------|--------------|
 | 2026-10-31 | First program. Free for everyone, no payments, no email; retention limit added. |
 | 2026-10-31 | Grown-up contact form (EmailJS), web only, never on kid screens. A planned tip link was dropped: no payments on Vercel. |
+| 2026-10-31 | Verifiable parental consent (email plus): kids locked until a grown-up confirms the emailed notice, follow-up with a withdraw link, unconfirmed kids deleted after 7 days, 3 consent emails per family per day. |
 | 2026-10-31 | Contact form moved behind our server (relay with server-only keys), activity history older than 24 months deleted with badges rolled up, private preview for new families. |
 | 2026-10-31 | Bot pass: 3-second fill floor on grown-up forms, 429 tests for every limited public route, honeypot guard per form, IP retention written down. |

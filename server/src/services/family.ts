@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import { ageFromBirthYear, DEFAULT_FEATURES, FEATURES, type Features } from '@kk/shared';
+import { config } from '../config.js';
 import { notFound } from '../http.js';
 import { Account, Family, LessonProgress, User } from '../models.js';
 import type { giftBody, kidBody, kidUpdateBody, settingsBody } from '../schemas.js';
@@ -8,6 +9,7 @@ import { familyOf, resolveKid, type Actor } from './access.js';
 import { hashPin } from './accounts.js';
 import { assertEmailVerified, assertKidCreationOpen } from './email-verification.js';
 import { ensureAccounts, move } from './money.js';
+import { sendConsentNotice } from './consent.js';
 import { eraseKid } from './personal-data.js';
 import { kidStats } from './stats.js';
 
@@ -42,6 +44,8 @@ const shapeKid = async (kid: InstanceType<typeof User>) => {
     effortBoost: kid.effortBoost,
     assistPoints: kid.assistPoints,
     trusted: !!kid.trusted,
+    /** Waiting for a grown-up to confirm the consent email (services/consent.ts); the kid cannot sign in yet. */
+    consentPending: config.consentRequired && !kid.kidConsent?.at,
     age: ageFromBirthYear(kid.birthYear),
     lessonsDone: await LessonProgress.countDocuments({ kidId: kid._id }),
     hat: kid.hat,
@@ -90,7 +94,15 @@ export const addKid = async (actor: Actor, body: z.infer<typeof kidBody>) => {
     birthYear: birthYearFor(body.age),
   });
   await ensureAccounts(kid.familyId, kid._id);
-  return { kid: await shapeKid(kid) };
+  // COPPA: the kid stays locked until the grown-up confirms the emailed notice. A failed or
+  // over-quota send still keeps the kid (locked); the grown-up can resend from the kid's card.
+  const consentEmail = config.consentRequired
+    ? await sendConsentNotice(actor, kid._id).then(
+        () => ({ sent: true as const }),
+        (err: Error) => ({ sent: false as const, error: err.message }),
+      )
+    : null;
+  return { kid: await shapeKid(kid), consentEmail };
 };
 
 export const updateKid = async (actor: Actor, kidId: string, body: z.infer<typeof kidUpdateBody>) => {

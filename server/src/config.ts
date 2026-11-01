@@ -102,7 +102,15 @@ export const config = {
     templateId: optional('EMAILJS_TEMPLATE_ID'),
     publicKey: optional('EMAILJS_PUBLIC_KEY'),
     privateKey: optional('EMAILJS_PRIVATE_KEY'),
+    /** The direct-to-user template (To = the grown-up's own account email): consent and account emails. */
+    userTemplateId: optional('EMAILJS_USER_TEMPLATE_ID'),
   },
+  /**
+   * Verifiable parental consent (COPPA "email plus", services/consent.ts): a new kid stays locked
+   * until a grown-up confirms the emailed notice. Always on wherever real people can reach the app
+   * (hosted); off in local development so the demo works offline; tests switch it on to test it.
+   */
+  consentRequired: isHosted,
   logRequests: optional('LOG_REQUESTS') !== 'false' && appEnv !== 'test',
   /**
    * FORM_GUARD_MODE=monitor keeps every form-guard detection and log line but drops

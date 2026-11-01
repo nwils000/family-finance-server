@@ -2,11 +2,12 @@
 // Vercel, Vercel Cron calls it daily through the cron door (app.ts). Every job here must be
 // idempotent and catch up on its own, because either runner may call it late or twice.
 import { runGrowth } from './growth.js';
+import { runConsentJobs } from './consent.js';
 import { eraseInactiveFamilies, eraseOldActivity } from './personal-data.js';
 
 export const runScheduledJobs = async (now = new Date()) => {
   // Each job runs even if the other fails; a failure is logged and the next tick retries.
-  const results = await Promise.allSettled([runGrowth(now), eraseInactiveFamilies(now), eraseOldActivity(now)]);
+  const results = await Promise.allSettled([runGrowth(now), eraseInactiveFamilies(now), eraseOldActivity(now), runConsentJobs(now)]);
   for (const r of results) if (r.status === 'rejected') console.error(JSON.stringify({ level: 'error', msg: 'scheduled job failed', err: String(r.reason) }));
 };
 

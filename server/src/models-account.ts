@@ -65,6 +65,23 @@ const emailVerificationTokenSchema = new Schema(
 export const EmailVerificationToken = model('EmailVerificationToken', emailVerificationTokenSchema);
 
 /**
+ * A parental-consent link (services/consent.ts): 'consent' in the first notice, 'revoke' in the
+ * follow-up. Hashed, single-use (findOneAndDelete), expiring. Deleted with the kid.
+ */
+const consentTokenSchema = new Schema(
+  {
+    kidId: { type: id, ref: 'User', required: true, index: true },
+    familyId: { type: id, ref: 'Family', required: true },
+    parentId: { type: id, ref: 'User', required: true },
+    purpose: { type: String, enum: ['consent', 'revoke'], required: true },
+    tokenHash: { type: String, required: true, unique: true },
+    expiresAt: { type: Date, required: true, expires: 0 },
+  },
+  { timestamps: { createdAt: true, updatedAt: false } },
+);
+export const ConsentToken = model('ConsentToken', consentTokenSchema);
+
+/**
  * A grown-up's invite for another grown-up to join the family. The family code
  * only lets KIDS sign in; a grown-up account needs one of these. Single-use,
  * claimed with a conditional update (usedAt: null -> now), 7 days.
