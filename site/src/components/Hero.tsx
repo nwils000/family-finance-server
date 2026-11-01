@@ -2,7 +2,7 @@ import { Cloud, Coin, HillsBand, PiggyBank, Rocket, Sparkle, Sun } from '@art';
 import { APP_LINKS } from '@/lib/site';
 import { Enter, Floating } from './Reveal';
 import { KidPhone, ParentPhone } from './PhoneMock';
-import { ButtonLink, Tick } from './ui';
+import { ButtonLink, SignupButton, Tick } from './ui';
 
 /** One promise, one picture, one button (the Mentis hero rule). */
 const PROOF = ['Free for every family', 'No ads for kids, ever', 'Grown-ups control every setting'];
@@ -49,9 +49,9 @@ export function Hero() {
           </Enter>
 
           <Enter delay={0.15} className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
-            <ButtonLink href={APP_LINKS.signup} size="lg" className="w-full sm:w-auto">
+            <SignupButton size="lg" className="w-full sm:w-auto">
               Start your family free
-            </ButtonLink>
+            </SignupButton>
             <ButtonLink href={APP_LINKS.kidLogin} variant="coin" size="lg" className="w-full sm:w-auto" icon={<Coin size={26} />}>
               I&apos;m a kid!
             </ButtonLink>

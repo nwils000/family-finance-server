@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { OPERATOR_NAME } from '@kk/shared';
-import { APP_LINKS, CONTACT_EMAIL, SECTIONS, SITE_NAME } from '@/lib/site';
+import { APP_LINKS, CONTACT_EMAIL, NEW_FAMILIES_OPEN, SECTIONS, SITE_NAME } from '@/lib/site';
 import { Logo } from './Logo';
 
 /** After the Mentis footer: brand, product links, sign-in, legal, contact. */
@@ -10,10 +10,11 @@ export function Footer() {
     {
       title: 'Get started',
       links: [
-        { href: APP_LINKS.signup, label: 'Start a family' },
+        // No signup or join link while new families are not open (SignupButton says why).
+        ...(NEW_FAMILIES_OPEN ? [{ href: APP_LINKS.signup, label: 'Start a family' }] : []),
         { href: APP_LINKS.login, label: 'Grown-up sign in' },
         { href: APP_LINKS.kidLogin, label: 'Kid sign in' },
-        { href: APP_LINKS.join, label: 'Join a family' },
+        ...(NEW_FAMILIES_OPEN ? [{ href: APP_LINKS.join, label: 'Join a family' }] : []),
       ],
     },
     {

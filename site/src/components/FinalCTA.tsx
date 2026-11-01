@@ -1,7 +1,7 @@
 import { Coin, HillsBand, SceneAllDone, Sparkle } from '@art';
 import { APP_LINKS } from '@/lib/site';
 import { Floating, Reveal } from './Reveal';
-import { ButtonLink } from './ui';
+import { ButtonLink, SignupButton } from './ui';
 
 export function FinalCTA() {
   return (
@@ -21,9 +21,9 @@ export function FinalCTA() {
           Set up your family in a few minutes. Your kids can be earning their first coins tonight.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <ButtonLink href={APP_LINKS.signup} size="lg" className="w-full sm:w-auto">
+          <SignupButton size="lg" className="w-full sm:w-auto">
             Start your family free
-          </ButtonLink>
+          </SignupButton>
           <ButtonLink href={APP_LINKS.login} variant="secondary" size="lg" className="w-full sm:w-auto">
             Grown-up sign in
           </ButtonLink>

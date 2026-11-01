@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
 import { useEffect, useState, type ReactNode } from 'react';
 import { APP_LINKS, SECTIONS } from '@/lib/site';
-import { ButtonLink } from './button';
+import { ButtonLink, SignupButton } from './button';
 
 /**
  * Fixed top bar, after Mentis Navigation: translucent while the page scrolls
@@ -59,9 +59,9 @@ export function Navigation({ logo, closeIcon }: { logo: ReactNode; closeIcon: Re
           <ButtonLink href={APP_LINKS.login} variant="ghost" size="sm">
             Sign in
           </ButtonLink>
-          <ButtonLink href={APP_LINKS.signup} variant="primary" size="sm">
+          <SignupButton variant="primary" size="sm">
             Start free
-          </ButtonLink>
+          </SignupButton>
         </div>
 
         <button
@@ -106,9 +106,9 @@ export function Navigation({ logo, closeIcon }: { logo: ReactNode; closeIcon: Re
               ))}
             </ul>
             <div className="mt-6 flex flex-col gap-3">
-              <ButtonLink href={APP_LINKS.signup} variant="primary" size="lg" block>
+              <SignupButton variant="primary" size="lg" block>
                 Start your family free
-              </ButtonLink>
+              </SignupButton>
               <ButtonLink href={APP_LINKS.login} variant="secondary" size="lg" block>
                 Grown-up sign in
               </ButtonLink>

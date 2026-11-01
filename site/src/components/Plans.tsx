@@ -1,7 +1,6 @@
 import { Coin } from '@art';
-import { APP_LINKS } from '@/lib/site';
 import { Reveal } from './Reveal';
-import { ButtonLink, Card, Chip, SectionHeading, Tick } from './ui';
+import { Card, Chip, SectionHeading, SignupButton, Tick } from './ui';
 
 /**
  * The price section: Kid Kapital is free and takes no payments (there is no billing code at
@@ -40,9 +39,9 @@ export function Plans() {
             ))}
           </ul>
           <div className="pt-8">
-            <ButtonLink href={APP_LINKS.signup} size="lg" block>
+            <SignupButton size="lg" block>
               Start your family free
-            </ButtonLink>
+            </SignupButton>
           </div>
         </Card>
       </Reveal>

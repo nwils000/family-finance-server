@@ -104,4 +104,4 @@ export function Chip({ children, tone = 'plain', className }: { children: ReactN
   );
 }
 
-export { ButtonLink, cx } from './button';
+export { ButtonLink, SignupButton, cx } from './button';

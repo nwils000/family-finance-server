@@ -84,6 +84,11 @@ export const config = {
 
   /** See the SMTP check above: a staging preview where grown-ups start verified and no mail goes out. */
   previewWithoutEmail,
+  /**
+   * In that preview there is no parental consent step, so only these grown-ups may add a kid
+   * (email-verification.ts assertKidCreationOpen). Comma-separated, case-insensitive.
+   */
+  previewAllowedEmails: (process.env.PREVIEW_ALLOWED_EMAILS ?? '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
   /** Running as a Vercel function: no long-lived process for interval jobs, a smaller pool. */
   serverless: !!process.env.VERCEL,
   /** Vercel Cron sends it as a bearer token to the scheduled-job door (app.ts). Unset: the door is not mounted. */

@@ -6,7 +6,7 @@ import type { giftBody, kidBody, kidUpdateBody, settingsBody } from '../schemas.
 import { revokeAllSessions } from '../auth.js';
 import { familyOf, resolveKid, type Actor } from './access.js';
 import { hashPin } from './accounts.js';
-import { assertEmailVerified } from './email-verification.js';
+import { assertEmailVerified, assertKidCreationOpen } from './email-verification.js';
 import { ensureAccounts, move } from './money.js';
 import { eraseKid } from './personal-data.js';
 import { kidStats } from './stats.js';
@@ -77,7 +77,9 @@ export const updateSettings = async (actor: Actor, { features, ...rest }: z.infe
 };
 
 export const addKid = async (actor: Actor, body: z.infer<typeof kidBody>) => {
-  // COPPA: a grown-up's verified contact comes before any kid's data is collected.
+  // COPPA: no kid's data while there is no consent step (private preview), and a grown-up's
+  // verified contact before any kid's data is collected.
+  await assertKidCreationOpen(actor);
   await assertEmailVerified(actor);
   const kid = await User.create({
     familyId: familyOf(actor),

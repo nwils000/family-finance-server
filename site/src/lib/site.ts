@@ -2,7 +2,7 @@
 // reaches the browser through the nav, and the index also evaluates the whole
 // lesson library (the package has no `sideEffects: false`), which put ~180 kB
 // of lesson text into every page's JavaScript.
-import { LEGAL_PATHS, PRIVACY_CONTACT } from '@kk/shared/src/legal';
+import { LEGAL_PATHS, NEW_FAMILIES_OPEN, PRIVACY_CONTACT, PRIVATE_PREVIEW_MESSAGE } from '@kk/shared/src/legal';
 
 /**
  * The one place the site learns where things live. Every CTA, legal link and
@@ -26,6 +26,9 @@ export const APP_LINKS = {
 } as const;
 
 export const CONTACT_EMAIL = PRIVACY_CONTACT;
+
+/** Whether new families may sign up (@kk/shared legal.ts). While false no page links to signup or join: see SignupButton. */
+export { NEW_FAMILIES_OPEN, PRIVATE_PREVIEW_MESSAGE };
 
 export const SITE_NAME = 'Kid Kapital';
 export const TAGLINE = 'Chores become quests. Coins become know-how.';

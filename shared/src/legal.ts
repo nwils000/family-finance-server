@@ -15,6 +15,17 @@ export const LEGAL_PATHS: Record<LegalDoc, string> = { terms: '/terms', privacy:
 export const OPERATOR_NAME = 'Nathan Wilson';
 
 /**
+ * Private preview: new families are not open yet, because verifiable parental consent
+ * (COPPA) is not built. While false, the marketing site shows "Coming soon" instead of any
+ * signup link (site button.tsx SignupButton), and the server refuses to add a kid for anyone
+ * not on PREVIEW_ALLOWED_EMAILS while grown-ups are auto-verified
+ * (email-verification.ts assertKidCreationOpen). Open it only once consent is built and a
+ * lawyer has confirmed the approach.
+ */
+export const NEW_FAMILIES_OPEN = false;
+export const PRIVATE_PREVIEW_MESSAGE = "Kid Kapital is in private preview and isn't open to new families yet.";
+
+/**
  * Retention limit (COPPA requires a published one, never indefinite): a family nobody has
  * signed in to for this many months is deleted with all its data
  * (server/src/services/personal-data.ts eraseInactiveFamilies). The Privacy Policy reads it.

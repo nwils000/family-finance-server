@@ -2,7 +2,7 @@
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, relative } from 'path';
 import { describe, expect, it } from 'vitest';
-import { LESSON_ART, LESSON_CATEGORIES, LESSONS } from '@kk/shared';
+import { LESSON_ART, LESSON_CATEGORIES, LESSONS, NEW_FAMILIES_OPEN } from '@kk/shared';
 
 const ROOT = join(import.meta.dirname, '../../..');
 const SKIP = new Set(['node_modules', 'dist', 'legacy-django', '.git', 'ios', 'android', 'coverage']);
@@ -74,6 +74,16 @@ describe('repo guards', () => {
     expect(keys.size).toBeGreaterThanOrEqual(6);
     const policy = text('client/src/pages/legal.tsx');
     expect([...keys].filter((k) => !policy.includes(k))).toEqual([]);
+  });
+
+  it('private preview: no signup or join link on the site outside the gated button and footer, and it stays closed until consent exists', () => {
+    expect(offenders(/APP_LINKS\.(signup|join)\b/, 'site/src', ['site/src/components/button.tsx', 'site/src/components/Footer.tsx'])).toEqual([]);
+    // The footer's links sit behind the same switch.
+    const footer = code.find((f) => f.path === 'site/src/components/Footer.tsx')!.text;
+    for (const line of footer.split('\n').filter((l) => /APP_LINKS\.(signup|join)\b/.test(l))) expect(line).toMatch(/NEW_FAMILIES_OPEN \?/);
+    // Opening to new families needs verifiable parental consent (COPPA) built first.
+    const consentBuilt = code.some((f) => f.path === 'server/src/services/consent.ts');
+    expect(!NEW_FAMILIES_OPEN || consentBuilt).toBe(true);
   });
 
   it('has no em or en dashes anywhere', () => {

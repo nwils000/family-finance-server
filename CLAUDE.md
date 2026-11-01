@@ -365,6 +365,15 @@ kids use family code `DEMO42`, Maya PIN `1234`, Leo PIN `5678`.
 
 Native: `npm run cap:ios -w client` / `npm run cap:android -w client`.
 
+## PRIVATE PREVIEW (COPPA stopgap)
+
+There is no verifiable parental consent step yet, so new families are not open:
+`@kk/shared` `NEW_FAMILIES_OPEN = false` turns every site signup button into "Coming soon"
+(`site/src/components/button.tsx` `SignupButton`, the only signup link), and while grown-ups are
+auto-verified `email-verification.ts` `assertKidCreationOpen` refuses to add a kid for anyone not
+on `PREVIEW_ALLOWED_EMAILS` (403 `PRIVATE_PREVIEW`). `guards.test.ts` keeps it closed until
+`server/src/services/consent.ts` exists. Opening needs consent built and a lawyer's sign-off.
+
 ## PREVIEW WITHOUT EMAIL
 
 A hosted server needs `SMTP_URL`, except a `NODE_ENV=staging` deploy with

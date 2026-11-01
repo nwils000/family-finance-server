@@ -6,6 +6,7 @@
 // change their password, change the family code. What waits for a verified email
 // (assertEmailVerified): adding a kid and inviting another grown-up, because both
 // bring new people's data in, and COPPA wants the parent's verified contact first.
+import { PRIVATE_PREVIEW_MESSAGE } from '@kk/shared';
 import type { AuthedUser } from '../auth.js';
 import { config } from '../config.js';
 import { HttpError } from '../http.js';
@@ -34,6 +35,19 @@ const sendLink = async (userId: unknown, email: string) => {
     await EmailVerificationToken.deleteOne({ _id: row._id });
     throw err;
   }
+};
+
+/**
+ * COPPA stopgap. In the preview without email, grown-ups count as verified without proving
+ * anything, so there is no parental consent step. Until consent is built, no kid's data may
+ * come in except for the allow-listed grown-ups (config.previewAllowedEmails). Called before
+ * every kid creation (family.ts addKid, the only path that makes a kid).
+ */
+export const assertKidCreationOpen = async (actor: AuthedUser) => {
+  if (!config.previewWithoutEmail) return;
+  const user = await User.findById(actor.userId).select('email');
+  if (user?.email && config.previewAllowedEmails.includes(user.email.toLowerCase())) return;
+  throw new HttpError(403, PRIVATE_PREVIEW_MESSAGE, 'PRIVATE_PREVIEW');
 };
 
 /** Send the link after the response, so signup never waits on (or fails with) the mail server. */

@@ -32,7 +32,10 @@ so the refresh cookie is first-party and no cross-site CORS is needed. Native ap
   becomes the Kid Kapital branch, change the production branch in both projects (Settings,
   Environments, Production) and the branch name in both `ignoreCommand`s. A manual
   `vercel deploy --prod` from the repo root still works (for the site, set `VERCEL_PROJECT_ID`).
-- **Environment (app, production):** `NODE_ENV=staging`, `PREVIEW_WITHOUT_EMAIL=true` (no mail
+- **Private preview (COPPA stopgap):** with no parental consent step yet, only grown-ups on
+  `PREVIEW_ALLOWED_EMAILS` can add a kid on the live preview, and the marketing site shows "Coming
+  soon" instead of any signup link (`@kk/shared` `NEW_FAMILIES_OPEN`).
+- **Environment (app, production):** `NODE_ENV=staging`, `PREVIEW_WITHOUT_EMAIL=true`, `PREVIEW_ALLOWED_EMAILS` (no mail
   domain yet: grown-ups start verified, no email is sent, so password reset and invite emails
   do not arrive), `JWT_SECRET`, `CRON_SECRET`, `MONGO_URL`, `CLIENT_ORIGINS` and `APP_URL`
   (both the app URL). Site: `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SITE_URL`.
