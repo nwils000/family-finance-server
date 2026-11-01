@@ -8,15 +8,18 @@
 // Facts this relies on: there is no billing code at all (removed 2026-10-31); the preview sends no
 // email (config.ts PREVIEW_WITHOUT_EMAIL); the free database tier keeps no backups
 // (docs/DEPLOY.md); IP bans expire within 24 hours and offenses after 7 days
-// (services/abuse.ts); the contact form uses EmailJS (features/creator.tsx) and nothing takes payments; idle families are erased after INACTIVE_FAMILY_MONTHS (personal-data.ts); Google and Apple sign-in are not configured, so they are not mentioned.
+// (services/abuse.ts); the contact form is relayed by our server through EmailJS (mailer.ts sendToOperator) and nothing takes payments; idle families are erased after INACTIVE_FAMILY_MONTHS (personal-data.ts); Google and Apple sign-in are not configured, so they are not mentioned.
 //
 // NOT REVIEWED BY A LAWYER. Kid Kapital is used by children under 13, so COPPA applies.
 // Have these reviewed before the app is promoted to real families.
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CREATOR_SITE, INACTIVE_FAMILY_MONTHS, LEGAL_PATHS, LEGAL_VERSIONS, OPERATOR_NAME, PRIVACY_CONTACT, type LegalDoc } from '@kk/shared';
+import { ACTIVITY_HISTORY_MONTHS, CREATOR_SITE, INACTIVE_FAMILY_MONTHS, LEGAL_PATHS, LEGAL_VERSIONS, OPERATOR_ADDRESS, OPERATOR_NAME, OPERATOR_PHONE, PRIVACY_CONTACT, type LegalDoc } from '@kk/shared';
 import { IconBack, Penny } from '@/art';
 import { Button, Card, Heading, Text } from '@/components/ui';
+
+/** Name, then postal address and phone once they exist (COPPA), then email. */
+const OPERATOR_CONTACT = [OPERATOR_NAME, OPERATOR_ADDRESS, OPERATOR_PHONE, PRIVACY_CONTACT].filter(Boolean).join(', ');
 
 interface Section {
   heading: string;
@@ -34,7 +37,7 @@ const PRIVACY: Section[] = [
   {
     heading: 'Who we are',
     body: [
-      `Kid Kapital is run by ${OPERATOR_NAME}, an individual, who is responsible for the information described here. You can reach us at ${PRIVACY_CONTACT} about anything in this policy, including a child's information.`,
+      `Kid Kapital is run by ${OPERATOR_NAME}, an individual, who is responsible for the information described here. You can reach us (${OPERATOR_CONTACT}) about anything in this policy, including a child's information.`,
       'Kid Kapital is an early, free preview made for families in the United States.',
     ],
   },
@@ -51,8 +54,8 @@ const PRIVACY: Section[] = [
     body: [
       "A grown-up creates each kid's profile; a kid can never sign up on their own. We ask the grown-up for a first name or nickname only. Please do not enter a kid's full name.",
       'For each kid we store: that first name or nickname, a picture they pick from our own drawings (never a photo), an optional birth year (only to choose lessons for their age), and a 4-digit PIN (stored only as a one-way hash).',
-      "As a kid uses the app, we store their activity inside the family: quests finished, coins earned, saved and spent, rewards picked, lessons and quiz answers, XP, badges and hats. Grown-ups in the family can see all of it.",
-      'We never ask a kid for, and the app has no place to enter, an email address, phone number, home address, photo, voice, location or any way to contact them. Kids cannot message anyone, and nothing a kid does is visible outside their own family.',
+      "As a kid uses the app, we store their activity inside the family: quests finished, coins earned, saved and spent, rewards picked, the name of their savings goal, lessons and quiz answers, XP, badges and hats. Grown-ups in the family can see all of it.",
+      'Kids cannot enter contact details, photos, voice or location, and the app never asks them to. The only place a kid types words is the name of their savings goal (40 characters, visible only to their family). Kids cannot message anyone, and nothing a kid does is visible outside their own family.',
     ],
   },
   {
@@ -74,7 +77,7 @@ const PRIVACY: Section[] = [
     heading: 'Who else handles data',
     body: [
       'Two companies run the computers Kid Kapital lives on, and process data only to provide that service to us, under their written data protection and security terms: Vercel (hosting) and MongoDB Atlas (database, run on Amazon Web Services). Data is stored in the United States.',
-      'If a grown-up writes to us with the contact form in Settings, their name, email address and message are passed by EmailJS (emailjs.com/legal/privacy-policy) to our Gmail inbox, run by Google (policies.google.com/privacy). Kids never see the form. Please do not include a child\'s details in a message. Apart from that, we do not send email yet.',
+      'If a grown-up writes to us with the contact form in Settings, their name, email address and message go from our server through EmailJS (emailjs.com/legal/privacy-policy) to our Gmail inbox, run by Google (policies.google.com/privacy). Kids never see the form. Please do not include a child\'s details in a message. Apart from that, we do not send email yet.',
       'EmailJS and Google only ever receive what a grown-up chooses to type into the contact form. It is in grown-up Settings only, and we ask grown-ups not to include a child\'s details, so no child\'s information is sent to them by the app. Kid Kapital takes no payments, so no payment company receives anything.',
       'We disclose information only if the law requires it, or to protect the safety of a person or the service.',
     ],
@@ -90,7 +93,7 @@ const PRIVACY: Section[] = [
     heading: 'How long we keep it',
     body: [
       "We keep a family's information only while the family uses Kid Kapital, because the app needs it to show each person their quests, coins and lessons. We never keep it indefinitely:",
-      `When you delete a kid, your account or the family, that data is deleted right away. If nobody in a family signs in for ${INACTIVE_FAMILY_MONTHS} months, we delete the whole family and everything in it automatically. We do not keep backup copies right now, so deleted data cannot be recovered, by you or by us.`,
+      `When you delete a kid, your account or the family, that data is deleted right away. If nobody in a family signs in for ${INACTIVE_FAMILY_MONTHS} months, we delete the whole family and everything in it automatically. Activity history (quests finished, coin movements and chest opens) older than ${ACTIVITY_HISTORY_MONTHS} months is deleted automatically; we keep it until then so grown-ups and kids can see their progress. Balances, XP and badges stay. We do not keep backup copies right now, so deleted data cannot be recovered, by you or by us.`,
       'To stop spam and password guessing, we briefly process the internet (IP) address of each request. We count tries per address, and per email or family code, over short windows of 15 minutes to 24 hours; those counters are stored only as one-way hashes and delete themselves when the window ends. An address that sends attack traffic is stored as-is: it may be blocked for up to 24 hours, and a record of its past blocks is kept for 7 days, then deleted automatically. Our host also processes addresses to filter bots, and keeps short-lived technical logs of requests, which contain no names, emails or family content.',
     ],
   },
@@ -115,7 +118,7 @@ const PRIVACY: Section[] = [
   },
   {
     heading: 'Contact',
-    body: [`${OPERATOR_NAME}, ${PRIVACY_CONTACT}. Questions, requests or concerns about privacy, including anything about a child's information, are welcome.`],
+    body: [`${OPERATOR_CONTACT}. Questions, requests or concerns about privacy, including anything about a child's information, are welcome.`],
   },
 ];
 
@@ -191,8 +194,18 @@ const TERMS: Section[] = [
   {
     heading: 'Your responsibility',
     body: [
-      "To the extent the law allows, you agree to cover any claims, losses and costs (including reasonable legal fees) that come from your breaking these terms, your misuse of Kid Kapital, or the information you or the kids in your family put into it.",
+      "To the extent the law allows, you agree to cover any claims, losses and costs (including reasonable legal fees) that come from your breaking these terms or your misuse of Kid Kapital.",
     ],
+  },
+  {
+    heading: 'Chores and rewards',
+    body: [
+      "You choose every quest and reward. The example quests in the app are only ideas; you decide which, if any, fit each kid. Pick tasks that are safe and right for each kid's age, and supervise them. We don't review or supervise chores and aren't responsible for injury or damage from them.",
+    ],
+  },
+  {
+    heading: 'Accessibility',
+    body: [`We aim to meet WCAG 2.1 AA. If something is hard to use, write to ${PRIVACY_CONTACT} and we'll work on it.`],
   },
   {
     heading: 'Changes to these terms',
@@ -205,7 +218,7 @@ const TERMS: Section[] = [
     body: [
       'If you have a problem with Kid Kapital, please write to us first and we will try to sort it out within 30 days.',
       'If any part of these terms cannot be enforced, the rest still applies. Our not enforcing a part is not a waiver of it. These terms and the Privacy Policy are the whole agreement between you and us about Kid Kapital. You may not transfer your account; we may transfer these terms to someone who takes over Kid Kapital.',
-      `Questions: ${OPERATOR_NAME}, ${PRIVACY_CONTACT}.`,
+      `Questions: ${OPERATOR_CONTACT}.`,
     ],
   },
 ];

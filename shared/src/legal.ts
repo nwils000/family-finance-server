@@ -32,5 +32,20 @@ export const PRIVATE_PREVIEW_MESSAGE = "Kid Kapital is in private preview and is
  */
 export const INACTIVE_FAMILY_MONTHS = 12;
 
+/**
+ * Activity history (quest runs, coin movements, chest opens) older than this is deleted even in
+ * an active family (services/personal-data.ts eraseOldActivity). Balances, XP and badges stay:
+ * what badges count is rolled up onto the kid first. The Privacy Policy reads it.
+ */
+export const ACTIVITY_HISTORY_MONTHS = 24;
+
+/**
+ * COPPA (16 CFR 312.4(d)(1)) asks a children's privacy notice for the operator's postal address
+ * and phone. Empty until a mailbox and number that are not a home address exist; the Privacy
+ * Policy shows them once set, and guards.test.ts refuses to open new families while either is empty.
+ */
+export const OPERATOR_ADDRESS = '';
+export const OPERATOR_PHONE = '';
+
 /** Contact for legal and privacy requests (access, deletion, consent questions). A real, read inbox. */
 export const PRIVACY_CONTACT = 'nwils000@gmail.com';

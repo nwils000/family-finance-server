@@ -2,7 +2,7 @@
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, relative } from 'path';
 import { describe, expect, it } from 'vitest';
-import { LESSON_ART, LESSON_CATEGORIES, LESSONS, NEW_FAMILIES_OPEN } from '@kk/shared';
+import { LESSON_ART, LESSON_CATEGORIES, LESSONS, NEW_FAMILIES_OPEN, OPERATOR_ADDRESS, OPERATOR_PHONE } from '@kk/shared';
 
 const ROOT = join(import.meta.dirname, '../../..');
 const SKIP = new Set(['node_modules', 'dist', 'legacy-django', '.git', 'ios', 'android', 'coverage']);
@@ -37,9 +37,12 @@ describe('repo guards', () => {
     expect(legal).toContain("It doesn't ask for or accept payments.");
   });
 
-  it('the tip link and contact form appear only in grown-up Settings, and EmailJS is called only from lib/api.ts', () => {
+  it('the creator corner appears only in grown-up Settings, and the browser never calls the mail relay', () => {
     expect(offenders(/features\/creator'/, 'client/src', ['client/src/pages/parent/ParentSettings.tsx'])).toEqual([]);
-    expect(offenders(/api\.emailjs\.com|EMAILJS\.origin/, 'client/src', ['client/src/lib/api.ts'])).toEqual([]);
+    // The browser never talks to the mail relay and holds no mail keys: the server relays the form.
+    // (The Privacy Policy names it as a processor; that is text, not a call.)
+    expect([...offenders(/emailjs/i, 'client/src', ['client/src/pages/legal.tsx']), ...offenders(/emailjs/i, 'shared/src')]).toEqual([]);
+    expect(offenders(/service_3t589y2|template_u5t6zq1|aEYQQP-65mEPEsaXX/, '')).toEqual([]);
     expect(offenders(/CREATOR_SUPPORT_PAGE/, 'client/src', ['client/src/features/creator.tsx'])).toEqual([]);
   });
 
@@ -58,9 +61,8 @@ describe('repo guards', () => {
     expect(guarded.filter((f) => !/<Honeypot\b/.test(f.text)).map((f) => f.path)).toEqual([]);
     const contact = code.find((f) => f.path === 'client/src/features/creator.tsx')!.text;
     expect(contact).toMatch(/<Honeypot\b/);
-    // The trap and floor check runs before the send, so a filled trap never reaches the network.
-    expect(contact.indexOf('checkContactSubmission(')).toBeGreaterThan(-1);
-    expect(contact.indexOf('checkContactSubmission(')).toBeLessThan(contact.indexOf('await sendContactMessage('));
+    // The contact form uses the shared form guard; the server drops a filled trap before any send.
+    expect(contact).toMatch(/useFormGuard\('contact'\)/);
   });
 
   it('every cookie and device storage key the app uses is named in the Privacy Policy', () => {
@@ -84,6 +86,8 @@ describe('repo guards', () => {
     // Opening to new families needs verifiable parental consent (COPPA) built first.
     const consentBuilt = code.some((f) => f.path === 'server/src/services/consent.ts');
     expect(!NEW_FAMILIES_OPEN || consentBuilt).toBe(true);
+    // COPPA 312.4(d)(1): the policy must give a postal address and phone before families are invited in.
+    expect(!NEW_FAMILIES_OPEN || (!!OPERATOR_ADDRESS && !!OPERATOR_PHONE)).toBe(true);
   });
 
   it('has no em or en dashes anywhere', () => {

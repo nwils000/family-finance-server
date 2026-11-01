@@ -1,7 +1,7 @@
 // The only module that talks to the server. Components call the typed
 // functions in `endpoints`, never axios directly.
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { EMAILJS, type AccountKind, type ContactFields, type FormGuardBody, type HatId } from '@kk/shared';
+import { type AccountKind, type ContactFields, type FormGuardBody, type HatId } from '@kk/shared';
 import { isNative, secureStorage } from './secure-storage';
 import type * as T from './types';
 
@@ -83,23 +83,6 @@ const del = <R>(url: string) => http.delete<R>(url).then((r) => r.data);
 
 type Ok = { ok: true };
 
-/**
- * The grown-up contact form (features/creator.tsx): one POST to EmailJS's REST API, the only
- * call that leaves our own origin. No retry: a failed send shows an error and the email address.
- */
-export const sendContactMessage = async (fields: ContactFields) => {
-  const res = await fetch(EMAILJS.origin + EMAILJS.sendPath, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      service_id: EMAILJS.serviceId,
-      template_id: EMAILJS.templateId,
-      user_id: EMAILJS.publicKey,
-      template_params: { ...fields, app_name: EMAILJS.appName },
-    }),
-  });
-  if (!res.ok) throw new Error(`EmailJS ${res.status}`);
-};
 
 export const endpoints = {
   // Public forms pass `guard` from useFormGuard() (lib/form-guard.ts): the anti-bot signals.
@@ -110,7 +93,7 @@ export const endpoints = {
   checkInvite: (invite: string) => post<{ valid: true; familyName: string } | { valid: false }>('/auth/invite/check', { invite }),
   login: (b: { email: string; password: string }, guard?: FormGuardBody) => post<T.Session>('/auth/login', { ...b, ...guard }),
   kidLogin: (b: { code: string; kidId: string; pin: string }, guard?: FormGuardBody) => post<T.Session>('/auth/kid-login', { ...b, ...guard }),
-  familyPreview: (code: string) => get<{ name: string; kids: T.KidRef[] }>(`/auth/family/${encodeURIComponent(code)}`),
+  familyPreview: (code: string) => get<{ kids: T.KidRef[] }>(`/auth/family/${encodeURIComponent(code)}`),
   logout: async () => {
     const refreshToken = await secureStorage.getRefreshToken();
     await post<Ok>('/auth/logout', refreshToken ? { refreshToken } : {});
@@ -129,6 +112,8 @@ export const endpoints = {
   exportData: () => get<Record<string, unknown>>('/account/export'),
   /** Delete your grown-up account; the last grown-up deletes the whole family. */
   deleteAccount: (password: string) => post<{ familyDeleted: boolean }>('/account/delete', { password }),
+  // The contact form: our server relays it to the operator's inbox. The guard body carries the trap and signals.
+  sendContact: (fields: ContactFields, guard: FormGuardBody) => post<{ ok: true }>('/contact', { ...fields, ...guard }),
   googleSignIn: (b: T.SocialExtras & { idToken: string }) => post<T.Session>('/auth/google', b),
   appleNonce: () => get<{ nonce: string }>('/auth/apple/nonce'),
   appleSignIn: (b: T.SocialExtras & { identityToken: string; nonce: string; name?: string }) => post<T.Session>('/auth/apple', b),

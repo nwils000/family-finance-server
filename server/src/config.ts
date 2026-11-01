@@ -93,6 +93,16 @@ export const config = {
   serverless: !!process.env.VERCEL,
   /** Vercel Cron sends it as a bearer token to the scheduled-job door (app.ts). Unset: the door is not mounted. */
   cronSecret: optional('CRON_SECRET'),
+  /**
+   * The grown-up contact form's relay to the operator's inbox (mailer.ts sendToOperator). Server
+   * env only: the private key must never reach a browser. Unset: hosted answers 503, dev logs.
+   */
+  emailjs: {
+    serviceId: optional('EMAILJS_SERVICE_ID'),
+    templateId: optional('EMAILJS_TEMPLATE_ID'),
+    publicKey: optional('EMAILJS_PUBLIC_KEY'),
+    privateKey: optional('EMAILJS_PRIVATE_KEY'),
+  },
   logRequests: optional('LOG_REQUESTS') !== 'false' && appEnv !== 'test',
   /**
    * FORM_GUARD_MODE=monitor keeps every form-guard detection and log line but drops

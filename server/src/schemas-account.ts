@@ -1,6 +1,6 @@
 // Input shapes for account security and social sign-in endpoints.
 import { z } from 'zod';
-import { PASSWORD_MAX } from '@kk/shared';
+import { CONTACT_RULES, PASSWORD_MAX } from '@kk/shared';
 import { linkToken } from './tokens.js';
 import { email, inviteToken, newPassword } from './schemas.js';
 
@@ -30,3 +30,12 @@ export const appleBody = z.object({
 });
 
 export const deleteAccountBody = z.object({ password: z.string().max(PASSWORD_MAX).optional() });
+
+/** The grown-up contact form, after the form guard has taken its trap and signals off. */
+export const contactBody = z
+  .object({
+    user_name: z.string().trim().min(1).max(CONTACT_RULES.limits.user_name),
+    user_email: z.string().trim().email().max(CONTACT_RULES.limits.user_email),
+    message: z.string().trim().min(1).max(CONTACT_RULES.limits.message),
+  })
+  .strict();

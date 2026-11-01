@@ -1,12 +1,13 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import mongoose, { Types } from 'mongoose';
 import request from 'supertest';
-import { INACTIVE_FAMILY_MONTHS, LEGAL_VERSIONS } from '@kk/shared';
+import { ACTIVITY_HISTORY_MONTHS, INACTIVE_FAMILY_MONTHS, LEGAL_VERSIONS } from '@kk/shared';
 import { createApp } from '../app.js';
 import { useTestDb } from './testDb.js';
 import { Account, Family, LessonProgress, Purchase, Quest, QuestRun, RefreshToken, TeamGoal, Txn, User } from '../models.js';
-import { eraseFamily, eraseInactiveFamilies, eraseKid, eraseParent, exportFamily, FAMILY_DATA, KID_DATA, NOT_PERSONAL, USER_DATA } from '../services/personal-data.js';
+import { eraseFamily, eraseInactiveFamilies, eraseOldActivity, eraseKid, eraseParent, exportFamily, FAMILY_DATA, KID_DATA, NOT_PERSONAL, USER_DATA } from '../services/personal-data.js';
 import '../models-account.js';
+import { kidStats } from '../services/stats.js';
 
 useTestDb('personal-data');
 
@@ -146,5 +147,30 @@ describe('personal data', () => {
     expect((await request(app).post('/api/auth/signup').send({ ...base, acceptLegal: true })).status).toBe(200);
     const user = (await User.findOne({ email: 'legal@x.com' }))!;
     expect(user.legalAccepted).toMatchObject(LEGAL_VERSIONS);
+  });
+});
+
+describe('activity history limit', () => {
+  it('deletes history past the limit in an active family, and badges and the quest count survive', async () => {
+    const { familyId, a } = await seed();
+    const old = new Date();
+    old.setMonth(old.getMonth() - (ACTIVITY_HISTORY_MONTHS + 1));
+    // seed() gave kid A one approved run and one quest Txn; add an old piggy deposit, then age everything.
+    await Txn.create({ familyId, kidId: a._id, amountCents: 25, kind: 'deposit', pot: 'piggy', label: 'Into piggy' });
+    const before = await kidStats(a._id);
+    expect(before.badges).toEqual(expect.arrayContaining(['first-quest', 'saver']));
+    for (const M of [QuestRun, Txn] as const) await (M as typeof Txn).collection.updateMany({ kidId: a._id }, { $set: { createdAt: old } });
+    await eraseOldActivity();
+    expect(await QuestRun.countDocuments({ kidId: a._id })).toBe(0);
+    expect(await Txn.countDocuments({ kidId: a._id })).toBe(0);
+    const after = await kidStats(a._id);
+    expect(after.questsDone).toBe(before.questsDone);
+    expect(after.badges).toEqual(expect.arrayContaining(['first-quest', 'saver']));
+  });
+
+  it('leaves recent history alone', async () => {
+    const { a } = await seed();
+    await eraseOldActivity();
+    expect(await QuestRun.countDocuments({ kidId: a._id })).toBe(1);
   });
 });

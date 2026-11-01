@@ -30,7 +30,7 @@ const PROMISES: { art: ReactNode; title: string; body: string; tone: CardTone }[
   {
     art: <Wallet size={56} />,
     title: 'No bank or card',
-    body: 'Kid Kapital keeps the family ledger. It never connects to a bank account or card for your kids.',
+    body: 'Kid Kapital tracks pretend coins. It never connects to a bank account or card, and never holds, moves or pays out money.',
     tone: 'good',
   },
   {

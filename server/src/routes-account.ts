@@ -11,6 +11,9 @@ import * as S from './schemas-account.js';
 import {
   accountDeleteLimiter,
   authLimiter,
+  bodyCap,
+  contactDailyLimiter,
+  contactLimiter,
   dataExportLimiter,
   linkCheckLimiter,
   resendVerificationLimiter,
@@ -20,6 +23,7 @@ import {
   strictLimiter,
 } from './security.js';
 import * as security from './services/account-security.js';
+import * as contact from './services/contact.js';
 import { familyOf } from './services/access.js';
 import * as data from './services/personal-data.js';
 import * as verification from './services/email-verification.js';
@@ -56,6 +60,9 @@ r.post('/auth/password/change', ...parent, strictLimiter, handle(async (req, res
 // Your data: download everything the family stored, or delete your account (the last
 // grown-up takes the whole family with them). Deleting re-checks the password first.
 r.get('/account/export', ...parent, dataExportLimiter, handle((req) => data.exportFamily(familyOf(req.auth))));
+// The grown-up contact form: relayed to the operator's inbox (services/contact.ts).
+r.post('/contact', ...parent, contactLimiter, contactDailyLimiter, bodyCap(8 * 1024), formGuard('contact'), handle((req) => contact.sendContact(parse(S.contactBody, req.body))));
+
 r.post('/account/delete', ...parent, accountDeleteLimiter, handle(async (req, res) => {
   await security.confirmPassword(req.auth, parse(S.deleteAccountBody, req.body).password);
   const result = await data.eraseParent(familyOf(req.auth), new Types.ObjectId(req.auth.userId));

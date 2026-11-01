@@ -1,39 +1,84 @@
-// The contact form's spam rules (@kk/shared creator.ts), shared by every one of Nathan's apps
-// through one EmailJS account with 200 sends a month.
-import { describe, expect, it } from 'vitest';
-import { CONTACT_RULES, checkContactSubmission, type ContactFields } from '@kk/shared';
+// The grown-up contact form. The browser never calls the mail relay: it posts to /api/contact,
+// where the form guard, the caps, the link rule and the per-address limits are enforced, and
+// only then is the message relayed (mailer.ts sendToOperator; tests read operatorOutbox).
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import request from 'supertest';
+import { CONTACT_RULES, FORM_SIGNALS_KEY, contactPacing, contactProblem } from '@kk/shared';
+import { createApp } from '../app.js';
+import { protection } from '../security.js';
+import { operatorOutbox } from '../services/mailer.js';
+import { useTestDb } from './testDb.js';
 
-const fields: ContactFields = { user_name: 'Pat', user_email: 'pat@x.com', message: 'Hello, I love the piggy bank.' };
-const T0 = 1_700_000_000_000;
-const check = (over: Partial<Parameters<typeof checkContactSubmission>[0]> = {}) =>
-  checkContactSubmission({ fields, trap: '', openedAt: T0, now: T0 + 10_000, sent: [], ...over });
+useTestDb('contact');
+const app = createApp();
+let n = 0;
+const human = { [FORM_SIGNALS_KEY]: { surface: 'contact', elapsedMs: 9000, interacted: true } };
+const fields = { user_name: 'Pat', user_email: 'pat@x.com', message: 'Hello, I love the piggy bank.' };
 
-describe('contact form rules', () => {
-  it('lets a normal message through', () => {
-    expect(check()).toEqual({ ok: true });
+const grownUp = async () => {
+  const email = `contact-${++n}@x.com`;
+  const res = await request(app).post('/api/auth/signup').send({ name: 'Pat', email, password: 'Password123!', familyName: 'Team', acceptLegal: true });
+  return { Authorization: `Bearer ${res.body.accessToken}` };
+};
+const send = (auth: Record<string, string>, body: object, ip = '198.51.100.7') => request(app).post('/api/contact').set(auth).set('X-Forwarded-For', ip).send(body);
+
+beforeEach(() => {
+  operatorOutbox.length = 0;
+});
+afterEach(() => {
+  protection.limits = false;
+});
+
+describe('contact form (server relay)', () => {
+  it('a person with normal signals reaches the inbox, with exactly the three fields', async () => {
+    const res = await send(await grownUp(), { ...fields, ...human, website: '' });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(operatorOutbox).toEqual([fields]);
   });
 
-  it('a filled trap or a form sent too fast is dropped silently (the bot sees success)', () => {
-    expect(check({ trap: 'http://spam' })).toEqual({ ok: false, silent: true });
-    expect(check({ now: T0 + CONTACT_RULES.minFillMs - 1 })).toEqual({ ok: false, silent: true });
+  it('a filled trap, a sub-3-second submit, or no signals gets the normal success and sends nothing', async () => {
+    const auth = await grownUp();
+    const fast = { [FORM_SIGNALS_KEY]: { surface: 'contact', elapsedMs: 1200, interacted: true } };
+    for (const body of [{ ...fields, ...human, website: 'http://spam' }, { ...fields, ...fast }, { ...fields }]) {
+      const res = await send(auth, body);
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ ok: true });
+    }
+    expect(operatorOutbox).toEqual([]);
   });
 
-  it('one message a minute and five a day per browser', () => {
-    const now = T0 + 10_000;
-    const cooling = check({ sent: [now - 30_000] });
-    expect(cooling.ok).toBe(false);
-    expect('text' in cooling && cooling.text).toMatch(/minute/);
-    expect(check({ sent: [now - 61_000] })).toEqual({ ok: true });
-    const five = [1, 2, 3, 4, 5].map((h) => now - h * 3_600_000);
-    expect(check({ sent: five }).ok).toBe(false);
-    // Yesterday's sends no longer count.
-    expect(check({ sent: five.map((t) => t - 86_400_000) })).toEqual({ ok: true });
+  it('refuses unknown fields, over-long fields, a near-empty message and more than three links', async () => {
+    const auth = await grownUp();
+    expect((await send(auth, { ...fields, ...human, to: 'someone@else.com' })).status).toBe(400);
+    expect((await send(auth, { ...fields, ...human, message: 'x'.repeat(CONTACT_RULES.limits.message + 1) })).status).toBe(400);
+    expect((await send(auth, { ...fields, ...human, message: 'hi' })).status).toBe(400);
+    expect((await send(auth, { ...fields, ...human, message: 'see http://a.com http://b.com www.c.com https://d.com' })).status).toBe(400);
+    expect(operatorOutbox).toEqual([]);
   });
 
-  it('refuses a near-empty message and one with more than three links', () => {
-    expect(check({ fields: { ...fields, message: 'hi' } }).ok).toBe(false);
-    const links = 'see http://a.com http://b.com www.c.com https://d.com';
-    expect(check({ fields: { ...fields, message: links } }).ok).toBe(false);
-    expect(check({ fields: { ...fields, message: 'see http://a.com http://b.com www.c.com' } })).toEqual({ ok: true });
+  it('grown-ups only: no session, no send', async () => {
+    expect((await request(app).post('/api/contact').set('X-Requested-With', 'XMLHttpRequest').send({ ...fields, ...human })).status).toBe(401);
+  });
+
+  it('3 per 10 minutes per address', async () => {
+    protection.limits = true;
+    const auth = await grownUp();
+    const ip = '198.51.100.99';
+    for (let i = 0; i < 3; i++) expect((await send(auth, { ...fields, ...human }, ip)).status).toBe(200);
+    const fourth = await send(auth, { ...fields, ...human }, ip);
+    expect(fourth.status).toBe(429);
+    expect(operatorOutbox).toHaveLength(3);
+  });
+});
+
+describe('contact rules shared with the browser', () => {
+  it('message problems and per-browser pacing', () => {
+    expect(contactProblem('hi')).toMatch(/say a little more/);
+    expect(contactProblem('see http://a.com http://b.com www.c.com')).toBeNull();
+    const now = 1_700_000_000_000;
+    expect(contactPacing([now - 30_000], now)).toMatch(/minute/);
+    expect(contactPacing([now - 61_000], now)).toBeNull();
+    expect(contactPacing([1, 2, 3, 4, 5].map((h) => now - h * 3_600_000), now)).toMatch(/one day/);
   });
 });

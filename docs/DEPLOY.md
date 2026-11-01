@@ -48,8 +48,8 @@ so the refresh cookie is first-party and no cross-site CORS is needed. Native ap
 - **Staying free:** Hobby has no card, so going over a limit pauses instead of billing. The
   tightest Hobby limit is Fluid Active CPU (4 h a month, shared by every project on the account);
   on 2026-10-31 Kid Kapital had used 12 s of it, `company` 1 h 53 m. Atlas
-  M0 is free but has NO backups: before real families, move to a paid tier with 30-day
-  point-in-time restore (the Privacy Policy promises that window).
+  M0 is free but has NO backups, and the Privacy Policy says so. Before real families, decide
+  whether to pay for backups; if so, update the policy to match.
 - **Going to production:** buy a domain, set `SMTP_URL`/`MAIL_FROM`, switch `NODE_ENV` to
   `production` and remove `PREVIEW_WITHOUT_EMAIL` (production refuses to boot with it).
 
@@ -80,9 +80,10 @@ so the refresh cookie is first-party and no cross-site CORS is needed. Native ap
 
 ## Database
 
-- **MongoDB Atlas**, a dedicated cluster with **continuous backup / point-in-time
-  restore kept 30 days**. The Privacy Policy promises deleted data leaves backups
-  within 30 days, so keep the retention at 30 days or update the policy.
+- **MongoDB Atlas.** Today: the free M0 cluster, with NO backups, and the Privacy Policy says
+  exactly that ("we do not keep backup copies right now"). If backups are turned on (a paid tier
+  with point-in-time restore), update the Privacy Policy in the same change to say how long a
+  deleted family can survive in a backup, and bump `LEGAL_VERSIONS`.
 - Indexes build at boot (`server/src/index.ts`); the once-only money rules depend on
   the unique ones, so a failed index build stops the boot on purpose.
 - Restrict network access to the app service. Use a database user with access to the
@@ -109,7 +110,7 @@ yearly and after any incident.
       at launch until that review is done.
 - [ ] A real privacy inbox for `PRIVACY_CONTACT` in `shared/src/legal.ts`.
 - [ ] SMTP configured and a test email received (verify, reset, invite).
-- [ ] Atlas backups on with 30-day retention; one restore rehearsed.
+- [ ] Decide on backups: if on, rehearse one restore and update the Privacy Policy to match.
 - [ ] `npm run typecheck`, `npm test`, `npm run build`, `npm audit --omit=dev` all green (CI runs them).
 - [ ] Error reporting: hook a server-only reporter into `errorHandler` with PII scrubbing.
       Keep third-party SDKs out of the client so kids' screens stay tracker-free.

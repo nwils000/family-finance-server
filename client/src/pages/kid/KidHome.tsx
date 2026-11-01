@@ -8,6 +8,7 @@ import { ChestClosed, ChestLocked, ChestOpen, IconCalendar, Penny, SceneAllDone,
 import { Button, Card, EmptyState, Heading, PennySays, Pill, ProgressBar, SectionTitle, Segmented, StreakFlame, Text } from '@/components/ui';
 import { QuestCard } from '@/features/cards';
 import { HelperPicker } from '@/features/teamwork';
+import { PrivacyLink } from '@/features/privacy-link';
 import { afterChest, afterXp } from '@/features/moments';
 import { endpoints } from '@/lib/api';
 import { celebrate } from '@/lib/celebrate';
@@ -80,7 +81,7 @@ export default function KidHome() {
       if ('paidCents' in res) {
         celebrate('coins', el);
         afterXp(res);
-        toast.success(`+${formatCents(res.paidCents)}! Trusted quest, paid right away.`);
+        toast.success(`+${formatCents(res.paidCents)}! Trusted quest, coins added right away.`);
       } else {
         celebrate('done', el);
       }
@@ -167,6 +168,7 @@ export default function KidHome() {
       )}
 
       {kid && <StreakCallout streak={kid.streak} />}
+      <PrivacyLink />
     </div>
   );
 }

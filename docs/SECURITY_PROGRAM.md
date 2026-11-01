@@ -56,13 +56,15 @@ details, photos, voice or location are collected, and the app has no field for t
 
 ## 5. Service providers and their assurances
 
-These providers process data as service providers. None receives children's information:
+These providers process data as service providers. Vercel and MongoDB store children's information only to host it, under their data processing terms; EmailJS receives none:
 
 - **Vercel** (hosting, firewall): Vercel's Data Processing Addendum and security commitments.
 - **MongoDB Atlas** (database, on AWS us-east-1): MongoDB's Data Processing Agreement and
   security commitments.
-- **EmailJS** (grown-up contact form in Settings only): receives the grown-up's name, email and
-  message to deliver them to the operator's inbox.
+- **EmailJS** (grown-up contact form in Settings only): our server relays the grown-up's name,
+  email and message to it with server-only keys (strict mode), and it delivers them to the
+  operator's Gmail inbox. The browser never calls it. The form is limited to 3 per 10 minutes and
+  10 a day per address, behind the form guard.
 - No payment provider: Kid Kapital takes no payments (Vercel Hobby fair use). Support for the
   creator lives only on his own site.
 
@@ -84,4 +86,5 @@ bump `LEGAL_VERSIONS`.
 |------|--------------|
 | 2026-10-31 | First program. Free for everyone, no payments, no email; retention limit added. |
 | 2026-10-31 | Grown-up contact form (EmailJS), web only, never on kid screens. A planned tip link was dropped: no payments on Vercel. |
+| 2026-10-31 | Contact form moved behind our server (relay with server-only keys), activity history older than 24 months deleted with badges rolled up, private preview for new families. |
 | 2026-10-31 | Bot pass: 3-second fill floor on grown-up forms, 429 tests for every limited public route, honeypot guard per form, IP retention written down. |

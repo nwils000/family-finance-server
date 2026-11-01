@@ -120,7 +120,7 @@ A fix that cannot name its guard is not done.
 | Ending sessions (password change/reset, sign out everywhere, token reuse) | `server/src/auth.ts` `revokeAllSessions()` | `RefreshToken.deleteMany` in a service |
 | Password rules | `@kk/shared` `passwordProblem()` (zod `newPassword` in `schemas.ts`) | a regex or length check anywhere else |
 | Hashing / checking passwords and PINs | `server/src/services/accounts.ts` `hashPassword` / `checkSecret` | `bcrypt` anywhere else |
-| Sending email | `server/src/services/mailer.ts` `sendMail()` | nodemailer anywhere else |
+| Sending email (account emails, and the contact relay to the operator) | `server/src/services/mailer.ts` `sendMail()` / `sendToOperator()` | nodemailer or a mail API anywhere else |
 | Request hardening (headers, CORS, CSRF guard, shape guard, rate limits and their IP keys, request ids, logs, the dev-door loopback check) | `server/src/security.ts` | a new `rateLimit(...)` or `helmet(...)` in a route file |
 | Rate-limit counts, shared by every serverless instance | `security.ts` `limiter(name, ...)`, which always uses `services/abuse.ts` `MongoRateLimitStore` | `MemoryStore`, a `store:` option, two limiters with one name |
 | Bot protection (IP bans and their ladder, honeypot paths, scanner and empty user agents, failed sign-ins per IP, the form guard and its decoy replies) | `server/src/bot-protection.ts`; counters and bans in `services/abuse.ts` (`countHit`, `recordBotSignal`, `recordFailedSignIn`) | a ban, a user-agent list or a honeypot check anywhere else; `IpBan` / `AbuseCounter` writes outside `abuse.ts` |
@@ -135,7 +135,7 @@ A fix that cannot name its guard is not done.
 | Agreeing to the Terms and Privacy Policy | `@kk/shared` `LEGAL_VERSIONS`; enforced and recorded in `accounts.ts` `createParent` | a grown-up account created anywhere else |
 | The legal documents' text | `client/src/pages/legal.tsx` | a second copy (the marketing site links to the app's pages) |
 | Who runs Kid Kapital and how to reach them | `@kk/shared` `OPERATOR_NAME` / `PRIVACY_CONTACT` | a name or email typed into a page |
-| The creator credit, support-page link, contact form, EmailJS settings and spam rules | `@kk/shared` `creator.ts`; UI `client/src/features/creator.tsx` (grown-up Settings only); the send in `lib/api.ts` `sendContactMessage` | any payment, tip or donation link or wording (Vercel Hobby forbids commercial use); creator links on a kid screen; a second EmailJS call |
+| The creator credit, support-page link, contact form and its rules | `@kk/shared` `creator.ts`; UI `client/src/features/creator.tsx` (grown-up Settings only); `POST /api/contact` (`services/contact.ts`, form guard surface `contact`, `contactLimiter`) relayed by `mailer.ts` `sendToOperator` with server-only `EMAILJS_*` keys | any payment, tip or donation link or wording (Vercel Hobby forbids commercial use); creator links on a kid screen; any mail call or key in the browser |
 | Connecting to MongoDB and building indexes (server and Vercel function) | `server/src/db.ts` `connectDb()` | `mongoose.connect` anywhere else |
 | Hosting on Vercel (build output, routes, cron) | `scripts/vercel-build.mjs` + `server/src/vercel.ts`; the cron door is `security.ts` `requireCron` | a second build config or an unguarded job route |
 | Serving the built web app (production) and its page headers | `server/src/web-app.ts` + `security.ts` `webAppHeaders` | static serving or a page CSP anywhere else |

@@ -274,11 +274,14 @@ export const decoyKidLogin = async (body: z.infer<typeof kidLoginBody>): Promise
   throw new HttpError(401, WRONG_PIN);
 };
 
-/** Public kid picker for the login screen: names and avatars only. */
+/**
+ * Public kid picker for the login screen: each kid's first name or nickname and avatar, nothing
+ * else. The family name is left out: it often carries a surname, and anyone with the code sees this.
+ */
 export const familyPreview = async (code: string) => {
   const family = await findFamilyByCode(code);
   const kids = await User.find({ familyId: family._id, role: 'kid' }).select('name avatar').sort({ createdAt: 1 });
-  return { name: family.name, kids: kids.map((k) => ({ id: String(k._id), name: k.name, avatar: k.avatar })) };
+  return { kids: kids.map((k) => ({ id: String(k._id), name: k.name, avatar: k.avatar })) };
 };
 
 export const getUser = async (userId: string) => {

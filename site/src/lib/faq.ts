@@ -12,7 +12,7 @@ const bands = AGE_BANDS.map((b) => AGE_BAND_NAMES[b].replace('Ages ', '')).join(
 export const FAQ: { q: string; a: string }[] = [
   {
     q: 'Is Kid Kapital real money?',
-    a: 'Coins in Kid Kapital stand for the money your family agrees on. The app keeps the family ledger: what each kid earned, spent and saved. It never connects to a bank or card for your kids. When a kid buys a reward, a grown-up hands it over in real life.',
+    a: 'No. Coins are pretend. If your family decides a coin stands for real allowance, you pay the real money yourselves, outside the app. Kid Kapital never connects to a bank or card and never holds, moves or pays out money.',
   },
   {
     q: 'What age is it for?',
@@ -24,7 +24,7 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Will my kids see ads or be asked to buy anything?',
-    a: 'No. Kids never see ads, and they never see an upgrade screen or a paywall. Plans and billing live only on the grown-up side.',
+    a: 'No. Kids never see ads, and they never see an upgrade screen or a paywall. There are no plans or billing.',
   },
   {
     q: 'What is the rocket fund?',

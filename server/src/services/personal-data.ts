@@ -3,7 +3,7 @@
 // delete their child's data, so nothing a kid or family owns may be left behind.
 // guards.test.ts checks that every model holding kidId / familyId / userId is listed here.
 import type { Types } from 'mongoose';
-import { INACTIVE_FAMILY_MONTHS } from '@kk/shared';
+import { ACTIVITY_HISTORY_MONTHS, INACTIVE_FAMILY_MONTHS } from '@kk/shared';
 import { CoParentInvite, EmailVerificationToken, PasswordResetToken, SessionCutoff, SocialIdentity, SpentRefreshToken } from '../models-account.js';
 import {
   Account,
@@ -68,6 +68,12 @@ export const eraseFamily = async (familyId: Types.ObjectId) => {
   await Family.deleteOne({ _id: familyId });
 };
 
+const monthsBefore = (now: Date, months: number) => {
+  const d = new Date(now);
+  d.setMonth(d.getMonth() - months);
+  return d;
+};
+
 /**
  * The retention limit (COPPA: published, never indefinite; the number is @kk/shared
  * INACTIVE_FAMILY_MONTHS and the Privacy Policy reads it). A family nobody signed in to for
@@ -75,8 +81,7 @@ export const eraseFamily = async (familyId: Types.ObjectId) => {
  * One family failing (say, a paid plan that still renews) never stops the rest.
  */
 export const eraseInactiveFamilies = async (now = new Date()) => {
-  const cutoff = new Date(now);
-  cutoff.setMonth(cutoff.getMonth() - INACTIVE_FAMILY_MONTHS);
+  const cutoff = monthsBefore(now, INACTIVE_FAMILY_MONTHS);
   const stale = await Family.find({
     $or: [{ lastActiveAt: { $lt: cutoff } }, { lastActiveAt: { $exists: false }, createdAt: { $lt: cutoff } }],
   }).select('_id');
@@ -91,6 +96,38 @@ export const eraseInactiveFamilies = async (now = new Date()) => {
   }
   if (erased) console.info(JSON.stringify({ level: 'info', msg: 'erased inactive families', erased }));
   return { erased };
+};
+
+/**
+ * The activity-history limit (COPPA 312.10: keep data only as long as needed). Quest runs, coin
+ * movements and chest opens older than ACTIVITY_HISTORY_MONTHS are deleted in every family.
+ * Balances and XP live on the kid and accounts, so nothing a kid owns changes; what badges and
+ * the quest count read from those rows is rolled up onto the kid (pastActivity) first.
+ * If the job stops between the roll-up and the delete, the next run counts those rows again;
+ * that can only ever award a badge early, never take one away.
+ */
+export const eraseOldActivity = async (now = new Date()) => {
+  const cutoff = monthsBefore(now, ACTIVITY_HISTORY_MONTHS);
+  const old = { createdAt: { $lt: cutoff } };
+  const [approved, deposits] = await Promise.all([
+    QuestRun.aggregate<{ _id: Types.ObjectId; n: number }>([{ $match: { ...old, status: 'approved' } }, { $group: { _id: '$kidId', n: { $sum: 1 } } }]),
+    Txn.aggregate<{ _id: Types.ObjectId; pots: string[] }>([
+      { $match: { ...old, kind: 'deposit', pot: { $in: ['piggy', 'rocket'] } } },
+      { $group: { _id: '$kidId', pots: { $addToSet: '$pot' } } },
+    ]),
+  ]);
+  const rollup = new Map<string, { $inc?: Record<string, number>; $set?: Record<string, boolean> }>();
+  for (const r of approved) rollup.set(String(r._id), { $inc: { 'pastActivity.questsApproved': r.n } });
+  for (const d of deposits) {
+    const u = rollup.get(String(d._id)) ?? {};
+    u.$set = { ...(d.pots.includes('piggy') ? { 'pastActivity.saved': true } : {}), ...(d.pots.includes('rocket') ? { 'pastActivity.rocket': true } : {}) };
+    rollup.set(String(d._id), u);
+  }
+  if (rollup.size) await User.bulkWrite([...rollup].map(([kidId, update]) => ({ updateOne: { filter: { _id: kidId, role: 'kid' }, update } })));
+  const [runs, txns, chests] = await Promise.all([QuestRun.deleteMany(old), Txn.deleteMany(old), ChestOpen.deleteMany(old)]);
+  const deleted = runs.deletedCount + txns.deletedCount + chests.deletedCount;
+  if (deleted) console.info(JSON.stringify({ level: 'info', msg: 'erased old activity history', deleted }));
+  return { deleted };
 };
 
 /** A grown-up deletes their own account. The last grown-up takes the family with them. */

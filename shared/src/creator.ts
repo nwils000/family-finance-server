@@ -1,6 +1,8 @@
 // The creator's corner in grown-up Settings: a "Made by" credit (with a link to the creator's
-// support page on the web) and a contact form. Never on a kid screen.
-// The same EmailJS account and spam rules serve every one of Nathan's apps (the portfolio's
+// support page on the web) and a contact form. Never on a kid screen. The form posts to our own
+// server (/api/contact), which relays it to the operator's inbox; the browser never talks to a
+// mail service and holds no mail keys.
+// The same relay account and spam rules serve every one of Nathan's apps (the portfolio's
 // Contact.js SPAM_RULES / checkSubmission are the reference), so they live here once.
 import { PRIVACY_CONTACT } from './legal';
 
@@ -16,24 +18,12 @@ export const CREATOR_SITE = 'https://nathanwilson.dev';
  */
 export const CREATOR_SUPPORT_PAGE = 'https://nathanwilson.dev/support';
 
-/** EmailJS REST settings. All public by design (EmailJS has no secret in the browser). */
-export const EMAILJS = {
-  origin: 'https://api.emailjs.com',
-  sendPath: '/api/v1.0/email/send',
-  serviceId: 'service_3t589y2',
-  templateId: 'template_u5t6zq1',
-  publicKey: 'aEYQQP-65mEPEsaXX',
-  /** Every app sends its name so the shared inbox can tell them apart. */
-  appName: 'Kid Kapital',
-} as const;
-
 /**
- * The free EmailJS plan is 200 sends a month shared by every app, so the form is careful.
- * Matches the portfolio exactly.
+ * The relay's free plan is 200 sends a month shared by every one of Nathan's apps, so the form
+ * is careful. Matches the portfolio. The server enforces the trap, the 3-second floor (form
+ * guard surface 'contact'), the caps and the links; the browser adds a per-browser cooldown.
  */
 export const CONTACT_RULES = {
-  trapField: 'website',
-  minFillMs: 3000,
   cooldownMs: 60_000,
   maxPerDay: 5,
   maxLinks: 3,
@@ -47,37 +37,20 @@ export interface ContactFields {
   message: string;
 }
 
-/** silent: a bot tripped a trap; show the normal success message and send nothing. */
-export type ContactVerdict = { ok: true } | { ok: false; silent: true } | { ok: false; silent?: false; text: string };
+/** What is wrong with a message, or null. The server refuses with it; the browser checks first. */
+export const contactProblem = (message: string): string | null => {
+  const text = message.trim();
+  if (text.length < CONTACT_RULES.minMessage) return 'Could you say a little more in your message?';
+  if ((text.match(/https?:\/\/|www\./gi) ?? []).length > CONTACT_RULES.maxLinks) return `That message has a lot of links in it. You can email ${PRIVACY_CONTACT} directly.`;
+  return null;
+};
 
 const DAY_MS = 86_400_000;
 
-/** Decide whether a contact message may go out. `sent` holds this browser's earlier send times. */
-export const checkContactSubmission = ({
-  fields,
-  trap,
-  openedAt,
-  now,
-  sent,
-}: {
-  fields: ContactFields;
-  trap: string;
-  openedAt: number;
-  now: number;
-  sent: number[];
-}): ContactVerdict => {
-  const R = CONTACT_RULES;
-  if (trap) return { ok: false, silent: true };
-  if (now - openedAt < R.minFillMs) return { ok: false, silent: true };
+/** The browser's own pacing, from this browser's earlier send times: one a minute, five a day. */
+export const contactPacing = (sent: number[], now: number): string | null => {
   const recent = sent.filter((t) => now - t < DAY_MS);
-  if (recent.length && now - Math.max(...recent) < R.cooldownMs) {
-    return { ok: false, text: 'Thanks, your last message just went out. Give it a minute before sending another.' };
-  }
-  if (recent.length >= R.maxPerDay) return { ok: false, text: `That is a lot of messages for one day. You can email ${PRIVACY_CONTACT} directly.` };
-  const message = fields.message.trim();
-  if (message.length < R.minMessage) return { ok: false, text: 'Could you say a little more in your message?' };
-  if ((message.match(/https?:\/\/|www\./gi) ?? []).length > R.maxLinks) {
-    return { ok: false, text: `That message has a lot of links in it. You can email ${PRIVACY_CONTACT} directly.` };
-  }
-  return { ok: true };
+  if (recent.length && now - Math.max(...recent) < CONTACT_RULES.cooldownMs) return 'Thanks, your last message just went out. Give it a minute before sending another.';
+  if (recent.length >= CONTACT_RULES.maxPerDay) return `That is a lot of messages for one day. You can email ${PRIVACY_CONTACT} directly.`;
+  return null;
 };

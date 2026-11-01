@@ -2,11 +2,12 @@
 // only (imported by ParentSettings alone; guards.test.ts keeps it off kid screens). Native builds
 // show the credit alone: no outside support link and no contact form in an app-store build.
 // No payment wording or links here (shared/src/creator.ts says why).
-import { useRef, useState, type FormEvent } from 'react';
-import { CONTACT_RULES, CREATOR_SITE, CREATOR_SUPPORT_PAGE, OPERATOR_NAME, PRIVACY_CONTACT, checkContactSubmission, type ContactFields } from '@kk/shared';
+import { useState, type FormEvent } from 'react';
+import { CONTACT_RULES, CREATOR_SITE, CREATOR_SUPPORT_PAGE, OPERATOR_NAME, PRIVACY_CONTACT, contactPacing, contactProblem, type ContactFields } from '@kk/shared';
 import { IconMail, Penny } from '@/art';
 import { Button, Card, Field, Honeypot, Input, PennySays, Sheet, Text, TextArea } from '@/components/ui';
-import { sendContactMessage } from '@/lib/api';
+import { endpoints, errorMessage } from '@/lib/api';
+import { useFormGuard } from '@/lib/form-guard';
 import { prefs } from '@/lib/prefs';
 import { isNative } from '@/lib/secure-storage';
 import { useAuth } from '@/stores/auth';
@@ -35,29 +36,26 @@ type Status = { state: 'idle' | 'sending' | 'sent' | 'error'; text: string };
 
 function ContactSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const user = useAuth((s) => s.user);
-  const openedAt = useRef(Date.now());
+  const guard = useFormGuard('contact');
   const [fields, setFields] = useState<ContactFields>(() => ({ ...EMPTY, user_name: user?.name ?? '', user_email: user?.email ?? '' }));
-  const [trap, setTrap] = useState('');
   const [status, setStatus] = useState<Status>({ state: 'idle', text: '' });
   const set = (k: keyof ContactFields) => (v: string) => setFields((f) => ({ ...f, [k]: v }));
   const showSent = () => setStatus({ state: 'sent', text: `Thanks! Your message is on its way to ${OPERATOR_NAME}.` });
 
+  // The server is the real gate (trap, 3-second floor, caps, links, per-address limits); these
+  // checks only save a round trip and keep one browser to one message a minute.
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (status.state === 'sending') return;
-    const verdict = checkContactSubmission({ fields, trap, openedAt: openedAt.current, now: Date.now(), sent: prefs.contactSent() });
-    if (!verdict.ok) {
-      if (verdict.silent) showSent();
-      else setStatus({ state: 'error', text: verdict.text });
-      return;
-    }
+    const problem = contactPacing(prefs.contactSent(), Date.now()) ?? contactProblem(fields.message);
+    if (problem) return setStatus({ state: 'error', text: problem });
     setStatus({ state: 'sending', text: '' });
     try {
-      await sendContactMessage({ user_name: fields.user_name.trim(), user_email: fields.user_email.trim(), message: fields.message.trim() });
+      await endpoints.sendContact({ user_name: fields.user_name.trim(), user_email: fields.user_email.trim(), message: fields.message.trim() }, guard.body());
       prefs.recordContactSent(Date.now());
       showSent();
-    } catch {
-      setStatus({ state: 'error', text: `That did not send. You can email ${PRIVACY_CONTACT} directly.` });
+    } catch (err) {
+      setStatus({ state: 'error', text: errorMessage(err) || `That did not send. You can email ${PRIVACY_CONTACT} directly.` });
     }
   };
 
@@ -72,7 +70,7 @@ function ContactSheet({ open, onClose }: { open: boolean; onClose: () => void })
         </div>
       ) : (
         <form onSubmit={onSubmit} className="relative flex flex-col gap-4" noValidate>
-          <Honeypot fields={[CONTACT_RULES.trapField]} values={{ [CONTACT_RULES.trapField]: trap }} onChange={(_, v) => setTrap(v)} />
+          <Honeypot {...guard.honeypot} />
           <Field label="Your name">
             {(id) => <Input id={id} value={fields.user_name} maxLength={CONTACT_RULES.limits.user_name} required onChange={(e) => set('user_name')(e.target.value)} />}
           </Field>

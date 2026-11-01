@@ -17,9 +17,10 @@ import { config } from './config.js';
 import { HttpError, parse } from './http.js';
 import { ipKey, loggablePath, protection } from './security.js';
 import * as S from './schemas.js';
-import { forgotBody } from './schemas-account.js';
+import { contactBody, forgotBody } from './schemas-account.js';
 import { decoyKidLogin, decoyLogin, decoyParent } from './services/accounts.js';
 import { RESET_REQUESTED } from './services/account-security.js';
+import { CONTACT_SENT } from './services/contact.js';
 import { isBanned, recordBotSignal, recordFailedSignIn, type BotSignalKind } from './services/abuse.js';
 
 const warn = (msg: string, req: Request, extra: Record<string, unknown> = {}) =>
@@ -154,7 +155,18 @@ const RESPOND: Record<FormGuardSurface, (req: Request, res: Response) => Promise
     parse(forgotBody, req.body);
     return RESET_REQUESTED;
   },
+  contact: async (req) => {
+    parse(contactBody, req.body);
+    return CONTACT_SENT;
+  },
 };
+
+/**
+ * Forms that send to a shared, quota-limited inbox are judged harder: too fast alone, or no
+ * signals at all, is enough to drop (a person always has both). Account forms never punish
+ * missing signals, because a lost sign-in is worse than a bot getting through to the limits.
+ */
+const STRICT: ReadonlySet<FormGuardSurface> = new Set(['contact']);
 
 /** Read the client's signals without trusting them: anything malformed is dropped, never punished. */
 const readSignals = (body: Record<string, unknown>): ClientFormSignals => {
@@ -191,9 +203,12 @@ export const formGuard =
     if (tooFast && noInteraction) kinds.push('timingAndInteraction');
     else if (noInteraction) kinds.push('noInteraction');
     else if (tooFast) kinds.push('tooFast');
+    const strict = STRICT.has(surface);
+    const missing = signals.elapsedMs === undefined || signals.interacted === undefined;
+    if (strict && missing && !kinds.length) kinds.push('noInteraction');
     if (!kinds.length) return next();
 
-    const drop = tripped.length > 0 || (tooFast && noInteraction);
+    const drop = tripped.length > 0 || (tooFast && noInteraction) || (strict && (tooFast || missing));
     const run = async () => {
       if (protection.bans) for (const kind of kinds) await recordBotSignal(ipKey(req.ip), kind, surface);
       if (!drop) return next();

@@ -5,7 +5,6 @@ import crypto from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import rateLimit, { type Options } from 'express-rate-limit';
-import { EMAILJS } from '@kk/shared';
 import { config } from './config.js';
 import { MongoRateLimitStore } from './services/abuse.js';
 
@@ -47,8 +46,7 @@ export const webAppHeaders = helmet({
       styleSrc: ["'self'", "'unsafe-inline'", 'https://accounts.google.com/gsi/style'],
       imgSrc: ["'self'", 'data:', 'blob:'],
       fontSrc: ["'self'"],
-      // EmailJS: the grown-up contact form (features/creator.tsx) posts to its REST API; no script.
-      connectSrc: ["'self'", 'https://accounts.google.com/gsi/', EMAILJS.origin],
+      connectSrc: ["'self'", 'https://accounts.google.com/gsi/'],
       frameSrc: ['https://accounts.google.com/gsi/', 'https://appleid.apple.com'],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
@@ -330,5 +328,13 @@ export const familyAccessLimiter = limiter('family-access', 60 * 60_000, 20, { k
 
 /** Downloading the family's data: a few times a day per grown-up (Mentis: 1 per day). */
 export const dataExportLimiter = limiter('data-export', 24 * 60 * 60_000, 3, { keyGenerator: userOrIp });
+/** The contact form relays to a shared inbox with a monthly quota: 3 per 10 minutes and 10 a day per address. */
+export const contactLimiter = limiter('contact', 10 * 60_000, 3);
+export const contactDailyLimiter = limiter('contact-day', 24 * 60 * 60_000, 10);
+
+/** Refuse a body over `bytes` before it is used (the global JSON limit is 50 KB). */
+export const bodyCap = (bytes: number) => (req: Request, res: Response, next: NextFunction) =>
+  Number(req.get('content-length') ?? 0) > bytes ? res.status(413).json({ error: 'That is too long to send.', code: 'TOO_LARGE' }) : next();
+
 /** Deleting an account re-checks the password, so it is also a password guess: keep it tight. */
 export const accountDeleteLimiter = limiter('account-delete', 60 * 60_000, 5, { keyGenerator: userOrIp });

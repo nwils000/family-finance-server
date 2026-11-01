@@ -5,6 +5,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LEGAL_PATHS, PASSWORD_HINT, PIN_LENGTH } from '@kk/shared';
+import { PrivacyLink } from '@/features/privacy-link';
 import { Avatar, Cloud, Coin, HillsBand, IconBack, IconKey, IconMail, Penny, SceneFamily, SceneWelcome, Sparkle, Sun } from '@/art';
 import { Button, Card, Checkbox, Field, Heading, Honeypot, Input, PennySays, PinPad, Spinner, Text } from '@/components/ui';
 import { SocialLogin } from '@/features/social-login';
@@ -35,6 +36,7 @@ export function AuthFrame({ children, back }: { children: ReactNode; back?: bool
           </Button>
         )}
         {children}
+        <PrivacyLink />
       </div>
     </div>
   );
@@ -185,7 +187,7 @@ export function GrownUpPage({ mode }: { mode: Mode }) {
             <Field label="Your name">{(id) => <Input id={id} value={form.name} onChange={set('name')} placeholder="Sam" autoComplete="given-name" required />}</Field>
           )}
           {mode === 'signup' && (
-            <Field label="Family name">{(id) => <Input id={id} value={form.familyName} onChange={set('familyName')} placeholder="The Rivera Family" required />}</Field>
+            <Field label="Family name">{(id) => <Input id={id} value={form.familyName} onChange={set('familyName')} placeholder="Team Awesome" required />}</Field>
           )}
           <Field label="Email">{(id) => <Input id={id} type="email" leading={<IconMail size={20} className="text-ink-faint" />} value={form.email} onChange={set('email')} autoComplete="email" required />}</Field>
           <Field label="Password" hint={mode === 'login' ? undefined : PASSWORD_HINT}>
@@ -235,7 +237,7 @@ export function GrownUpPage({ mode }: { mode: Mode }) {
 export function KidLoginPage() {
   const signIn = useAuth((s) => s.signIn);
   const [code, setCode] = useState(prefs.familyCode());
-  const [family, setFamily] = useState<{ name: string; kids: KidRef[] } | null>(null);
+  const [family, setFamily] = useState<{ kids: KidRef[] } | null>(null);
   const [kid, setKid] = useState<KidRef | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -306,7 +308,6 @@ export function KidLoginPage() {
           Different family
         </Button>
         <div className="text-center">
-          <Text>{family.name}</Text>
           <Heading size="lg">Who are you?</Heading>
         </div>
         {family.kids.length === 0 ? (

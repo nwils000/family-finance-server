@@ -58,6 +58,12 @@ const userSchema = new Schema(
     balanceCents: { type: Number, default: 0 },
     // Gamification (kids only).
     xp: { type: Number, default: 0, min: 0 },
+    // Kids: what badges and the quest count read from history that the retention limit has
+    // deleted (personal-data.ts eraseOldActivity rolls it up first; stats.ts adds it back).
+    pastActivity: {
+      type: new Schema({ questsApproved: { type: Number, default: 0 }, saved: { type: Boolean, default: false }, rocket: { type: Boolean, default: false } }, { _id: false }),
+      default: () => ({}),
+    },
     // Grown-up controls per kid: their own coins per star (null = family default)
     // and how much their effort counts toward team goals.
     starValueCents: { type: Number, default: null, min: 0 },

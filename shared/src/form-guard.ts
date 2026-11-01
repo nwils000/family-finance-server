@@ -15,7 +15,7 @@
 //    on a phone that predates this file must keep working.
 
 /** Every public form the guard watches. */
-export type FormGuardSurface = 'signup' | 'join' | 'login' | 'kidLogin' | 'passwordReset';
+export type FormGuardSurface = 'signup' | 'join' | 'login' | 'kidLogin' | 'passwordReset' | 'contact';
 
 /** The body key the signals ride under. The server strips it before zod sees the body. */
 export const FORM_SIGNALS_KEY = 'clientSignals';
@@ -36,6 +36,7 @@ export const FORM_MIN_FILL_MS: Record<FormGuardSurface, number> = {
   join: 3000,
   login: 3000,
   kidLogin: 600,
+  contact: 3000,
   passwordReset: 3000,
 };
 
