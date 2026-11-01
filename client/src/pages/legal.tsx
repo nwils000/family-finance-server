@@ -8,13 +8,13 @@
 // Facts this relies on: PAID_PLANS is off (shared/src/plans.ts); the preview sends no
 // email (config.ts PREVIEW_WITHOUT_EMAIL); the free database tier keeps no backups
 // (docs/DEPLOY.md); IP bans expire within 24 hours and offenses after 7 days
-// (services/abuse.ts); the contact form uses EmailJS and tips use a Stripe page (features/creator.tsx); idle families are erased after INACTIVE_FAMILY_MONTHS (personal-data.ts); Google and Apple sign-in are not configured, so they are not mentioned.
+// (services/abuse.ts); the contact form uses EmailJS (features/creator.tsx) and nothing takes payments; idle families are erased after INACTIVE_FAMILY_MONTHS (personal-data.ts); Google and Apple sign-in are not configured, so they are not mentioned.
 //
 // NOT REVIEWED BY A LAWYER. Kid Kapital is used by children under 13, so COPPA applies.
 // Have these reviewed before the app is promoted to real families.
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { INACTIVE_FAMILY_MONTHS, LEGAL_PATHS, LEGAL_VERSIONS, OPERATOR_NAME, PRIVACY_CONTACT, type LegalDoc } from '@kk/shared';
+import { CREATOR_SITE, INACTIVE_FAMILY_MONTHS, LEGAL_PATHS, LEGAL_VERSIONS, OPERATOR_NAME, PRIVACY_CONTACT, type LegalDoc } from '@kk/shared';
 import { IconBack, Penny } from '@/art';
 import { Button, Card, Heading, Text } from '@/components/ui';
 
@@ -75,8 +75,7 @@ const PRIVACY: Section[] = [
     body: [
       'Two companies run the computers Kid Kapital lives on, and process data only to provide that service to us, under their written data protection and security terms: Vercel (hosting) and MongoDB Atlas (database, run on Amazon Web Services). Data is stored in the United States.',
       'If a grown-up writes to us with the contact form in Settings, their name, email address and message are passed by EmailJS (emailjs.com/legal/privacy-policy) to our Gmail inbox, run by Google (policies.google.com/privacy). Kids never see the form. Please do not include a child\'s details in a message. Apart from that, we do not send email yet.',
-      'If a grown-up chooses to leave a tip, it is paid on Stripe\'s own page (stripe.com/privacy). Stripe receives what the grown-up enters there (such as name, email and card details); we never see or store card details. There are no other payments.',
-      'EmailJS, Google and Stripe only ever receive what a grown-up chooses to type into the contact form or Stripe\'s page. Both are in grown-up Settings only, and we ask grown-ups not to include a child\'s details, so no child\'s information is sent to them by the app.',
+      'EmailJS and Google only ever receive what a grown-up chooses to type into the contact form. It is in grown-up Settings only, and we ask grown-ups not to include a child\'s details, so no child\'s information is sent to them by the app. Kid Kapital takes no payments, so no payment company receives anything.',
       'We disclose information only if the law requires it, or to protect the safety of a person or the service.',
     ],
   },
@@ -138,16 +137,8 @@ const TERMS: Section[] = [
   {
     heading: 'It is free',
     body: [
-      'Kid Kapital is free. There are no paid plans, no purchases and no ads.',
-    ],
-  },
-  {
-    heading: 'Tips',
-    body: [
-      `On the web, a grown-up may choose to leave a tip to support Kid Kapital. A tip is a voluntary gift to ${OPERATOR_NAME} personally, for an app that is already free.`,
-      'A tip unlocks nothing, buys nothing, and creates no account, subscription or obligation on either side. It is not a charitable donation and is not tax-deductible.',
-      `Tips are processed by Stripe on Stripe's own page, so Kid Kapital never sees card details. Tips are not refundable, except that if you tipped by mistake you can email ${PRIVACY_CONTACT} within 30 days for a refund, and except where consumer law requires otherwise.`,
-      'Kids never see the tip link.',
+      "Kid Kapital is free. It doesn't ask for or accept payments. There are no paid plans, no purchases and no ads.",
+      `If you'd like to support my work, you can do that on my website (${CREATOR_SITE}).`,
     ],
   },
   {

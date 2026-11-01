@@ -1,34 +1,32 @@
-// The creator's corner in grown-up Settings: a tip link and a contact form. Grown-ups only
-// (imported by ParentSettings alone; guards.test.ts keeps it off kid screens) and web only:
-// app stores forbid outside payment links, so a native build renders nothing.
-// The link, the EmailJS settings and the spam rules live in @kk/shared creator.ts.
+// The creator's corner in grown-up Settings: a "Made by" credit and a contact form. Grown-ups
+// only (imported by ParentSettings alone; guards.test.ts keeps it off kid screens). Native builds
+// show the credit alone: no outside support link and no contact form in an app-store build.
+// No payment wording or links here (shared/src/creator.ts says why).
 import { useRef, useState, type FormEvent } from 'react';
-import { CONTACT_RULES, CREATOR_SITE, OPERATOR_NAME, PRIVACY_CONTACT, SUPPORT_URL, checkContactSubmission, type ContactFields } from '@kk/shared';
-import { Heart, IconMail, Penny } from '@/art';
+import { CONTACT_RULES, CREATOR_SITE, CREATOR_SUPPORT_PAGE, OPERATOR_NAME, PRIVACY_CONTACT, checkContactSubmission, type ContactFields } from '@kk/shared';
+import { IconMail, Penny } from '@/art';
 import { Button, Card, Field, Honeypot, Input, PennySays, Sheet, Text, TextArea } from '@/components/ui';
 import { sendContactMessage } from '@/lib/api';
 import { prefs } from '@/lib/prefs';
 import { isNative } from '@/lib/secure-storage';
 import { useAuth } from '@/stores/auth';
 
-function SupportCard() {
-  if (!SUPPORT_URL) return null;
+/** "Made by Nathan Wilson · Support my work". Native builds show the credit alone. */
+function CreatorCredit({ web }: { web: boolean }) {
   return (
-    <Card tone="coin" className="flex flex-col gap-3">
-      <div className="flex items-center gap-3">
-        <Heart size={44} />
-        <Text tone="ink" bold className="font-display">
-          Support {OPERATOR_NAME}, the creator
-        </Text>
-      </div>
-      <Text size="sm">Kid Kapital is free. If it helps your family, you can leave a tip to support its development.</Text>
-      <Button block onClick={() => window.open(SUPPORT_URL, '_blank', 'noopener')}>
-        Leave a tip
-      </Button>
-      <a href={CREATOR_SITE} target="_blank" rel="noopener" className="text-center text-sm font-bold text-brand underline">
-        More about {OPERATOR_NAME}
+    <Text size="sm" className="text-center">
+      <a href={CREATOR_SITE} target="_blank" rel="noopener" className="font-bold text-brand underline">
+        Made by {OPERATOR_NAME}
       </a>
-    </Card>
+      {web && (
+        <>
+          {' · '}
+          <a href={CREATOR_SUPPORT_PAGE} target="_blank" rel="noopener" className="font-bold text-brand underline">
+            Support my work
+          </a>
+        </>
+      )}
+    </Text>
   );
 }
 
@@ -127,13 +125,13 @@ function ContactCard() {
   );
 }
 
-/** The whole corner. Nothing in native builds. */
+/** The whole corner: the contact card and the credit on the web, the credit alone in native builds. */
 export function CreatorCorner() {
-  if (isNative()) return null;
+  const web = !isNative();
   return (
     <div className="flex flex-col gap-4">
-      <SupportCard />
-      <ContactCard />
+      {web && <ContactCard />}
+      <CreatorCredit web={web} />
     </div>
   );
 }

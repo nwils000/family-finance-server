@@ -1,5 +1,5 @@
-// The creator's corner: a tip link and a contact form for grown-ups, in grown-up Settings
-// only and only on the web (never on a kid screen; app stores forbid outside payment links).
+// The creator's corner in grown-up Settings: a "Made by" credit (with a link to the creator's
+// support page on the web) and a contact form. Never on a kid screen.
 // The same EmailJS account and spam rules serve every one of Nathan's apps (the portfolio's
 // Contact.js SPAM_RULES / checkSubmission are the reference), so they live here once.
 import { PRIVACY_CONTACT } from './legal';
@@ -8,11 +8,13 @@ import { PRIVACY_CONTACT } from './legal';
 export const CREATOR_SITE = 'https://nathanwilson.dev';
 
 /**
- * Stripe Payment Link for tips, opened in a new tab (no Stripe script in the app). A tip is
- * optional, unlocks nothing and is not a purchase (Terms). Empty: the support card does not
- * render at all.
+ * Where people can support the creator: a page on his own site (Netlify), never in this app.
+ * Kid Kapital runs on Vercel's Hobby plan, whose fair-use rules count asking for money as
+ * commercial use, so nothing that takes money (no checkout page, no amounts, no money button) may live in this repo
+ * (guards.test.ts). This plain link to his site is the only exception, and only in grown-up
+ * Settings on the web.
  */
-export const SUPPORT_URL = '';
+export const CREATOR_SUPPORT_PAGE = 'https://nathanwilson.dev/support';
 
 /** EmailJS REST settings. All public by design (EmailJS has no secret in the browser). */
 export const EMAILJS = {

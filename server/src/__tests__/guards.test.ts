@@ -34,7 +34,16 @@ describe('repo guards', () => {
   it('the tip link and contact form appear only in grown-up Settings, and EmailJS is called only from lib/api.ts', () => {
     expect(offenders(/features\/creator'/, 'client/src', ['client/src/pages/parent/ParentSettings.tsx'])).toEqual([]);
     expect(offenders(/api\.emailjs\.com|EMAILJS\.origin/, 'client/src', ['client/src/lib/api.ts'])).toEqual([]);
-    expect(offenders(/SUPPORT_URL/, 'client/src', ['client/src/features/creator.tsx'])).toEqual([]);
+    expect(offenders(/CREATOR_SUPPORT_PAGE/, 'client/src', ['client/src/features/creator.tsx'])).toEqual([]);
+  });
+
+  it('no payment link or wording on the Vercel projects (Hobby forbids commercial use); the support page link is the one exception', () => {
+    // Lesson packs may teach kids about giving, so they are not app UI and are left out.
+    const ui = code.filter((f) => /^(client\/src|site\/src|shared\/src)\//.test(f.path) && !f.path.startsWith('shared/src/lessons'));
+    const paymentWords = /stripe\.com|buy\.stripe|payment link|leave a tip|tip jar|tipping|donat(?:e|ion)/i;
+    expect(ui.filter((f) => paymentWords.test(f.text)).map((f) => f.path)).toEqual([]);
+    // The exact support link lives once, in shared/src/creator.ts.
+    expect(ui.filter((f) => f.text.includes('nathanwilson.dev/support')).map((f) => f.path)).toEqual(['shared/src/creator.ts']);
   });
 
   it('every form that sends from the browser renders a honeypot, and the contact form checks before it sends', () => {

@@ -26,7 +26,6 @@ import { qk, useAction, useHome } from '@/lib/queries';
 import type { FamilySettings } from '@/lib/types';
 import { PlanCard } from '@/features/billing';
 import { CreatorCorner } from '@/features/creator';
-import { isNative } from '@/lib/secure-storage';
 import { AccountSecurityCard, YourDataCard } from '@/pages/account';
 import { useSignOut } from '@/stores/auth';
 import { FamilyCodeCard, InviteGrownUpCard, PageIntro } from './parts';
@@ -305,12 +304,10 @@ export default function ParentSettings() {
             <YourDataCard />
           </motion.section>
 
-          {!isNative() && (
-            <motion.section variants={popIn}>
-              <SectionTitle>From the creator</SectionTitle>
-              <CreatorCorner />
-            </motion.section>
-          )}
+          <motion.section variants={popIn}>
+            <SectionTitle>From the creator</SectionTitle>
+            <CreatorCorner />
+          </motion.section>
 
           <motion.section variants={popIn}>
             <SectionTitle>This device</SectionTitle>

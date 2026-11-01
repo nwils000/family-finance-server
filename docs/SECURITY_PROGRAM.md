@@ -63,8 +63,8 @@ These providers process data as service providers. None receives children's info
   security commitments.
 - **EmailJS** (grown-up contact form in Settings only): receives the grown-up's name, email and
   message to deliver them to the operator's inbox.
-- **Stripe** (optional tips, on Stripe's own hosted page, web only): the app sends nothing to
-  Stripe and never sees card details.
+- No payment provider: Kid Kapital takes no payments (Vercel Hobby fair use). Support for the
+  creator lives only on his own site.
 
 Before adding any provider that would touch children's information (email, payments,
 analytics), get its written security assurances, add it here and to the Privacy Policy, and
@@ -83,5 +83,5 @@ bump `LEGAL_VERSIONS`.
 | Date | What changed |
 |------|--------------|
 | 2026-10-31 | First program. Free for everyone, no payments, no email; retention limit added. |
-| 2026-10-31 | Grown-up contact form (EmailJS) and optional tip link (Stripe), web only, never on kid screens. |
+| 2026-10-31 | Grown-up contact form (EmailJS), web only, never on kid screens. A planned tip link was dropped: no payments on Vercel. |
 | 2026-10-31 | Bot pass: 3-second fill floor on grown-up forms, 429 tests for every limited public route, honeypot guard per form, IP retention written down. |
