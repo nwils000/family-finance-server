@@ -121,10 +121,6 @@ A fix that cannot name its guard is not done.
 | Password rules | `@kk/shared` `passwordProblem()` (zod `newPassword` in `schemas.ts`) | a regex or length check anywhere else |
 | Hashing / checking passwords and PINs | `server/src/services/accounts.ts` `hashPassword` / `checkSecret` | `bcrypt` anywhere else |
 | Sending email | `server/src/services/mailer.ts` `sendMail()` | nodemailer anywhere else |
-| What each plan allows | `@kk/shared` `PLAN_LIMITS` (`shared/src/plans.ts`) | a kid count or feature list in a service or component |
-| The family's effective plan, and refusing over-limit actions | `server/src/services/billing.ts` `getFamilyPlan` / `assertWithinLimit` / `assertPlanFeature` | `HttpError(402` or `Entitlement` reads elsewhere |
-| Stripe and RevenueCat on the server | `server/src/services/billing.ts` | `import Stripe` anywhere else |
-| Native store purchases | `client/src/lib/purchases.ts` | importing `@revenuecat/purchases-capacitor` elsewhere |
 | Request hardening (headers, CORS, CSRF guard, shape guard, rate limits and their IP keys, request ids, logs, the dev-door loopback check) | `server/src/security.ts` | a new `rateLimit(...)` or `helmet(...)` in a route file |
 | Rate-limit counts, shared by every serverless instance | `security.ts` `limiter(name, ...)`, which always uses `services/abuse.ts` `MongoRateLimitStore` | `MemoryStore`, a `store:` option, two limiters with one name |
 | Bot protection (IP bans and their ladder, honeypot paths, scanner and empty user agents, failed sign-ins per IP, the form guard and its decoy replies) | `server/src/bot-protection.ts`; counters and bans in `services/abuse.ts` (`countHit`, `recordBotSignal`, `recordFailedSignIn`) | a ban, a user-agent list or a honeypot check anywhere else; `IpBan` / `AbuseCounter` writes outside `abuse.ts` |
@@ -139,7 +135,6 @@ A fix that cannot name its guard is not done.
 | Agreeing to the Terms and Privacy Policy | `@kk/shared` `LEGAL_VERSIONS`; enforced and recorded in `accounts.ts` `createParent` | a grown-up account created anywhere else |
 | The legal documents' text | `client/src/pages/legal.tsx` | a second copy (the marketing site links to the app's pages) |
 | Who runs Kid Kapital and how to reach them | `@kk/shared` `OPERATOR_NAME` / `PRIVACY_CONTACT` | a name or email typed into a page |
-| Whether anything is paid | `@kk/shared` `PAID_PLANS` | a price, plan card or upgrade button that ignores it |
 | The creator credit, support-page link, contact form, EmailJS settings and spam rules | `@kk/shared` `creator.ts`; UI `client/src/features/creator.tsx` (grown-up Settings only); the send in `lib/api.ts` `sendContactMessage` | any payment, tip or donation link or wording (Vercel Hobby forbids commercial use); creator links on a kid screen; a second EmailJS call |
 | Connecting to MongoDB and building indexes (server and Vercel function) | `server/src/db.ts` `connectDb()` | `mongoose.connect` anywhere else |
 | Hosting on Vercel (build output, routes, cron) | `scripts/vercel-build.mjs` + `server/src/vercel.ts`; the cron door is `security.ts` `requireCron` | a second build config or an unguarded job route |
@@ -257,7 +252,7 @@ so changing it changes the policy; bump `LEGAL_VERSIONS` when you do.
   refused, `$`/dotted keys stripped, rate limits (all keyed by `ipKey`, which folds
   IPv6 to its /64), a CSRF guard (`csrfGuard`: a state-changing request needs
   `Authorization` or `X-Requested-With`, which `client/src/lib/api.ts` always sends;
-  only pre-session auth calls and signed webhooks are exempt; sign out is not), no
+  only pre-session auth calls are exempt; sign out is not), no
   ETags, and an error handler that answers body-parser 4xx generically and logs a 500
   as one structured line, never the raw error (it carries the request body).
 - **Bot protection** (`bot-protection.ts`, ported from Mentis botProtection/formGuard; no
@@ -267,7 +262,7 @@ so changing it changes the policy; bump `LEGAL_VERSIONS` when you do.
   first: a banned address gets a bare 403 everywhere. Honeypot paths (`/wp-admin`,
   `/.env`, ...) answer 404 and score; attack-tool agents get 403 and score; empty or
   generic-client agents (curl, python-requests) get 403 on `/api` without scoring
-  (webhooks and cron exempt). Scores reaching 15 in 6 h, or 40 wrong sign-ins in 15 min
+  (cron exempt). Scores reaching 15 in 6 h, or 40 wrong sign-ins in 15 min
   from one address, ban it on the ladder 15 min, 1 h, 6 h, 24 h (offenses remembered 7
   days). Bans and agent checks run only on hosted servers (`protection.bans`). The
   public forms (signup, join, login, kid login, forgot password) send a honeypot and
@@ -284,35 +279,18 @@ so changing it changes the policy; bump `LEGAL_VERSIONS` when you do.
 
 ---
 
-## KAPITAL PLUS (subscriptions, one per FAMILY)
+## FREE, NO PAYMENTS
 
-**Right now Kid Kapital is FREE FOR EVERYONE:** `PAID_PLANS = false` in `shared/src/plans.ts`.
-While it is off, Free allows everything Plus does (no gate ever refuses), checkout answers 501,
-and the Settings plan card, the upsell sheet and the site's plan cards render nothing (they read
-the switch). Turning it on means, in the same change: rewrite the Terms ("It is free"), add the
-payment provider to the Privacy Policy, and bump `LEGAL_VERSIONS` (`guards.test.ts` fails if the
-Terms and the switch disagree). The limit tests run only while it is on.
-
-- `PLAN_LIMITS` in `shared/src/plans.ts` is the only table. Free: 2 kids, quests,
-  shop, piggy, chest, savings goals, 1 team goal, co-parent invites. Plus: unlimited
-  kids and team goals, rocket fund, helper (assist) points.
-- Gate in the SERVICE, never only in the UI: `await assertWithinLimit(actor, 'kids', n)`
-  (count BEFORE adding) or `await assertPlanFeature(actor, 'rocket')`. Both throw 402
-  `PLAN_LIMIT`; the client's axios interceptor opens the one upsell sheet
-  (`PlanUpsellHost` in `features/billing.tsx`) and `useAction` skips its toast.
-- `getFamilyPlan()` / `effectivePlan()` is the one place expiry and grace are decided
-  (Mentis `getEffectiveTier`): active rows go free 18 days (Stripe) / 10 days
-  (RevenueCat) past their period end with no renewal, past_due keeps Plus for 14 days,
-  cancelled keeps it until the period ends, a paid row without a period end counts
-  only for a `manual` comp.
-- Provider state reaches `Entitlement` only through webhooks (and `/billing/sync`,
-  which re-reads RevenueCat; the client never says what it bought). Every webhook is
-  claimed once by event id (`BillingEvent`), applied only if not older than the last
-  event (`lastEventAt`), and one provider's lapse never cancels Plus bought through
-  the other. Stripe's webhook is mounted before `express.json()` (raw body for the
-  signature). RevenueCat's app user id IS the family id.
-- No keys means every family is Free and billing endpoints answer 501, so local dev
-  needs nothing. Env vars are listed in `server/.env.example` and `client/.env.example`.
+Kid Kapital is free for every family and takes no payments of any kind. It runs on Vercel's
+Hobby plan, whose fair-use rules count asking for money as commercial use. There is no billing
+code at all: no plans, no plan limits, no Stripe or RevenueCat SDK, no `/billing` routes (all
+removed 2026-10-31, so no env var can turn charging on). Every family gets every feature.
+`guards.test.ts` fails on a payment SDK, a 402, a `/billing/` path, a plan hook, payment or
+donation wording, or Terms that stop saying "It is free"; `no-billing.test.ts` boots with every
+provider env var set and proves no payment route exists. Support for the creator lives only on
+his own site (`@kk/shared` `CREATOR_SUPPORT_PAGE`), linked from grown-up Settings. Bringing
+payments back is a product and legal decision (Terms, Privacy Policy, hosting plan), not a code
+switch.
 
 ---
 
@@ -362,8 +340,8 @@ thing, or a second model for the same resource.
 | API app / entry | `server/src/app.ts`, `server/src/index.ts` |
 | Models | `server/src/models.ts` |
 | Services (all logic) | `server/src/services/` |
-| Routes (thin) | `server/src/routes.ts`, `server/src/routes-account.ts` (auth extras + billing) |
-| Account / billing models | `server/src/models-account.ts` |
+| Routes (thin) | `server/src/routes.ts`, `server/src/routes-account.ts` (auth extras) |
+| Account models | `server/src/models-account.ts` |
 | Security middleware | `server/src/security.ts` |
 | Tests + guards | `server/src/__tests__/` |
 | UI kit | `client/src/components/ui/` |

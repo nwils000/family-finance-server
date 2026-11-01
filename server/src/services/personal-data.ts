@@ -4,7 +4,6 @@
 // guards.test.ts checks that every model holding kidId / familyId / userId is listed here.
 import type { Types } from 'mongoose';
 import { INACTIVE_FAMILY_MONTHS } from '@kk/shared';
-import { HttpError } from '../http.js';
 import { CoParentInvite, EmailVerificationToken, PasswordResetToken, SessionCutoff, SocialIdentity, SpentRefreshToken } from '../models-account.js';
 import {
   Account,
@@ -24,7 +23,6 @@ import {
   User,
 } from '../models.js';
 import { revokeAllSessions } from '../auth.js';
-import { forgetEntitlement, hasRenewingSubscription } from './billing.js';
 import { removeKidFromTeamGoals } from './teamGoals.js';
 
 /** Everything that belongs to one kid, deleted by kidId. */
@@ -37,8 +35,6 @@ export const FAMILY_DATA = [Reward, Milestone, TeamGoal, CoParentInvite] as cons
 export const NOT_PERSONAL = {
   Family: 'deleted last by eraseFamily itself',
   User: 'deleted by eraseUser',
-  Entitlement: 'billing row, removed through billing.ts forgetEntitlement',
-  BillingEvent: 'provider event ids for idempotency; no personal data',
   AppleNonce: 'short-lived sign-in nonces with a TTL; not tied to a user',
   RevokedJti: 'ids of signed-out access tokens, TTL at their 15 minute expiry; no user id stored',
   AbuseCounter: 'rate-limit and bot counters with a TTL of their window; rate-limit keys (which may hold an email or kid id) are stored hashed',
@@ -65,13 +61,10 @@ export const eraseKid = async (familyId: Types.ObjectId, kidId: Types.ObjectId) 
 
 /** Delete the whole family: every kid, every grown-up, and all family data. */
 export const eraseFamily = async (familyId: Types.ObjectId) => {
-  if (await hasRenewingSubscription(familyId)) {
-    throw new HttpError(409, 'Cancel Kapital Plus first, so your card is not charged again. Then you can delete the family.', 'SUBSCRIPTION_ACTIVE');
-  }
   const members = await User.find({ familyId }).select('role');
   for (const m of members.filter((u) => u.role === 'kid')) await eraseKid(familyId, m._id);
   for (const m of members.filter((u) => u.role === 'parent')) await eraseUser(m._id);
-  await Promise.all([...FAMILY_DATA.map((M) => (M as typeof Reward).deleteMany({ familyId })), forgetEntitlement(familyId)]);
+  await Promise.all(FAMILY_DATA.map((M) => (M as typeof Reward).deleteMany({ familyId })));
   await Family.deleteOne({ _id: familyId });
 };
 

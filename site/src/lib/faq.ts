@@ -1,4 +1,4 @@
-import { AGE_BAND_NAMES, AGE_BANDS, LESSONS, PAID_PLANS, PLAN_LIMITS, PLAN_NAMES } from '@kk/shared';
+import { AGE_BAND_NAMES, AGE_BANDS, LESSONS } from '@kk/shared';
 
 /**
  * The FAQ, once. The visible FAQ section and the FAQPage structured data in the
@@ -7,7 +7,6 @@ import { AGE_BAND_NAMES, AGE_BANDS, LESSONS, PAID_PLANS, PLAN_LIMITS, PLAN_NAMES
  *
  * Numbers come from @kk/shared, never typed into the copy.
  */
-const freeKids = PLAN_LIMITS.free.limits.kids;
 const bands = AGE_BANDS.map((b) => AGE_BAND_NAMES[b].replace('Ages ', '')).join(', ');
 
 export const FAQ: { q: string; a: string }[] = [
@@ -35,12 +34,9 @@ export const FAQ: { q: string; a: string }[] = [
     q: 'What is Money school?',
     a: `A library of ${LESSONS.length} short, illustrated lessons with a quick quiz, covering earning, spending, saving, banks, credit, investing and staying safe. Grown-ups can pick lessons for each kid and reward them with coins.`,
   },
-  PAID_PLANS ? {
-    q: 'What does the free plan include?',
-    a: `${PLAN_NAMES.free} covers the whole core loop for up to ${freeKids} kids: quests, the family shop, the piggy bank, the daily chest, savings goals, a team goal and co-parent invites. ${PLAN_NAMES.plus} adds room for more kids and team goals, the rocket fund and helper points. One plan covers the whole family.`,
-  } : {
+  {
     q: 'Is it really free?',
-    a: 'Yes. Right now Kid Kapital is free for every family: every feature, as many kids as you like, no card and no ads. If that ever changes, grown-ups will hear about it before anything changes, and kids will never see a price.',
+    a: "Yes. Kid Kapital is free for every family: every feature, as many kids as you like, no card and no ads. It doesn't ask for or accept payments, and kids never see a price.",
   },
   {
     q: 'Can two grown-ups share a family?',

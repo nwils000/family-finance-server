@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { PAID_PLANS, PIN_LENGTH } from '@kk/shared';
+import { PIN_LENGTH } from '@kk/shared';
 import { Heart, IconEyeOff, IconLock, Penny, Wallet } from '@art';
 import { Reveal } from './Reveal';
 import { Card, SectionHeading, type CardTone } from './ui';
@@ -17,10 +17,8 @@ const PROMISES: { art: ReactNode; title: string; body: string; tone: CardTone }[
   },
   {
     art: <IconLock size={52} />,
-    title: 'No paywalls for kids',
-    body: PAID_PLANS
-      ? 'Kids never see an upgrade screen or a price. Plans and billing live only on the grown-up side.'
-      : 'Kids never see an upgrade screen or a price. Right now there is nothing to buy at all.',
+    title: 'Nothing to buy',
+    body: "Kid Kapital doesn't ask for or accept payments, so kids never see a price, an upgrade screen or a store.",
     tone: 'brand',
   },
   {

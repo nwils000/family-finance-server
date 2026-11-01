@@ -1,13 +1,11 @@
 import type { ReactNode } from 'react';
-import { BADGE_RULES, EFFORT_BOOST, HATS, PLAN_LIMITS, PLAN_NAMES, type PlanFeature } from '@kk/shared';
+import { BADGE_RULES, EFFORT_BOOST, HATS } from '@kk/shared';
 import { BADGES, ChestOpen, GoalJar, Hat, Heart, LevelShield, PiggyBank, QuestIcon, RewardIcon, Rocket, Trophy, XpStar } from '@art';
 import { Reveal } from './Reveal';
-import { Card, Chip, SectionHeading, type CardTone } from './ui';
+import { Card, SectionHeading, type CardTone } from './ui';
 
-type Feature = { art: ReactNode; title: string; body: string; tone: CardTone; plus?: PlanFeature; wide?: boolean };
+type Feature = { art: ReactNode; title: string; body: string; tone: CardTone; wide?: boolean };
 
-/** True when the free plan leaves a feature off: the tile then says it comes with Plus. Read from PLAN_LIMITS, never typed. */
-const plusOnly = (f?: PlanFeature) => !!f && !PLAN_LIMITS.free.features[f] && PLAN_LIMITS.plus.features[f];
 
 const FEATURES: Feature[] = [
   {
@@ -45,7 +43,6 @@ const FEATURES: Feature[] = [
     title: 'Rocket fund',
     body: 'Zooms up or dips down each week inside the range you set. A safe first taste of investing risk.',
     tone: 'good',
-    plus: 'rocket',
   },
   {
     art: <GoalJar size={80} fill={0.65} />,
@@ -64,7 +61,6 @@ const FEATURES: Feature[] = [
     title: 'Helper points',
     body: 'Help a brother or sister with their quest and earn helper points and a little XP. The doer keeps every coin.',
     tone: 'bad',
-    plus: 'assists',
   },
   {
     art: (
@@ -101,7 +97,6 @@ export function Features() {
             <Card tone={f.tone} className="flex h-full flex-col">
               <div className="flex h-[88px] items-end justify-between gap-2">
                 {f.art}
-                {plusOnly(f.plus) && <Chip tone="brand">{PLAN_NAMES.plus}</Chip>}
               </div>
               <h3 className="mt-4 font-display text-xl font-bold text-ink">{f.title}</h3>
               <p className="mt-1.5 leading-relaxed text-ink-soft">{f.body}</p>

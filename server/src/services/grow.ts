@@ -2,7 +2,6 @@ import { GROWTH_PERIOD_DAYS, POT_NAMES, type AccountKind } from '@kk/shared';
 import { Account, Family, Purchase, Quest, QuestRun, Txn, User } from '../models.js';
 import { assertFeature, familyOf, resolveKid, visibleTo, type Actor } from './access.js';
 import { NOT_TRANSFER_OUT, transfer } from './money.js';
-import { assertPlanFeature } from './billing.js';
 import { teamPrizesToHandOver } from './teamGoals.js';
 
 
@@ -27,8 +26,6 @@ export const growOverview = async (actor: Actor, kidId?: string) => {
 export const moveGrowth = async (actor: Actor, kind: AccountKind, direction: 'deposit' | 'withdraw', amountCents: number, kidId?: string) => {
   if (direction === 'deposit') {
     await assertFeature(actor, kind);
-    // Withdrawing is always allowed, so coins are never trapped after a plan change.
-    if (kind === 'rocket') await assertPlanFeature(actor, 'rocket');
   }
   const kid = await resolveKid(actor, kidId);
   const base = { familyId: kid.familyId, kidId: kid._id };

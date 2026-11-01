@@ -5,7 +5,6 @@ import { levelFor } from '@kk/shared';
 import { Milestone, MilestoneClaim } from '../models.js';
 import type { milestoneBody } from '../schemas.js';
 import { familyOf, resolveKid, updateScoped, type Actor } from './access.js';
-import { assertPlanFeature } from './billing.js';
 
 const shape = (m: InstanceType<typeof Milestone>) => ({ id: String(m._id), kind: (m.kind ?? 'helper') as 'helper' | 'level', title: m.title, icon: m.icon ?? null, points: m.points });
 
@@ -22,8 +21,6 @@ export const listMilestones = async (actor: Actor, kidId?: string) => {
 };
 
 export const createMilestone = async (actor: Actor, body: z.infer<typeof milestoneBody>) => {
-  // Helper prizes are part of Kapital Plus; level prizes are free for everyone.
-  if (body.kind !== 'level') await assertPlanFeature(actor, 'assists');
   return { milestone: shape(await Milestone.create({ ...body, familyId: familyOf(actor) })) };
 };
 

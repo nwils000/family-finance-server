@@ -2,8 +2,7 @@
 // which owns error toasts and cache invalidation.
 import { useMutation, useQuery, useQueryClient, QueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { PLAN_LIMIT_CODE } from '@kk/shared';
-import { endpoints, errorCode, errorMessage } from './api';
+import { endpoints, errorMessage } from './api';
 
 export const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 15_000, retry: 1, refetchOnWindowFocus: true } },
@@ -19,7 +18,6 @@ export const qk = {
   grow: (kidId?: string) => ['grow', kidId ?? 'me'] as const,
   activity: (kidId?: string) => ['activity', kidId ?? 'all'] as const,
   approvals: ['approvals'] as const,
-  billing: ['billing'] as const,
   providers: ['providers'] as const,
   teamGoals: ['teamGoals'] as const,
   lessons: (kidId?: string) => ['lessons', kidId ?? 'me'] as const,
@@ -39,7 +37,6 @@ export const useActivity = (kidId?: string) => useQuery({ queryKey: qk.activity(
 export const useLessons = (kidId?: string) => useQuery({ queryKey: qk.lessons(kidId), queryFn: () => endpoints.lessons(kidId) });
 export const useTeamGoals = () => useQuery({ queryKey: qk.teamGoals, queryFn: endpoints.teamGoals });
 export const useMilestones = (kidId?: string) => useQuery({ queryKey: qk.milestones(kidId), queryFn: () => endpoints.milestones(kidId) });
-export const useBillingStatus = (enabled = true) => useQuery({ queryKey: qk.billing, queryFn: endpoints.billingStatus, enabled });
 /** Which social sign-in buttons this server supports. Rarely changes, so it is cached for the session. */
 export const useSocialProviders = () => useQuery({ queryKey: qk.providers, queryFn: endpoints.providers, staleTime: Infinity, retry: 0 });
 export const useApprovals = (enabled = true) =>
@@ -62,8 +59,7 @@ export const useAction = <A extends unknown[], R>(fn: (...args: A) => Promise<R>
       if (opts.success) toast.success(opts.success);
       opts.onSuccess?.(result);
     },
-    // A plan refusal opens the Kapital Plus sheet instead (api.ts setOnPlanLimit), so no toast on top.
-    onError: (err) => errorCode(err) !== PLAN_LIMIT_CODE && toast.error(errorMessage(err)),
+    onError: (err) => toast.error(errorMessage(err)),
     onSettled: () =>
       Promise.all((opts.invalidate ?? MONEY_KEYS).map((queryKey) => client.invalidateQueries({ queryKey: [...queryKey] }))),
   });

@@ -1,7 +1,7 @@
 // The only module that talks to the server. Components call the typed
 // functions in `endpoints`, never axios directly.
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { EMAILJS, PLAN_LIMIT_CODE, type AccountKind, type ContactFields, type FormGuardBody, type HatId } from '@kk/shared';
+import { EMAILJS, type AccountKind, type ContactFields, type FormGuardBody, type HatId } from '@kk/shared';
 import { isNative, secureStorage } from './secure-storage';
 import type * as T from './types';
 
@@ -19,17 +19,12 @@ export const http = axios.create({ baseURL: BASE_URL, withCredentials: true, hea
 // The access token lives in memory only (see secure-storage.ts).
 let accessToken: string | null = null;
 let onSessionLost: () => void = () => undefined;
-let onPlanLimit: (message: string) => void = () => undefined;
 
 export const setAccessToken = (token: string | null) => {
   accessToken = token;
 };
 export const setOnSessionLost = (fn: () => void) => {
   onSessionLost = fn;
-};
-/** Any call the server refuses with 402 PLAN_LIMIT opens the Kapital Plus upsell (features/billing.tsx). */
-export const setOnPlanLimit = (fn: (message: string) => void) => {
-  onPlanLimit = fn;
 };
 
 http.interceptors.request.use((config) => {
@@ -63,8 +58,6 @@ export const refreshSession = () => {
 http.interceptors.response.use(undefined, async (error: AxiosError) => {
   const original = error.config as (InternalAxiosRequestConfig & { _retried?: boolean }) | undefined;
   const isAuthCall = original?.url?.startsWith('/auth/');
-  const body = error.response?.data as { code?: string; error?: string } | undefined;
-  if (error.response?.status === 402 && body?.code === PLAN_LIMIT_CODE) onPlanLimit(body.error ?? '');
   if (error.response?.status === 401 && original && !original._retried && !isAuthCall) {
     original._retried = true;
     try {
@@ -140,10 +133,6 @@ export const endpoints = {
   appleNonce: () => get<{ nonce: string }>('/auth/apple/nonce'),
   appleSignIn: (b: T.SocialExtras & { identityToken: string; nonce: string; name?: string }) => post<T.Session>('/auth/apple', b),
 
-  billingStatus: () => get<T.BillingStatus>('/billing/status'),
-  checkout: () => post<{ url: string }>('/billing/checkout'),
-  billingPortal: () => post<{ url: string }>('/billing/portal'),
-  syncPurchases: () => post<T.BillingStatus>('/billing/sync'),
 
   home: () => get<T.Home>('/family'),
   updateSettings: (b: Partial<Omit<T.FamilySettings, 'id' | 'code' | 'features'>> & { features?: Partial<T.FamilySettings['features']> }) =>

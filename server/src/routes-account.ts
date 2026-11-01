@@ -1,8 +1,8 @@
-// Account security, social sign-in and Kapital Plus billing endpoints. Thin like
+// Account security and social sign-in endpoints. Thin like
 // routes.ts: parse with zod, call a service, return its result. Mounted in app.ts
 // BEFORE routes.ts, because routes.ts requires a session for everything after its
 // public block; so every signed-in route here names requireAuth itself.
-import express, { Router } from 'express';
+import { Router } from 'express';
 import { Types } from 'mongoose';
 import { endSession, issueSession, requireAuth, requireParent } from './auth.js';
 import { formGuard } from './bot-protection.js';
@@ -18,26 +18,12 @@ import {
   resetRequestIpLimiter,
   resetRequestLimiter,
   strictLimiter,
-  webhookLimiter,
 } from './security.js';
 import * as security from './services/account-security.js';
 import { familyOf } from './services/access.js';
-import * as billing from './services/billing.js';
 import * as data from './services/personal-data.js';
 import * as verification from './services/email-verification.js';
 import * as social from './services/social.js';
-
-/**
- * Stripe signs the exact bytes it sent, so its webhook must see the raw body.
- * Mounted before express.json() in app.ts.
- */
-export const rawBodyRoutes = Router();
-rawBodyRoutes.post(
-  '/billing/webhooks/stripe',
-  webhookLimiter,
-  express.raw({ type: 'application/json', limit: '512kb' }),
-  handle((req) => billing.stripeWebhook(req.body, req.get('stripe-signature'))),
-);
 
 export const accountRoutes = Router();
 const r = accountRoutes;
@@ -78,9 +64,3 @@ r.post('/account/delete', ...parent, accountDeleteLimiter, handle(async (req, re
 }));
 r.post('/auth/logout-all', signedIn, strictLimiter, handle(async (req, res) => issueSession(req, res, await security.signOutEverywhere(req.auth))));
 
-// Kapital Plus
-r.get('/billing/status', signedIn, handle((req) => billing.billingStatus(req.auth)));
-r.post('/billing/checkout', ...parent, authLimiter, handle((req) => billing.createCheckout(req.auth)));
-r.post('/billing/portal', ...parent, authLimiter, handle((req) => billing.createPortal(req.auth)));
-r.post('/billing/sync', ...parent, authLimiter, handle((req) => billing.syncRevenueCat(req.auth)));
-r.post('/billing/webhooks/revenuecat', webhookLimiter, handle((req) => billing.revenueCatWebhook(req.get('authorization'), req.body)));

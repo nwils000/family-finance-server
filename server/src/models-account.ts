@@ -1,7 +1,6 @@
 // Models for account security and billing. Kept apart from models.ts so the core
 // game models stay small; services are the only importers (see guards.test.ts).
 import mongoose, { Schema } from 'mongoose';
-import { PLANS } from '@kk/shared';
 
 const { model } = mongoose;
 const id = Schema.Types.ObjectId;
@@ -101,44 +100,6 @@ const appleNonceSchema = new Schema({
   expiresAt: { type: Date, required: true, expires: 0 },
 });
 export const AppleNonce = model('AppleNonce', appleNonceSchema);
-
-/**
- * The family's subscription. One per family. Read only through
- * services/billing.ts getFamilyPlan(), which decides what the stored state means.
- */
-const entitlementSchema = new Schema(
-  {
-    familyId: { type: id, ref: 'Family', required: true, unique: true },
-    plan: { type: String, enum: PLANS, default: 'free' },
-    status: { type: String, enum: ['active', 'past_due', 'cancelled', 'inactive'], default: 'inactive' },
-    source: { type: String, enum: ['stripe', 'revenuecat', 'manual', null], default: null },
-    currentPeriodEnd: { type: Date, default: null },
-    cancelAtPeriodEnd: { type: Boolean, default: false },
-    stripeCustomerId: { type: String, default: null, index: true },
-    stripeSubscriptionId: { type: String, default: null },
-    /** Provider timestamp of the last event applied, so a late, older webhook never overwrites a newer one. */
-    lastEventAt: { type: Date, default: null },
-  },
-  { timestamps: true },
-);
-export const Entitlement = model('Entitlement', entitlementSchema);
-
-/** Webhook idempotency: one row per provider event id (Mentis models/WebhookEvent). */
-const billingEventSchema = new Schema(
-  {
-    provider: { type: String, enum: ['stripe', 'revenuecat'], required: true },
-    eventId: { type: String, required: true },
-    type: String,
-    status: { type: String, enum: ['processing', 'completed', 'failed'], required: true },
-    attempts: { type: Number, default: 0 },
-    error: String,
-  },
-  { timestamps: true },
-);
-billingEventSchema.index({ provider: 1, eventId: 1 }, { unique: true });
-// Keep 90 days of history for support, then let Mongo clean up.
-billingEventSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 86_400 });
-export const BillingEvent = model('BillingEvent', billingEventSchema);
 
 /**
  * Fixed-window counters shared by every serverless instance (Mentis keeps these in

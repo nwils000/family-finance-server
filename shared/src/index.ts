@@ -158,7 +158,6 @@ export const assistXpFor = (stars: number) => Math.ceil(xpForStars(stars) / 2);
 /** Share of a team goal, 0..1, from contribution points. */
 export const contributionShare = (mine: number, total: number) => (total > 0 ? mine / total : 0);
 
-export * from './plans';
 export * from './password';
 export * from './learn';
 export * from './legal';

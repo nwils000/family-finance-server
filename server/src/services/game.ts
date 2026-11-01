@@ -1,12 +1,11 @@
 // XP, the daily chest, hats and dream goals. The only module that changes xp.
 import type { Types } from 'mongoose';
 import type { z } from 'zod';
-import { assistPointsFor, assistXpFor, planAllows, CHEST_XP, hatUnlocked, levelFor, type HatId } from '@kk/shared';
+import { assistPointsFor, assistXpFor, CHEST_XP, hatUnlocked, levelFor, type HatId } from '@kk/shared';
 import { HttpError } from '../http.js';
 import { ChestOpen, Family, Milestone, MilestoneClaim, Purchase, User } from '../models.js';
 import type { goalBody } from '../schemas.js';
 import { assertFeature, resolveKid, type Actor } from './access.js';
-import { getFamilyPlan } from './billing.js';
 import { move } from './money.js';
 import { questsForDay } from './quests.js';
 
@@ -95,8 +94,8 @@ export const setGoal = async (actor: Actor, goal: z.infer<typeof goalBody>, kidI
 export const awardAssists = async (familyId: Types.ObjectId, helperIds: Types.ObjectId[], stars: number) => {
   if (!helperIds.length) return;
   const family = await Family.findById(familyId).select('features');
-  // Helper points need the family switch on and a plan that includes them.
-  if (family?.features?.assists === false || !planAllows(await getFamilyPlan(familyId), 'assists')) return;
+  // Helper points need the family switch on.
+  if (family?.features?.assists === false) return;
   const points = assistPointsFor(stars);
   for (const helperId of helperIds) {
     const helper = await User.findOneAndUpdate({ _id: helperId, familyId, role: 'kid' }, { $inc: { assistPoints: points } }, { new: true });

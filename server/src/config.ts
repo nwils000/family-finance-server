@@ -82,17 +82,6 @@ export const config = {
     },
   },
 
-  /** Kapital Plus billing. Stripe for web, RevenueCat for the app stores. */
-  stripe: {
-    secretKey: optional('STRIPE_SECRET_KEY'),
-    webhookSecret: optional('STRIPE_WEBHOOK_SECRET'),
-    pricePlus: optional('STRIPE_PRICE_PLUS'),
-  },
-  revenueCat: {
-    webhookSecret: optional('REVENUECAT_WEBHOOK_SECRET'),
-    /** Server-side REST key (sk_...), used only to re-sync a family after a native purchase. */
-    secretApiKey: optional('REVENUECAT_SECRET_API_KEY'),
-  },
   /** See the SMTP check above: a staging preview where grown-ups start verified and no mail goes out. */
   previewWithoutEmail,
   /** Running as a Vercel function: no long-lived process for interval jobs, a smaller pool. */

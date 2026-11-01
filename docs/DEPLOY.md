@@ -73,7 +73,6 @@ so the refresh cookie is first-party and no cross-site CORS is needed. Native ap
 | `PORT` | no | Defaults to 8787. |
 | `SMTP_URL`, `MAIL_FROM` | yes | Grown-up emails (verify email, reset password, co-parent invites). A hosted server refuses to boot without `SMTP_URL`, since parents must confirm their email before adding kids. |
 | `GOOGLE_CLIENT_ID`, `APPLE_SERVICES_ID`, `APPLE_WEB_REDIRECT_URI` | optional | Each sign-in button appears only once its ids are set. |
-| `STRIPE_*`, `REVENUECAT_*` | optional | Kapital Plus. Without them every family is Free and billing answers 501. |
 | `ENABLE_DEV_ENDPOINTS` | never in hosted envs | Dev quick-login; only mounts in `development`. |
 
 ## Database

@@ -7,7 +7,7 @@ import cors from 'cors';
 import { errorHandler, handle, notFound } from './http.js';
 import { runScheduledJobs } from './services/jobs.js';
 import { routes } from './routes.js';
-import { accountRoutes, rawBodyRoutes } from './routes-account.js';
+import { accountRoutes } from './routes-account.js';
 import { botProtection, watchFailedSignIns } from './bot-protection.js';
 import { apiLimiter, corsOptions, csrfGuard, noStore, requireCron, requestId, requestLog, requestShapeGuard, securityHeaders, writeLimiter } from './security.js';
 
@@ -25,11 +25,8 @@ export const createApp = () => {
   if (config.serveClientDir) app.use(webApp(config.serveClientDir));
   app.use(securityHeaders, noStore);
   app.use(cors(corsOptions));
-  // Before any route, raw-body webhooks included (they are exempt by path).
   app.use(csrfGuard);
   app.use('/api', apiLimiter, writeLimiter);
-  // Before express.json(): the Stripe webhook needs the raw bytes for its signature.
-  app.use('/api', rawBodyRoutes);
   app.use(express.json({ limit: '50kb' }));
   app.use(cookieParser());
   app.use(requestShapeGuard);

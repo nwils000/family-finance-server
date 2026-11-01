@@ -190,8 +190,7 @@ export const requestShapeGuard = (req: Request, res: Response, next: NextFunctio
 /* ---------- CSRF (Mentis middlewares/csrf.ts) ---------- */
 
 /**
- * Endpoints a browser reaches before it has any session, plus provider webhooks
- * (signature-checked inside the handler). Everything else that changes state must
+ * Endpoints a browser reaches before it has any session. Everything else that changes state must
  * prove it came from our own code: an Authorization header, or X-Requested-With,
  * which a cross-site form or `text/plain` fetch cannot set without a CORS preflight
  * our exact-match origin list refuses. Sign out is NOT exempt: it acts on the
@@ -211,12 +210,11 @@ const CSRF_EXEMPT = new Set([
   '/api/auth/google',
   '/api/auth/apple',
 ]);
-const CSRF_EXEMPT_PREFIXES = ['/api/billing/webhooks/'];
 const STATE_CHANGING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 export const csrfGuard = (req: Request, res: Response, next: NextFunction) => {
   if (!STATE_CHANGING.has(req.method)) return next();
-  if (CSRF_EXEMPT.has(req.path) || CSRF_EXEMPT_PREFIXES.some((p) => req.path.startsWith(p))) return next();
+  if (CSRF_EXEMPT.has(req.path)) return next();
   if (req.get('Authorization') || req.get('X-Requested-With')) return next();
   console.warn(JSON.stringify({ level: 'warn', msg: 'csrf guard refused a request', id: req.id, method: req.method, path: loggablePath(req.originalUrl) }));
   res.status(403).json({ error: 'Missing required security headers', code: 'CSRF_REFUSED' });
@@ -301,8 +299,6 @@ export const limiter = (name: string, windowMs: number, limit: number, { skip, .
 export const authLimiter = limiter('auth', 15 * 60_000, 30);
 /** Signed-in credential changes (change password, sign out everywhere): tight. */
 export const strictLimiter = limiter('strict', 60 * 60_000, 10);
-/** Provider webhooks: generous, but bounded (Mentis uses 120 per minute). */
-export const webhookLimiter = limiter('webhook', 60_000, 120);
 /** Every API call, per IP: generous (a busy family on one home connection), but a script reading in a loop stops. */
 export const apiLimiter = limiter('api', 15 * 60_000, 3000);
 /** Every write on the API, per IP. Generous for a busy family, hostile for a script. */

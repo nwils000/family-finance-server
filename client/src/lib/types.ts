@@ -10,8 +10,6 @@ import type {
   Cents,
   Features,
   HatId,
-  Plan,
-  PlanRules,
   QuestIconId,
   Repeat,
   RewardIconId,
@@ -208,7 +206,7 @@ export interface Milestone {
   unlocked: boolean;
 }
 
-/* ---------- Accounts and Kapital Plus ---------- */
+/* ---------- Accounts ---------- */
 
 export interface SocialProviders {
   google: { clientId: string } | null;
@@ -222,18 +220,6 @@ export interface SocialExtras {
   familyName?: string;
   /** Agreed to the Terms and Privacy Policy; the server needs it only when this sign-in creates the account. */
   acceptLegal?: boolean;
-}
-
-export interface BillingStatus {
-  plan: Plan;
-  planName: string;
-  rules: PlanRules;
-  status: 'active' | 'past_due' | 'cancelled' | 'inactive';
-  source: 'stripe' | 'revenuecat' | 'manual' | null;
-  renewsAt: string | null;
-  cancelAtPeriodEnd: boolean;
-  usage: { kids: number };
-  web: { checkout: boolean; portal: boolean };
 }
 
 export interface LessonListItem {

@@ -55,9 +55,9 @@ const BLOCKED_AGENTS = [
 
 /**
  * Callers that are not browsers and prove themselves another way, so their user agent
- * is never judged: provider webhooks (signed) and Vercel Cron (secret).
+ * is never judged: Vercel Cron (it proves itself with its secret).
  */
-const AGENT_EXEMPT_PREFIXES = ['/api/billing/webhooks/', '/api/cron/'];
+const AGENT_EXEMPT_PREFIXES = ['/api/cron/'];
 
 /**
  * Paths no person and no part of this app ever asks for. Matched as a prefix of the

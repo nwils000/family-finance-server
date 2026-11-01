@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 import { defaultRewardCents, toDateKey } from '@kk/shared';
 import { config } from '../config.js';
 import { Family, Quest, QuestRun, Reward, User } from '../models.js';
-import { Entitlement } from '../models-account.js';
 import { hashPassword, hashPin } from '../services/accounts.js';
 import { ensureAccounts, move, transfer } from '../services/money.js';
 
@@ -69,9 +68,6 @@ await Reward.insertMany([
   { familyId, title: 'Stay up 30 min late', icon: 'moon', priceCents: 250 },
   { familyId, title: 'Sleepover', icon: 'tent', priceCents: 1000 },
 ]);
-
-// The demo family gets Plus so every feature is on locally.
-await Entitlement.create({ familyId, plan: 'plus', status: 'active', source: 'manual' });
 
 console.log(`Seeded. Parent: demo@kidkapital.app / password123. Family code DEMO42. Maya PIN 1234, Leo PIN 5678.`);
 await mongoose.disconnect();

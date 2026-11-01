@@ -12,7 +12,6 @@ import { celebrate } from '@/lib/celebrate';
 import { bouncy, popIn, stagger } from '@/lib/motion';
 import { useAction, useGrow, useSelfKid, useTeamGoals } from '@/lib/queries';
 import { TeamGoalCard } from '@/features/teamwork';
-import { usePlan } from '@/features/billing';
 import type { Goal, GrowAccount } from '@/lib/types';
 import { Loading, WalletHeader } from './kid-parts';
 
@@ -33,7 +32,6 @@ const pct = (n: number) => `${n > 0 ? '+' : ''}${n}%`;
 
 export default function KidGrow() {
   const navigate = useNavigate();
-  const plan = usePlan();
   const { kid, family } = useSelfKid();
   const grow = useGrow();
   const [move, setMove] = useState<{ kind: AccountKind; direction: Direction } | null>(null);
@@ -54,8 +52,8 @@ export default function KidGrow() {
   const { features } = family;
   // A switched-off pot still shows while it holds coins, so they can be taken out.
   const showPiggy = !!piggy && (features.piggy || piggy.balanceCents > 0);
-  // The rocket needs the family switch AND a plan with it; coins already inside can always come out.
-  const rocketOpen = features.rocket && plan.allows('rocket');
+  // The rocket needs the family switch; coins already inside can always come out.
+  const rocketOpen = features.rocket;
   const showRocket = !!rocket && (rocketOpen || rocket.balanceCents > 0);
 
   return (

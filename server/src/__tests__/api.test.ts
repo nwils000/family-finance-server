@@ -2,13 +2,12 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import mongoose from 'mongoose';
 import request from 'supertest';
 import { markVerified, useTestDb } from './testDb.js';
-import { LESSON_XP, LESSONS, PAID_PLANS, toDateKey } from '@kk/shared';
+import { LESSON_XP, LESSONS, toDateKey } from '@kk/shared';
 import { createApp } from '../app.js';
 import { REUSE_GRACE_MS } from '../auth.js';
 import { SpentRefreshToken } from '../models-account.js';
 import { runGrowth } from '../services/growth.js';
 import { Account, Purchase, RefreshToken, Txn, User } from '../models.js';
-import { Entitlement } from '../models-account.js';
 import { requireLocalDev } from '../security.js';
 
 const app = createApp();
@@ -256,14 +255,6 @@ describe('teamwork', () => {
   it('a helper earns assist points and unlocks a milestone once; the doer keeps every coin', async () => {
     const f = await makeFamily('assist');
     const siblingId = await addKid(f.parent, 'Sib', '4321');
-    // With paid plans on, Free gets a 402 for helper milestones and Plus unlocks them;
-    // while Kid Kapital is free for everyone (PAID_PLANS off) every family has them.
-    if (PAID_PLANS) {
-      const free = await request(app).post('/api/milestones').set(bearer(f.parent)).send({ title: 'X', icon: null, points: 3 });
-      expect(free.status).toBe(402);
-      const familyId = (await User.findById(f.kidId))!.familyId;
-      await Entitlement.create({ familyId, plan: 'plus', status: 'active', source: 'manual' });
-    }
     await request(app).post('/api/milestones').set(bearer(f.parent)).send({ title: 'Pick dinner', icon: 'pickdinner', points: 3 });
     for (let i = 0; i < 2; i++) {
       const quest = await makeQuest(f.parent, f.kidId, 3); // 3 stars = 3 assist points, 75 cents

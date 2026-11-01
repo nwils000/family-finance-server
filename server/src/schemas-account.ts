@@ -1,4 +1,4 @@
-// Input shapes for account security, social sign-in and billing endpoints.
+// Input shapes for account security and social sign-in endpoints.
 import { z } from 'zod';
 import { PASSWORD_MAX } from '@kk/shared';
 import { linkToken } from './tokens.js';

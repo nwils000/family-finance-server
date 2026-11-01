@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
 import { acceptSession, endpoints, errorStatus, refreshSession, setAccessToken, setOnSessionLost } from '@/lib/api';
-import { purchases } from '@/lib/purchases';
 import { secureStorage } from '@/lib/secure-storage';
 import type { Session, User } from '@/lib/types';
 
@@ -56,7 +55,6 @@ export const useAuth = create<AuthState>((set, get) => {
         if (errorStatus(err) !== 401) throw err;
       });
       await secureStorage.clear();
-      await purchases.logOut();
       clear();
     },
   };

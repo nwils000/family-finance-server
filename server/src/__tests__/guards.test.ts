@@ -2,7 +2,7 @@
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, relative } from 'path';
 import { describe, expect, it } from 'vitest';
-import { LESSON_ART, LESSON_CATEGORIES, LESSONS, PAID_PLANS } from '@kk/shared';
+import { LESSON_ART, LESSON_CATEGORIES, LESSONS } from '@kk/shared';
 
 const ROOT = join(import.meta.dirname, '../../..');
 const SKIP = new Set(['node_modules', 'dist', 'legacy-django', '.git', 'ios', 'android', 'coverage']);
@@ -24,11 +24,17 @@ const offenders = (pattern: RegExp, scope: string, allowed: string[] = []) =>
   code.filter((f) => f.path.startsWith(scope) && !allowed.includes(f.path) && pattern.test(f.text)).map((f) => f.path);
 
 describe('repo guards', () => {
-  it('the Terms match the paid-plans switch: they cannot promise free while plans are on, or skip it while off', () => {
-    // Turning PAID_PLANS on means rewriting the Terms ("It is free"), adding the payment
-    // provider to the Privacy Policy, and bumping LEGAL_VERSIONS, in the same change.
+  it('there is no billing code to switch on: no payment SDK, no plan gate, and the Terms say free', () => {
+    // Kid Kapital is free and takes no payments (Vercel Hobby fair use). Billing was removed
+    // outright on 2026-10-31 so no env var can quietly turn charging on; bringing it back is
+    // a product decision that also rewrites the Terms and the Privacy Policy.
+    const pkgs = ['package.json', 'server/package.json', 'client/package.json', 'site/package.json', 'shared/package.json'].map((p) => readFileSync(join(ROOT, p), 'utf8'));
+    expect(pkgs.filter((p) => /"(stripe|@stripe\/[^"]+|@revenuecat\/[^"]+|react-native-purchases)"/.test(p))).toEqual([]);
+    expect(offenders(/from 'stripe'|@revenuecat\/|HttpError\(\s*402|\/billing\//, 'server/src').filter((p) => !/(guards|no-billing)\.test\.ts$/.test(p))).toEqual([]);
+    expect(offenders(/@revenuecat\/|\/billing\/|PlanUpsell|usePlan\b/, 'client/src')).toEqual([]);
     const legal = readFileSync(join(ROOT, 'client/src/pages/legal.tsx'), 'utf8');
-    expect(legal.includes("heading: 'It is free'")).toBe(!PAID_PLANS);
+    expect(legal).toContain("heading: 'It is free'");
+    expect(legal).toContain("It doesn't ask for or accept payments.");
   });
 
   it('the tip link and contact form appear only in grown-up Settings, and EmailJS is called only from lib/api.ts', () => {
@@ -159,13 +165,6 @@ describe('repo guards', () => {
     expect(offenders(/layoutId=/, 'client/src', ['client/src/features/shell.tsx'])).toEqual([]);
   });
 
-  it('billing has one owner per side: plans in @kk/shared, providers in billing.ts and purchases.ts', () => {
-    // A plan refusal (402) is decided only by services/billing.ts against PLAN_LIMITS.
-    expect(offenders(/HttpError\(\s*402/, 'server/src', ['server/src/services/billing.ts'])).toEqual([]);
-    expect(offenders(/from 'stripe'/, 'server/src', ['server/src/services/billing.ts']).filter((p) => !p.includes('__tests__'))).toEqual([]);
-    expect(offenders(/@revenuecat\/purchases-capacitor/, 'client/src', ['client/src/lib/purchases.ts'])).toEqual([]);
-  });
-
   it('ends sessions only through auth.ts revokeAllSessions', () => {
     expect(offenders(/RefreshToken\.deleteMany\(\s*\{\s*userId[^}]*\}\s*\)/, 'server/src/services')).toEqual([]);
   });
@@ -179,7 +178,7 @@ describe('repo guards', () => {
   it('hashes and compares secrets only in services/accounts.ts, and hashes stored tokens only in tokens.ts', () => {
     // social.ts digests the Apple nonce as Apple specifies; billing.ts digests for a constant-time compare.
     expect(offenders(/from 'bcryptjs'/, 'server/src', ['server/src/services/accounts.ts']).filter((p) => !p.includes('__tests__'))).toEqual([]);
-    expect(offenders(/createHash\(\s*'sha256'/, 'server/src', ['server/src/tokens.ts', 'server/src/services/social.ts', 'server/src/services/billing.ts'])).toEqual([]);
+    expect(offenders(/createHash\(\s*'sha256'/, 'server/src', ['server/src/tokens.ts', 'server/src/services/social.ts'])).toEqual([]);
   });
 
   it('the app connects to MongoDB only through db.ts connectDb (the server and the Vercel function share it)', () => {

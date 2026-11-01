@@ -2,7 +2,7 @@
 // money rules, sound on this device, and signing out.
 import { useState, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { FEATURES, PAID_PLANS, THEMES, type Feature, type Features, type Theme } from '@kk/shared';
+import { FEATURES, THEMES, type Feature, type Features, type Theme } from '@kk/shared';
 import { Coin, GoalJar, IconCheck, IconLearn, IconLogout, PiggyBank, QuestIcon, RewardIcon, Rocket, Star, TreasureChest, XpStar } from '@/art';
 import {
   AmountPicker,
@@ -24,7 +24,6 @@ import { popIn, stagger } from '@/lib/motion';
 import { prefs } from '@/lib/prefs';
 import { qk, useAction, useHome } from '@/lib/queries';
 import type { FamilySettings } from '@/lib/types';
-import { PlanCard } from '@/features/billing';
 import { CreatorCorner } from '@/features/creator';
 import { AccountSecurityCard, YourDataCard } from '@/pages/account';
 import { useSignOut } from '@/stores/auth';
@@ -267,13 +266,6 @@ export default function ParentSettings() {
         </div>
 
         <div className="flex flex-col gap-6">
-          {PAID_PLANS && (
-            <motion.section variants={popIn}>
-              <SectionTitle>Your plan</SectionTitle>
-              <PlanCard />
-            </motion.section>
-          )}
-
           <motion.section variants={popIn}>
             <SectionTitle>Money rules</SectionTitle>
             <MoneyRules

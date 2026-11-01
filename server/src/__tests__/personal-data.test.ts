@@ -5,7 +5,6 @@ import { INACTIVE_FAMILY_MONTHS, LEGAL_VERSIONS } from '@kk/shared';
 import { createApp } from '../app.js';
 import { useTestDb } from './testDb.js';
 import { Account, Family, LessonProgress, Purchase, Quest, QuestRun, RefreshToken, TeamGoal, Txn, User } from '../models.js';
-import { Entitlement } from '../models-account.js';
 import { eraseFamily, eraseInactiveFamilies, eraseKid, eraseParent, exportFamily, FAMILY_DATA, KID_DATA, NOT_PERSONAL, USER_DATA } from '../services/personal-data.js';
 import '../models-account.js';
 
@@ -74,17 +73,6 @@ describe('personal data', () => {
     expect(await Family.exists({ _id: familyId })).toBeNull();
     expect(await User.countDocuments({ familyId })).toBe(0);
     expect(await TeamGoal.countDocuments({ familyId })).toBe(0);
-  });
-
-  it('refuses to delete a family whose paid plan will charge again', async () => {
-    const { familyId } = await seed();
-    await Entitlement.create({ familyId, plan: 'plus', status: 'active', source: 'stripe', currentPeriodEnd: new Date(Date.now() + 86_400_000) });
-    await expect(eraseFamily(familyId)).rejects.toMatchObject({ status: 409 });
-    expect(await Family.exists({ _id: familyId })).not.toBeNull();
-    // Once cancelled at period end, deletion goes ahead and forgets the plan row.
-    await Entitlement.updateOne({ familyId }, { cancelAtPeriodEnd: true });
-    await eraseFamily(familyId);
-    expect(await Entitlement.exists({ familyId })).toBeNull();
   });
 
   it('export includes the family data and never a secret', async () => {

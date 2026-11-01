@@ -96,16 +96,16 @@ describe('bot protection', () => {
     expect((await get('2001:db8:1:3::a', '/api/health')).status).toBe(200);
   });
 
-  it('empty and generic client agents are refused on the API without a ban; webhooks are exempt', async () => {
+  it('empty and generic client agents are refused on the API without a ban; the cron door is exempt', async () => {
     protection.bans = true;
     const ip = newIp();
     expect((await get(ip, '/api/health', null)).status).toBe(403);
     for (let i = 0; i < 5; i++) expect((await get(ip, '/api/health', 'curl/8.4.0')).status).toBe(403);
     expect((await get(ip, '/api/health')).status).toBe(200);
     expect(await banOf(ip)).toBeNull();
-    // Signed webhooks come from servers, not browsers: never judged by their agent.
-    const hook = await request(app).post('/api/billing/webhooks/revenuecat').set('X-Forwarded-For', ip).set('User-Agent', 'python-requests/2.31').send({});
-    expect(hook.status).not.toBe(403);
+    // Vercel Cron is a server, not a browser, and proves itself with its secret: never judged by its agent.
+    const cron = await request(app).get('/api/cron/growth').set('X-Forwarded-For', ip).set('User-Agent', 'vercel-cron/1.0');
+    expect(cron.status).not.toBe(403);
   });
 
   it('wrong passwords from one address count toward a ban', async () => {

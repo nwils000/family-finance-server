@@ -1,4 +1,3 @@
-import { PLAN_NAMES } from '@kk/shared';
 import { FAQ } from './faq';
 import { DESCRIPTION, SITE_NAME, SITE_URL } from './site';
 
@@ -27,7 +26,7 @@ export function jsonLd() {
         applicationCategory: 'EducationalApplication',
         operatingSystem: 'Web',
         description: DESCRIPTION,
-        offers: { '@type': 'Offer', name: PLAN_NAMES.free, price: '0', priceCurrency: 'USD' },
+        offers: { '@type': 'Offer', name: 'Free', price: '0', priceCurrency: 'USD' },
       },
       {
         '@type': 'FAQPage',

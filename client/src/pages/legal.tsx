@@ -5,7 +5,7 @@
 //
 // Every sentence must describe what the app does TODAY. Before changing a fact here
 // (backups, email, payments, a new provider), change the code first, or the policy lies.
-// Facts this relies on: PAID_PLANS is off (shared/src/plans.ts); the preview sends no
+// Facts this relies on: there is no billing code at all (removed 2026-10-31); the preview sends no
 // email (config.ts PREVIEW_WITHOUT_EMAIL); the free database tier keeps no backups
 // (docs/DEPLOY.md); IP bans expire within 24 hours and offenses after 7 days
 // (services/abuse.ts); the contact form uses EmailJS (features/creator.tsx) and nothing takes payments; idle families are erased after INACTIVE_FAMILY_MONTHS (personal-data.ts); Google and Apple sign-in are not configured, so they are not mentioned.

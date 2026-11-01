@@ -8,7 +8,6 @@ import { ChestClosed, ChestLocked, ChestOpen, IconCalendar, Penny, SceneAllDone,
 import { Button, Card, EmptyState, Heading, PennySays, Pill, ProgressBar, SectionTitle, Segmented, StreakFlame, Text } from '@/components/ui';
 import { QuestCard } from '@/features/cards';
 import { HelperPicker } from '@/features/teamwork';
-import { usePlan } from '@/features/billing';
 import { afterChest, afterXp } from '@/features/moments';
 import { endpoints } from '@/lib/api';
 import { celebrate } from '@/lib/celebrate';
@@ -50,8 +49,7 @@ function pennyLine(pick: DayPick, total: number, finished: number): { mood: Penn
 export default function KidHome() {
   const { kid, family, data: home } = useSelfKid();
   // Siblings who can be credited as helpers (never yourself).
-  const plan = usePlan();
-  const siblings = family?.features.assists && plan.allows('assists') ? (home?.siblings ?? []).filter((s) => s.id !== kid?.id) : [];
+  const siblings = family?.features.assists ? (home?.siblings ?? []).filter((s) => s.id !== kid?.id) : [];
   const [pick, setPick] = useState<DayPick>('today');
   const date = keyFor(pick);
   const day = useDay(date);

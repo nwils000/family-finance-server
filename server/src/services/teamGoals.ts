@@ -8,7 +8,6 @@ import { notFound } from '../http.js';
 import { TeamGoal, User } from '../models.js';
 import type { teamGoalBody } from '../schemas.js';
 import { assertFeature, familyOf, transition, type Actor } from './access.js';
-import { assertPlanFeature, assertWithinLimit } from './billing.js';
 
 const shapeGoal = (g: InstanceType<typeof TeamGoal>) => {
   const contributions = Object.fromEntries(g.contributions ?? new Map());
@@ -40,8 +39,6 @@ const assertKids = async (actor: Actor, kidIds: string[]) => {
 
 export const createTeamGoal = async (actor: Actor, body: z.infer<typeof teamGoalBody>) => {
   await assertFeature(actor, 'teamGoals');
-  await assertPlanFeature(actor, 'teamGoals');
-  await assertWithinLimit(actor, 'teamGoals', await TeamGoal.countDocuments({ familyId: familyOf(actor), status: 'active' }));
   await assertKids(actor, body.kidIds);
   const goal = await TeamGoal.create({ ...body, familyId: familyOf(actor) });
   return { goal: shapeGoal(goal) };

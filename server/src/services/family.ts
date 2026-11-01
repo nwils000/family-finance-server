@@ -6,7 +6,6 @@ import type { giftBody, kidBody, kidUpdateBody, settingsBody } from '../schemas.
 import { revokeAllSessions } from '../auth.js';
 import { familyOf, resolveKid, type Actor } from './access.js';
 import { hashPin } from './accounts.js';
-import { assertWithinLimit } from './billing.js';
 import { assertEmailVerified } from './email-verification.js';
 import { ensureAccounts, move } from './money.js';
 import { eraseKid } from './personal-data.js';
@@ -80,7 +79,6 @@ export const updateSettings = async (actor: Actor, { features, ...rest }: z.infe
 export const addKid = async (actor: Actor, body: z.infer<typeof kidBody>) => {
   // COPPA: a grown-up's verified contact comes before any kid's data is collected.
   await assertEmailVerified(actor);
-  await assertWithinLimit(actor, 'kids', await User.countDocuments({ familyId: familyOf(actor), role: 'kid' }));
   const kid = await User.create({
     familyId: familyOf(actor),
     role: 'kid',
@@ -89,15 +87,6 @@ export const addKid = async (actor: Actor, body: z.infer<typeof kidBody>) => {
     pinHash: await hashPin(body.pin),
     birthYear: birthYearFor(body.age),
   });
-  // Two adds at the same moment can both pass the check above. Re-check by creation
-  // order (ObjectIds sort by time): whichever kid landed past the limit is removed,
-  // so a family can never end up over its plan, however the requests race.
-  try {
-    await assertWithinLimit(actor, 'kids', await User.countDocuments({ familyId: kid.familyId, role: 'kid', _id: { $lt: kid._id } }));
-  } catch (err) {
-    await kid.deleteOne();
-    throw err;
-  }
   await ensureAccounts(kid.familyId, kid._id);
   return { kid: await shapeKid(kid) };
 };

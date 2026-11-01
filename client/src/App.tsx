@@ -4,7 +4,6 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Spinner } from '@/components/ui';
 import { ConfirmProvider } from '@/components/ui';
-import { PlanUpsellHost } from '@/features/billing';
 import { MomentOverlay } from '@/features/moments';
 import { AppShell } from '@/features/shell';
 import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from '@/pages/account';
@@ -83,7 +82,6 @@ export default function App() {
           </Suspense>
         )}
         <MomentOverlay />
-        <PlanUpsellHost />
         <Toaster
           position="top-center"
           toastOptions={{
