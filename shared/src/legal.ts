@@ -5,6 +5,12 @@
 export const LEGAL_VERSIONS = { terms: '2026-10-31', privacy: '2026-10-31' } as const;
 export type LegalDoc = keyof typeof LEGAL_VERSIONS;
 
+/** The versions as one string, carried in a grown-up's access token (server auth.ts). */
+export const legalVersionKey = (v: { terms?: string | null; privacy?: string | null } | null | undefined) => `${v?.terms ?? ''}:${v?.privacy ?? ''}`;
+export const CURRENT_LEGAL_KEY = legalVersionKey(LEGAL_VERSIONS);
+/** The error code a grown-up gets until they agree to changed documents; the app opens the re-accept sheet on it. */
+export const LEGAL_UPDATE_CODE = 'LEGAL_UPDATE';
+
 /** Where the documents live, shared by the app, emails and the marketing site. */
 export const LEGAL_PATHS: Record<LegalDoc, string> = { terms: '/terms', privacy: '/privacy' };
 

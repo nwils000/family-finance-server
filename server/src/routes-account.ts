@@ -22,6 +22,7 @@ import {
   resetRequestLimiter,
   strictLimiter,
 } from './security.js';
+import * as accounts from './services/accounts.js';
 import * as security from './services/account-security.js';
 import * as contact from './services/contact.js';
 import { familyOf } from './services/access.js';
@@ -60,6 +61,9 @@ r.post('/auth/password/change', ...parent, strictLimiter, handle(async (req, res
 // Your data: download everything the family stored, or delete your account (the last
 // grown-up takes the whole family with them). Deleting re-checks the password first.
 r.get('/account/export', ...parent, dataExportLimiter, handle((req) => data.exportFamily(familyOf(req.auth))));
+// Agreeing to changed Terms and Privacy Policy (requireAuth answers 428 LEGAL_UPDATE until then).
+r.post('/account/legal/accept', ...parent, strictLimiter, handle(async (req, res) => issueSession(req, res, await accounts.acceptCurrentLegal(req.auth))));
+
 // The grown-up contact form: relayed to the operator's inbox (services/contact.ts).
 r.post('/contact', ...parent, contactLimiter, contactDailyLimiter, bodyCap(8 * 1024), formGuard('contact'), handle((req) => contact.sendContact(parse(S.contactBody, req.body))));
 

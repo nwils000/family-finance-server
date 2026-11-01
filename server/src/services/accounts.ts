@@ -65,6 +65,16 @@ interface NewParent {
 const emailTaken = () => new HttpError(409, 'That email already has an account');
 
 /**
+ * A grown-up agrees to changed Terms and Privacy Policy (the re-accept sheet). The one other
+ * place agreement is recorded, after createParent. Returns the user, for a fresh session.
+ */
+export const acceptCurrentLegal = async (actor: { userId: string }) => {
+  const user = await User.findOneAndUpdate({ _id: actor.userId, role: 'parent' }, { $set: { legalAccepted: { ...LEGAL_VERSIONS, at: new Date() } } }, { new: true });
+  if (!user) throw new HttpError(404, 'Account not found');
+  return user;
+};
+
+/**
  * Every check and field of a new grown-up, not yet saved. createParent stores it;
  * the form guard's decoy (decoyParent) only shows it, so both answer the same way.
  */

@@ -1,7 +1,7 @@
 // The only module that talks to the server. Components call the typed
 // functions in `endpoints`, never axios directly.
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { type AccountKind, type ContactFields, type FormGuardBody, type HatId } from '@kk/shared';
+import { LEGAL_UPDATE_CODE, type AccountKind, type ContactFields, type FormGuardBody, type HatId } from '@kk/shared';
 import { isNative, secureStorage } from './secure-storage';
 import type * as T from './types';
 
@@ -19,12 +19,17 @@ export const http = axios.create({ baseURL: BASE_URL, withCredentials: true, hea
 // The access token lives in memory only (see secure-storage.ts).
 let accessToken: string | null = null;
 let onSessionLost: () => void = () => undefined;
+let onLegalUpdate: () => void = () => undefined;
 
 export const setAccessToken = (token: string | null) => {
   accessToken = token;
 };
 export const setOnSessionLost = (fn: () => void) => {
   onSessionLost = fn;
+};
+/** A grown-up's call refused with 428 LEGAL_UPDATE opens the re-accept sheet (features/legal-update.tsx). */
+export const setOnLegalUpdate = (fn: () => void) => {
+  onLegalUpdate = fn;
 };
 
 http.interceptors.request.use((config) => {
@@ -58,6 +63,8 @@ export const refreshSession = () => {
 http.interceptors.response.use(undefined, async (error: AxiosError) => {
   const original = error.config as (InternalAxiosRequestConfig & { _retried?: boolean }) | undefined;
   const isAuthCall = original?.url?.startsWith('/auth/');
+  // A kid's 428 comes from signing in and shows as that screen's error instead.
+  if (error.response?.status === 428 && !isAuthCall && (error.response.data as { code?: string } | undefined)?.code === LEGAL_UPDATE_CODE) onLegalUpdate();
   if (error.response?.status === 401 && original && !original._retried && !isAuthCall) {
     original._retried = true;
     try {
@@ -112,6 +119,7 @@ export const endpoints = {
   exportData: () => get<Record<string, unknown>>('/account/export'),
   /** Delete your grown-up account; the last grown-up deletes the whole family. */
   deleteAccount: (password: string) => post<{ familyDeleted: boolean }>('/account/delete', { password }),
+  acceptLegal: () => post<T.Session>('/account/legal/accept'),
   // The contact form: our server relays it to the operator's inbox. The guard body carries the trap and signals.
   sendContact: (fields: ContactFields, guard: FormGuardBody) => post<{ ok: true }>('/contact', { ...fields, ...guard }),
   googleSignIn: (b: T.SocialExtras & { idToken: string }) => post<T.Session>('/auth/google', b),

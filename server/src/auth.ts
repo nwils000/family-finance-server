@@ -5,6 +5,7 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import type { Request, Response, NextFunction, CookieOptions } from 'express';
+import { CURRENT_LEGAL_KEY, LEGAL_UPDATE_CODE, LEGAL_VERSIONS, legalVersionKey } from '@kk/shared';
 import { config } from './config.js';
 import { HttpError } from './http.js';
 import { Family, RefreshToken, User, type UserDoc } from './models.js';
@@ -42,12 +43,19 @@ const isNative = (req: Request) => req.get('X-Client-Platform') === 'native';
  */
 const signAccessToken = (user: UserDoc, key: jwt.Secret = config.jwtSecret) =>
   jwt.sign(
-    { userId: String(user._id), familyId: String(user.familyId), role: user.role, t: Date.now() } satisfies AuthedUser & { t: number },
+    {
+      userId: String(user._id),
+      familyId: String(user.familyId),
+      role: user.role,
+      t: Date.now(),
+      // Which Terms and Privacy versions this grown-up agreed to; requireAuth compares it.
+      ...(user.role === 'parent' ? { lv: legalVersionKey(user.legalAccepted) } : {}),
+    } satisfies AuthedUser & { t: number; lv?: string },
     key,
     { expiresIn: config.accessTokenTtl, algorithm: 'HS256', jwtid: crypto.randomUUID() } as jwt.SignOptions,
   );
 
-type AccessClaims = AuthedUser & { t?: number; iat?: number; exp?: number; jti?: string };
+type AccessClaims = AuthedUser & { t?: number; iat?: number; exp?: number; jti?: string; lv?: string };
 const verifyAccessToken = (token: string) => jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] }) as AccessClaims;
 
 export const publicUser = (u: UserDoc) => ({
@@ -87,6 +95,11 @@ const noteFamilyActive = (familyId: UserDoc['familyId']) =>
   );
 
 export const issueSession = async (req: Request, res: Response, user: UserDoc) => {
+  // A kid signs in (or stays signed in) only once a grown-up in the family has agreed to the
+  // current Privacy Policy, which is the document that covers the kid's data.
+  if (user.role === 'kid' && !(await User.exists({ familyId: user.familyId, role: 'parent', 'legalAccepted.privacy': LEGAL_VERSIONS.privacy }))) {
+    throw new HttpError(428, 'A grown-up in your family needs to agree to our updated Privacy Policy first.', LEGAL_UPDATE_CODE);
+  }
   void noteFamilyActive(user.familyId);
   const refreshToken = newToken(48);
   await RefreshToken.create({
@@ -252,10 +265,18 @@ export const requireAuth = (req: Request, _res: Response, next: NextFunction) =>
   const mintedAt = payload.t ?? (payload.iat ?? 0) * 1000;
   Promise.all([cutoffFor(payload.userId), isRevoked(payload.jti)]).then(([cutoff, revoked]) => {
     if (revoked || (cutoff !== null && mintedAt <= cutoff)) return next(new HttpError(401, 'Session expired', 'TOKEN_EXPIRED'));
+    // Changed Terms or Privacy Policy: a grown-up agrees again before anything else
+    // (accounts.ts acceptCurrentLegal), except signing in or out and their data rights.
+    if (payload.role === 'parent' && payload.lv !== CURRENT_LEGAL_KEY && !LEGAL_EXEMPT.some((p) => req.originalUrl.startsWith(p))) {
+      return next(new HttpError(428, 'We updated our Terms and Privacy Policy. Please review and agree to keep going.', LEGAL_UPDATE_CODE));
+    }
     req.auth = { userId: payload.userId, familyId: payload.familyId, role: payload.role };
     next();
   }, next);
 };
+
+/** What a grown-up may still do before agreeing to changed documents: sessions, and seeing or deleting their data. */
+const LEGAL_EXEMPT = ['/api/auth/', '/api/account/legal/', '/api/account/export', '/api/account/delete'];
 
 export const requireParent = (req: Request, _res: Response, next: NextFunction) => {
   if (req.auth?.role !== 'parent') return next(new HttpError(403, 'Only grown-ups can do that'));

@@ -1,3 +1,4 @@
+import { LegalUpdateHost } from '@/features/legal-update';
 import { LEGAL_PATHS } from '@kk/shared';
 import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
@@ -82,6 +83,7 @@ export default function App() {
           </Suspense>
         )}
         <MomentOverlay />
+        <LegalUpdateHost />
         <Toaster
           position="top-center"
           toastOptions={{

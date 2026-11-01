@@ -1,6 +1,6 @@
 // Resets the local database to a demo family. Never run against production.
 import mongoose from 'mongoose';
-import { defaultRewardCents, toDateKey } from '@kk/shared';
+import { defaultRewardCents, LEGAL_VERSIONS, toDateKey } from '@kk/shared';
 import { config } from '../config.js';
 import { Family, Quest, QuestRun, Reward, User } from '../models.js';
 import { hashPassword, hashPin } from '../services/accounts.js';
@@ -22,6 +22,8 @@ await User.create({
   passwordHash: await hashPassword('password123'),
   // Verified, so the demo grown-up can add kids and invite grown-ups right away.
   emailVerifiedAt: new Date(),
+  // Agreed to the current documents, so the demo signs in without the re-accept sheet.
+  legalAccepted: { ...LEGAL_VERSIONS, at: new Date() },
 });
 const mk = async (name: string, avatar: string, pin: string) => {
   const kid = await User.create({ familyId, role: 'kid', name, avatar, pinHash: await hashPin(pin) });
