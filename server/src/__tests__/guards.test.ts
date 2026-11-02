@@ -2,7 +2,7 @@
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, relative } from 'path';
 import { describe, expect, it } from 'vitest';
-import { LESSON_ART, LESSON_CATEGORIES, LESSONS, NEW_FAMILIES_OPEN, OPERATOR_ADDRESS, OPERATOR_PHONE } from '@kk/shared';
+import { APP_PAGES, LEGAL_PATHS, LESSON_ART, LESSON_CATEGORIES, LESSONS, NEW_FAMILIES_OPEN, OPERATOR_ADDRESS, OPERATOR_PHONE } from '@kk/shared';
 
 const ROOT = join(import.meta.dirname, '../../..');
 const SKIP = new Set(['node_modules', 'dist', 'legacy-django', '.git', 'ios', 'android', 'coverage']);
@@ -88,6 +88,13 @@ describe('repo guards', () => {
     expect(!NEW_FAMILIES_OPEN || consentBuilt).toBe(true);
     // COPPA 312.4(d)(1): the policy must give a postal address and phone before families are invited in.
     expect(!NEW_FAMILIES_OPEN || (!!OPERATOR_ADDRESS && !!OPERATOR_PHONE)).toBe(true);
+  });
+
+  it('every page the server names for search engines and link previews is a real route in the app', () => {
+    const app = code.find((f) => f.path === 'client/src/App.tsx')!.text;
+    const routes = new Set([...app.matchAll(/<Route path="([^"]+)"/g)].map((m) => m[1]));
+    for (const p of Object.values(LEGAL_PATHS)) routes.add(p);
+    expect(Object.keys(APP_PAGES).filter((p) => !routes.has(p))).toEqual([]);
   });
 
   it('has no em or en dashes anywhere', () => {

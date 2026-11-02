@@ -139,6 +139,8 @@ A fix that cannot name its guard is not done.
 | Connecting to MongoDB and building indexes (server and Vercel function) | `server/src/db.ts` `connectDb()` | `mongoose.connect` anywhere else |
 | Hosting on Vercel (build output, routes, cron) | `scripts/vercel-build.mjs` + `server/src/vercel.ts`; the cron door is `security.ts` `requireCron` | a second build config or an unguarded job route |
 | Serving the built web app (production) and its page headers | `server/src/web-app.ts` + `security.ts` `webAppHeaders` | static serving or a page CSP anywhere else |
+| Each app page's title, description, robots rule and share tags (and robots.txt, sitemap.xml) | `@kk/shared` `APP_PAGES`, written into the HTML by `web-app.ts` `pageHead`; the tab title in `App.tsx` reads the same table | a `<title>` or meta tag typed into a page, or a page missing from the table |
+| Share image and app icons | `client/public` (`og-image.png`, `apple-touch-icon.png`, `icon-192/512.png`), made by `npm run og -w site`, copied to the site by `site/scripts/sync-assets.mjs` | a second copy committed under `site/public` |
 
 ---
 

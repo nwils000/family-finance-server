@@ -32,9 +32,9 @@ export function pageMetadata({ title, description = DESCRIPTION, path = '/', noI
       siteName: SITE_NAME,
       type: 'website',
       locale: 'en_US',
-      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: `${SITE_NAME}: ${TAGLINE}` }],
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: `${SITE_NAME}: ${TAGLINE}`, type: 'image/png' }],
     },
-    twitter: { card: 'summary_large_image', title: fullTitle, description, images: ['/og-image.png'] },
+    twitter: { card: 'summary_large_image', title: fullTitle, description, images: [{ url: '/og-image.png', alt: `${SITE_NAME}: ${TAGLINE}` }] },
     robots: noIndex
       ? { index: false, follow: true }
       : { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 } },

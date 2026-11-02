@@ -10,4 +10,4 @@ const from = (p) => fileURLToPath(new URL(`../../client/public/${p}`, import.met
 const to = (p) => fileURLToPath(new URL(`../public/${p}`, import.meta.url));
 
 mkdirSync(to(''), { recursive: true });
-for (const file of ['favicon.svg']) copyFileSync(from(file), to(file));
+for (const file of ['favicon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'og-image.png']) copyFileSync(from(file), to(file));

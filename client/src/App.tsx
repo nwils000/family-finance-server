@@ -1,7 +1,7 @@
 import { LegalUpdateHost } from '@/features/legal-update';
-import { LEGAL_PATHS } from '@kk/shared';
+import { appPageMeta, LEGAL_PATHS } from '@kk/shared';
 import { lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Spinner } from '@/components/ui';
 import { ConfirmProvider } from '@/components/ui';
@@ -34,6 +34,15 @@ const Loading = () => (
   </div>
 );
 
+/** The browser tab says which page this is (the same names the server writes for crawlers). */
+function PageTitle() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    document.title = appPageMeta(pathname).title;
+  }, [pathname]);
+  return null;
+}
+
 export default function App() {
   const { status, init } = useAuth();
   useEffect(() => {
@@ -45,6 +54,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ConfirmProvider>
+        <PageTitle />
         <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<WelcomePage />} />

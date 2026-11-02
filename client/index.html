@@ -4,18 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
     <meta name="theme-color" content="#FFF8EC" />
-    <link rel="icon" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- page-meta:start (server/src/web-app.ts writes each page's title, description, robots and share tags here; these are the dev defaults) -->
     <title>Kid Kapital</title>
     <meta name="description" content="The free family app where chores become quests and coins become know-how. Grown-ups and kids sign in here." />
-    <!-- Link previews (the firewall lets preview bots fetch pages). The image is the marketing site's one copy. -->
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Kid Kapital" />
-    <meta property="og:title" content="Kid Kapital" />
-    <meta property="og:description" content="The free family app where chores become quests and coins become know-how." />
-    <meta property="og:image" content="https://kid-kapital-site.vercel.app/og-image.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="robots" content="noindex, follow" />
+    <!-- page-meta:end -->
   </head>
   <body>
     <div id="root"></div>

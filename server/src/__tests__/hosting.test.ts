@@ -39,7 +39,7 @@ describe('serving the web app shell', () => {
     const { webApp } = await import('../web-app.js');
     const dir = mkdtempSync(join(tmpdir(), 'kk-shell-'));
     mkdirSync(join(dir, 'assets'));
-    writeFileSync(join(dir, 'index.html'), '<!doctype html><link href="/assets/a.css">');
+    writeFileSync(join(dir, 'index.html'), '<!doctype html><head><!-- page-meta:start --><title>x</title><!-- page-meta:end --></head><link href="/assets/a.css">');
     const app = express().use(webApp(dir));
     for (const path of ['/', '/parent/learn', '/index.html']) {
       const res = await request(app).get(path);
@@ -50,5 +50,34 @@ describe('serving the web app shell', () => {
     }
     // An old build's file is a 404, never the shell (the client reloads into the new build).
     expect((await request(app).get('/assets/old-chunk-abc123.js')).status).toBe(404);
+  });
+
+  it('writes each page its own title, description, robots rule and share tags; only the legal pages are indexed', async () => {
+    const { mkdtempSync, mkdirSync, writeFileSync } = await import('fs');
+    const { join } = await import('path');
+    const { tmpdir } = await import('os');
+    const express = (await import('express')).default;
+    const { webApp } = await import('../web-app.js');
+    const dir = mkdtempSync(join(tmpdir(), 'kk-meta-'));
+    mkdirSync(join(dir, 'assets'));
+    writeFileSync(join(dir, 'index.html'), '<!doctype html><head><!-- page-meta:start --><title>dev</title><!-- page-meta:end --></head>');
+    const app = express().use(webApp(dir));
+    const privacy = (await request(app).get('/privacy')).text;
+    expect(privacy).toContain('<title>Privacy Policy | Kid Kapital</title>');
+    expect(privacy).toMatch(/<meta name="robots" content="index, follow/);
+    expect(privacy).toMatch(/<link rel="canonical" href="[^"]+\/privacy" \/>/);
+    expect(privacy).toMatch(/<meta property="og:image" content="[^"]+\/og-image.png" \/>/);
+    expect(privacy).toMatch(/<meta name="twitter:card" content="summary_large_image" \/>/);
+    expect(privacy).not.toContain('<title>dev</title>');
+    const parent = (await request(app).get('/parent/family')).text;
+    expect(parent).toContain('<meta name="robots" content="noindex, follow" />');
+    expect(parent).not.toContain('rel="canonical"');
+    const robots = await request(app).get('/robots.txt');
+    expect(robots.headers['content-type']).toMatch(/text\/plain/);
+    expect(robots.text).toMatch(/Sitemap: .+\/sitemap.xml/);
+    const sitemap = (await request(app).get('/sitemap.xml')).text;
+    expect(sitemap).toMatch(/<loc>[^<]+\/privacy<\/loc>/);
+    expect(sitemap).toMatch(/<loc>[^<]+\/terms<\/loc>/);
+    expect(sitemap).not.toMatch(/\/login</);
   });
 });

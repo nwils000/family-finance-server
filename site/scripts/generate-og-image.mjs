@@ -16,6 +16,8 @@ import { chromium } from 'playwright-core';
 
 const SITE = process.env.SITE ?? 'http://localhost:3100';
 const pub = (p) => fileURLToPath(new URL(`../public/${p}`, import.meta.url));
+/** Icons live with the app (client/public), the one source; scripts/sync-assets.mjs copies them here. */
+const appPub = (p) => fileURLToPath(new URL(`../../client/public/${p}`, import.meta.url));
 
 const browser = await chromium.launch();
 try {
@@ -23,16 +25,22 @@ try {
   await page.goto(`${SITE}/og-card`, { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
   await page.addStyleTag({ content: 'body::before{display:none} .skip-link{display:none}' });
-  await page.locator('#og').screenshot({ path: pub('og-image.png') });
+  await page.locator('#og').screenshot({ path: appPub('og-image.png') });
 
-  const svg = readFileSync(pub('favicon.svg'), 'utf8');
-  const icon = await browser.newPage({ viewport: { width: 180, height: 180 } });
-  await icon.setContent(
-    `<body style="margin:0;background:#FFF8EC;display:flex;align-items:center;justify-content:center;width:180px;height:180px">
-       <div style="width:140px;height:140px">${svg.replace('<svg ', '<svg width="140" height="140" ')}</div></body>`,
-  );
-  await icon.screenshot({ path: pub('apple-touch-icon.png') });
-  console.log('wrote public/og-image.png and public/apple-touch-icon.png');
+  // The app icon at every size a phone, a browser or a search engine asks for: the coin on cream,
+  // with a margin so a rounded or circular mask never clips it.
+  const svg = readFileSync(appPub('favicon.svg'), 'utf8');
+  for (const [file, size] of [['apple-touch-icon.png', 180], ['icon-192.png', 192], ['icon-512.png', 512]]) {
+    const inner = Math.round(size * 0.72);
+    const icon = await browser.newPage({ viewport: { width: size, height: size } });
+    await icon.setContent(
+      `<body style="margin:0;background:#FFF8EC;display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px">
+         <div style="width:${inner}px;height:${inner}px">${svg.replace('<svg ', `<svg width="${inner}" height="${inner}" `)}</div></body>`,
+    );
+    await icon.screenshot({ path: appPub(file) });
+    await icon.close();
+  }
+  console.log('wrote client/public og-image.png and icons (apple-touch-icon, icon-192, icon-512)');
 } finally {
   await browser.close();
 }
